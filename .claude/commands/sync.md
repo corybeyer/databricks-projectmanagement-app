@@ -1,7 +1,6 @@
 ---
-name: sync
-description: Pull latest develop into your current feature branch to stay up to date
-argument-hint: ""
+description: Pull latest develop into your current feature branch
+allowed-tools: Bash(git *)
 ---
 
 Sync the current feature branch with the latest changes from develop.
@@ -36,4 +35,4 @@ Follow these steps exactly:
    No conflicts.
    ```
 
-Use merge (not rebase) to keep the history straightforward for users who aren't git experts.
+Use merge (not rebase) to keep the history straightforward.
