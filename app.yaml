@@ -1,0 +1,13 @@
+# Databricks Apps Deployment Config
+# ==================================
+# Deploy: databricks apps deploy pm-hub --source-code-path ./databricks-pm-app
+
+command:
+  - python
+  - app.py
+
+env:
+  - name: DATABRICKS_SQL_WAREHOUSE_ID
+    value: "your-warehouse-id-here"
+  - name: APP_ENV
+    value: "production"
