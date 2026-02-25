@@ -1,7 +1,6 @@
 ---
-name: commit
 description: Stage changes, write a conventional commit message, and commit
-argument-hint: "[optional message override]"
+allowed-tools: Bash(git *)
 ---
 
 Help the user commit their current changes. Follow these steps exactly:

@@ -1,7 +1,6 @@
 ---
-name: hotfix
-description: Create an emergency hotfix branch from main (merges to both main and develop)
-argument-hint: [branch-name]
+description: Create an emergency hotfix branch from main
+allowed-tools: Bash(git *)
 ---
 
 Create a hotfix branch for an emergency fix. Hotfixes branch from main and merge to BOTH main and develop.

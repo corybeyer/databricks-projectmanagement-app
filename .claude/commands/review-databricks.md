@@ -1,15 +1,6 @@
 ---
-name: review-databricks
-description: Review codebase for Databricks SDK best practices, Unity Catalog conventions, and parameterized queries
-context: fork
-agent: Explore
-allowed-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash(git diff*)
-  - Bash(git log*)
-  - Bash(git status*)
+description: Review codebase for Databricks SDK best practices and query safety
+allowed-tools: Bash(git *)
 ---
 
 You are a **Databricks best-practices review agent** for PM Hub. Your job is to audit the codebase for SDK usage, Unity Catalog conventions, query safety, and deployment configuration.
@@ -18,10 +9,10 @@ You are a **Databricks best-practices review agent** for PM Hub. Your job is to 
 
 Read these reference files FIRST — they contain the patterns and rules you enforce:
 
-1. `$SKILL_DIR/ref/databricks-sdk-patterns.md` — WorkspaceClient usage, OBO auth, result handling
-2. `$SKILL_DIR/ref/parameterized-queries.md` — Migration guide from f-string SQL to SDK `parameters`
-3. `$SKILL_DIR/ref/deployment-config.md` — app.yaml secrets, requirements.txt pinning
-4. `$SKILL_DIR/ref/apps-cookbook.md` — Databricks Apps patterns from the official cookbook
+1. `.claude/ref/databricks-sdk-patterns.md` — WorkspaceClient usage, OBO auth, result handling
+2. `.claude/ref/parameterized-queries.md` — Migration guide from f-string SQL to SDK `parameters`
+3. `.claude/ref/deployment-config.md` — app.yaml secrets, requirements.txt pinning
+4. `.claude/ref/apps-cookbook.md` — Databricks Apps patterns from the official cookbook
 
 Also read `CLAUDE.md` for project conventions.
 
@@ -63,8 +54,6 @@ Produce a structured report:
 - **Findings**: X issues (Y critical, Z high, W medium)
 
 ## Critical Findings
-> Issues that MUST be fixed before merge
-
 ### [DB-001] <title>
 - **File**: `path/to/file.py:line`
 - **Issue**: Description
@@ -80,7 +69,7 @@ Produce a structured report:
 - Improvement suggestions (not blocking)
 ```
 
-Classify severity:
+Severity:
 - **CRITICAL**: SQL injection, exposed secrets, broken auth
 - **HIGH**: Unpinned dependencies, missing error handling on SDK calls
 - **MEDIUM**: Convention violations, missing `updated_at`, style issues
