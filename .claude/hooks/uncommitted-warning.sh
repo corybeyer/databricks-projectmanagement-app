@@ -1,5 +1,6 @@
 #!/bin/bash
 # Warn if there are uncommitted changes at session end.
+# No jq dependency — doesn't need to parse input.
 CHANGES=$(git status --porcelain 2>/dev/null)
 
 if [[ -n "$CHANGES" ]]; then

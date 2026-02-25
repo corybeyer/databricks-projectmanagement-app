@@ -1,18 +1,24 @@
 #!/bin/bash
 # Validate that git commit messages follow conventional commit format.
 # Valid types: feat, fix, refactor, schema, style, docs, test, deploy, chore
+# No external dependencies. Portable across Git Bash / Linux / macOS.
 INPUT=$(cat)
-CMD=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
 # Only check git commit commands that have a -m flag
-if ! echo "$CMD" | grep -qE '^\s*git\s+commit.*-m'; then
+if ! echo "$INPUT" | grep -q 'git commit.*-m'; then
   exit 0
 fi
 
-# Extract the commit message — handle both -m "msg" and heredoc patterns
-MSG=$(echo "$CMD" | grep -oP '(?<=-m\s")[^"]*' | head -1)
+# Allow heredoc-style commits through (they use cat <<'EOF' pattern)
+if echo "$INPUT" | grep -q 'EOF'; then
+  exit 0
+fi
 
-# If no simple -m "msg" match, allow it through (heredoc or complex format)
+# Extract message: handle both escaped \" and regular " in JSON
+# Pattern: -m "message" or -m \"message\"
+MSG=$(echo "$INPUT" | sed 's/\\"/"/g' | sed -n 's/.*-m\s*"\([^"]*\)".*/\1/p' | head -1)
+
+# If we can't extract a message, allow through (complex format)
 if [[ -z "$MSG" ]]; then
   exit 0
 fi
