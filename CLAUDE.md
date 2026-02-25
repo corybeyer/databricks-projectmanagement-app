@@ -23,12 +23,19 @@ Unity Catalog Delta tables.
 - Team works primarily in Python and SQL. No dedicated frontend developers.
   All UI must be maintainable by data engineers.
 
+## Architecture Plan
+
+See [docs/architecture-plan.md](docs/architecture-plan.md) for the full scaffolding & architecture plan.
+**Current step**: Not started — plan approved, ready for Step 1 (Local Postgres setup)
+**Pattern**: Pragmatic Layered Architecture with Repository Pattern
+**Call direction**: Pages → Services → Repositories → DB (never skip layers)
+
 ## Current State
 
 <!-- UPDATE THIS SECTION AS THE PROJECT PROGRESSES -->
 - **Phase**: 1 — Planning & Design (Waterfall)
 - **Sprint**: N/A (sprints begin in Phase 3)
-- **Focus**: Schema finalization, architecture validation, project plan approval
+- **Focus**: Architecture scaffolding — implementing the layered architecture plan
 - **Blockers**: None
 - **Next Gate**: Gate 1 — Charter & Architecture Approved
 
