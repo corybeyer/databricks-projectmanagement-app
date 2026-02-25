@@ -1,5 +1,5 @@
 ---
-name: status
+name: git-status
 description: Show current git status — branch, uncommitted changes, ahead/behind remote
 argument-hint: ""
 ---
