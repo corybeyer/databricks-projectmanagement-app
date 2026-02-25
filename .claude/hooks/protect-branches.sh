@@ -1,11 +1,11 @@
 #!/bin/bash
 # Block direct commits to develop and main branches.
 # Allows commits only on feature/*, bugfix/*, hotfix/* branches.
+# No external dependencies. Portable across Git Bash / Linux / macOS.
 INPUT=$(cat)
-CMD=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
-# Only check git commit commands
-if ! echo "$CMD" | grep -qE '^\s*git\s+commit'; then
+# Check if this is a git commit command (search the raw JSON)
+if ! echo "$INPUT" | grep -q 'git commit\|git.*commit'; then
   exit 0
 fi
 
