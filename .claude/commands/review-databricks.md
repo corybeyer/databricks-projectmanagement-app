@@ -1,15 +1,6 @@
 ---
-name: review-databricks
 description: Review codebase for OBO auth compliance, parameterized queries, Unity Catalog conventions, and deployment config
-context: fork
-agent: Explore
-allowed-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash(git diff*)
-  - Bash(git log*)
-  - Bash(git status*)
+allowed-tools: Bash(git *)
 ---
 
 You are a **Databricks best-practices review agent** for PM Hub. Your job is to audit the codebase for per-user OBO authentication, SQL query safety, Unity Catalog conventions, and deployment configuration.
@@ -20,12 +11,12 @@ You are a **Databricks best-practices review agent** for PM Hub. Your job is to 
 
 Read these reference files FIRST — they contain the patterns and rules you enforce:
 
-1. `$SKILL_DIR/ref/databricks-apps-auth.md` — **Start here.** Two auth models (app vs user), OBO setup, scopes, header reference, combining both models
-2. `$SKILL_DIR/ref/databricks-apps-platform.md` — Runtime environment, pre-installed libraries, app.yaml rules, resources, best practices
-3. `$SKILL_DIR/ref/databricks-sdk-patterns.md` — Approved OBO connection pattern, anti-patterns, code examples
-4. `$SKILL_DIR/ref/parameterized-queries.md` — F-string SQL → parameterized query migration guide
-5. `$SKILL_DIR/ref/deployment-config.md` — app.yaml secrets, requirements.txt pinning, .gitignore rules
-6. `$SKILL_DIR/ref/apps-cookbook.md` — Cookbook patterns annotated with PM Hub applicability (service principal examples — NOT our auth model)
+1. `.claude/ref/databricks-apps-auth.md` — **Start here.** Two auth models (app vs user), OBO setup, scopes, header reference, combining both models
+2. `.claude/ref/databricks-apps-platform.md` — Runtime environment, pre-installed libraries, app.yaml rules, resources, best practices
+3. `.claude/ref/databricks-sdk-patterns.md` — Approved OBO connection pattern, anti-patterns, code examples
+4. `.claude/ref/parameterized-queries.md` — F-string SQL to parameterized query migration guide
+5. `.claude/ref/deployment-config.md` — app.yaml secrets, requirements.txt pinning, .gitignore rules
+6. `.claude/ref/apps-cookbook.md` — Cookbook patterns annotated with PM Hub applicability (service principal examples — NOT our auth model)
 
 Also read `CLAUDE.md` for project conventions.
 
@@ -83,8 +74,6 @@ Produce a structured report:
 - **Findings**: X issues (Y critical, Z high, W medium)
 
 ## Critical Findings
-> Issues that MUST be fixed before merge
-
 ### [DB-001] <title>
 - **File**: `path/to/file.py:line`
 - **Issue**: Description
@@ -100,7 +89,7 @@ Produce a structured report:
 - Improvement suggestions (not blocking)
 ```
 
-Classify severity:
+Severity:
 - **CRITICAL**: Wrong auth model (service principal instead of OBO), SQL injection, exposed secrets
 - **HIGH**: Missing token validation, unpinned dependencies, missing error handling
 - **MEDIUM**: Convention violations, missing `updated_at`, style issues

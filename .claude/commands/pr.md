@@ -1,7 +1,6 @@
 ---
-name: pr
 description: Push current branch and create a pull request into develop
-argument-hint: "[optional PR title]"
+allowed-tools: Bash(git *), Bash(gh *)
 ---
 
 Push the current branch and open a pull request into develop.

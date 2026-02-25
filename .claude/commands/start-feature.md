@@ -1,7 +1,6 @@
 ---
-name: start-feature
-description: Create a new feature branch from develop following the project branch strategy
-argument-hint: [branch-name]
+description: Create a new feature branch from develop
+allowed-tools: Bash(git *)
 ---
 
 Create a new feature branch for the user. The argument $ARGUMENTS is the branch name (without the prefix).

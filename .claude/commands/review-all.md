@@ -1,14 +1,13 @@
 ---
-name: review-all
-description: Run all review agents (databricks, security, architecture) and produce a consolidated summary
-argument-hint: "[optional: path or branch to review]"
+description: Run all review agents and produce a consolidated quality report
+allowed-tools: Bash(git *), Bash(ruff *)
 ---
 
 Run all three review agents and produce a consolidated quality report.
 
 ## Steps
 
-1. Run the three review agents in sequence:
+1. Run the three reviews in sequence:
    - `/review-databricks`
    - `/review-security`
    - `/review-architecture`
@@ -40,12 +39,11 @@ Run all three review agents and produce a consolidated quality report.
 1. [ ] Fix: <critical item 1>
 2. [ ] Fix: <critical item 2>
 3. [ ] Consider: <high item 1>
-...
 
 ## Verdict
-- **BLOCK**: If any CRITICAL findings exist → Do not merge
-- **WARN**: If only HIGH findings → Merge with caution, create follow-up tickets
-- **PASS**: If only MEDIUM/LOW → Safe to merge
+- **BLOCK**: If any CRITICAL findings exist — Do not merge
+- **WARN**: If only HIGH findings — Merge with caution
+- **PASS**: If only MEDIUM/LOW — Safe to merge
 ```
 
 3. Present the verdict clearly to the user.
