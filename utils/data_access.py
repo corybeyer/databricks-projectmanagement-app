@@ -2,60 +2,87 @@
 Data Access Layer — Unity Catalog Queries
 ==========================================
 All database interactions go through this module.
-Uses Databricks SDK for serverless SQL warehouse queries.
+Uses databricks-sql-connector for parameterized queries.
 Falls back to sample data when running locally for development.
 """
 
 import os
-import json
+import logging
 from datetime import datetime, date, timedelta
 from typing import Optional
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 # ─── Databricks Connection ──────────────────────────────────
 CATALOG = "workspace"
 SCHEMA = "project_management"
 
-def _get_sql_connection():
-    """Get Databricks SQL connection via SDK. Returns None if running locally."""
-    try:
-        from databricks.sdk import WorkspaceClient
-        from databricks.sdk.service.sql import StatementState
-        w = WorkspaceClient()
-        return w
-    except Exception:
-        return None
 
-def query(sql: str, params: dict = None) -> pd.DataFrame:
-    """
-    Execute SQL against Unity Catalog and return DataFrame.
-    Falls back to sample data when Databricks SDK unavailable.
-    """
-    client = _get_sql_connection()
-    if client is None:
-        # Running locally — return sample data
-        return _sample_data_fallback(sql)
-    
-    warehouse_id = os.getenv("DATABRICKS_SQL_WAREHOUSE_ID")
+def _get_sql_connection(user_token: str = None):
+    """Get Databricks SQL connection. Returns None if running locally."""
+    if user_token is None:
+        return None
     try:
-        result = client.statement_execution.execute_statement(
-            warehouse_id=warehouse_id,
-            statement=sql,
+        from databricks import sql
+        from databricks.sdk.core import Config
+        cfg = Config()
+        warehouse_id = os.getenv("DATABRICKS_SQL_WAREHOUSE_ID")
+        return sql.connect(
+            server_hostname=cfg.host,
+            http_path=f"/sql/1.0/warehouses/{warehouse_id}",
+            access_token=user_token,
             catalog=CATALOG,
             schema=SCHEMA,
         )
-        if result.result and result.result.data_array:
-            columns = [col.name for col in result.manifest.schema.columns]
-            return pd.DataFrame(result.result.data_array, columns=columns)
-        return pd.DataFrame()
     except Exception as e:
-        print(f"Query error: {e}")
+        logger.error("SQL connection failed: %s", e)
+        return None
+
+
+def query(sql_str: str, params: dict = None, user_token: str = None) -> pd.DataFrame:
+    """
+    Execute a parameterized SQL query and return DataFrame.
+    Falls back to sample data when connection unavailable.
+    """
+    conn = _get_sql_connection(user_token)
+    if conn is None:
+        return _sample_data_fallback(sql_str)
+
+    try:
+        with conn:
+            with conn.cursor() as cursor:
+                cursor.execute(sql_str, parameters=params)
+                if cursor.description:
+                    columns = [desc[0] for desc in cursor.description]
+                    rows = cursor.fetchall()
+                    return pd.DataFrame(rows, columns=columns)
+                return pd.DataFrame()
+    except Exception as e:
+        logger.error("Query error: %s", e)
         return pd.DataFrame()
+
+
+def execute_write(sql_str: str, params: dict = None, user_token: str = None) -> bool:
+    """Execute a write operation (INSERT/UPDATE). Returns True on success."""
+    conn = _get_sql_connection(user_token)
+    if conn is None:
+        logger.warning("Write skipped — no database connection (local dev)")
+        return False
+
+    try:
+        with conn:
+            with conn.cursor() as cursor:
+                cursor.execute(sql_str, parameters=params)
+        return True
+    except Exception as e:
+        logger.error("Write error: %s", e)
+        return False
 
 
 # ─── Domain Queries ─────────────────────────────────────────
 
-def get_portfolios() -> pd.DataFrame:
+def get_portfolios(user_token: str = None) -> pd.DataFrame:
     return query("""
         SELECT p.*,
                COUNT(DISTINCT pr.project_id) as project_count,
@@ -66,10 +93,10 @@ def get_portfolios() -> pd.DataFrame:
         LEFT JOIN projects pr ON p.portfolio_id = pr.portfolio_id
         GROUP BY ALL
         ORDER BY p.name
-    """)
+    """, user_token=user_token)
 
-def get_portfolio_projects(portfolio_id: str) -> pd.DataFrame:
-    return query(f"""
+def get_portfolio_projects(portfolio_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         SELECT pr.*,
                ph.name as current_phase_name,
                ph.phase_type,
@@ -78,12 +105,12 @@ def get_portfolio_projects(portfolio_id: str) -> pd.DataFrame:
         FROM projects pr
         LEFT JOIN phases ph ON pr.current_phase_id = ph.phase_id
         LEFT JOIN sprints s ON pr.project_id = s.project_id AND s.status = 'active'
-        WHERE pr.portfolio_id = '{portfolio_id}'
+        WHERE pr.portfolio_id = :portfolio_id
         ORDER BY pr.priority_rank
-    """)
+    """, params={"portfolio_id": portfolio_id}, user_token=user_token)
 
-def get_project_detail(project_id: str) -> pd.DataFrame:
-    return query(f"""
+def get_project_detail(project_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         SELECT pr.*,
                pf.name as portfolio_name,
                ph.name as current_phase_name,
@@ -91,62 +118,62 @@ def get_project_detail(project_id: str) -> pd.DataFrame:
         FROM projects pr
         LEFT JOIN portfolios pf ON pr.portfolio_id = pf.portfolio_id
         LEFT JOIN phases ph ON pr.current_phase_id = ph.phase_id
-        WHERE pr.project_id = '{project_id}'
-    """)
+        WHERE pr.project_id = :project_id
+    """, params={"project_id": project_id}, user_token=user_token)
 
-def get_project_charter(project_id: str) -> pd.DataFrame:
-    return query(f"""
+def get_project_charter(project_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         SELECT c.*
         FROM project_charters c
-        WHERE c.project_id = '{project_id}'
-    """)
+        WHERE c.project_id = :project_id
+    """, params={"project_id": project_id}, user_token=user_token)
 
-def get_project_phases(project_id: str) -> pd.DataFrame:
-    return query(f"""
+def get_project_phases(project_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         SELECT ph.*,
                COUNT(DISTINCT t.task_id) as task_count,
                COUNT(DISTINCT CASE WHEN t.status = 'done' THEN t.task_id END) as done_count
         FROM phases ph
         LEFT JOIN tasks t ON ph.phase_id = t.phase_id
-        WHERE ph.project_id = '{project_id}'
+        WHERE ph.project_id = :project_id
         GROUP BY ALL
         ORDER BY ph.phase_order
-    """)
+    """, params={"project_id": project_id}, user_token=user_token)
 
-def get_sprints(project_id: str) -> pd.DataFrame:
-    return query(f"""
+def get_sprints(project_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         SELECT s.*,
                SUM(t.story_points) as total_points,
                SUM(CASE WHEN t.status = 'done' THEN t.story_points ELSE 0 END) as done_points
         FROM sprints s
         LEFT JOIN tasks t ON s.sprint_id = t.sprint_id
-        WHERE s.project_id = '{project_id}'
+        WHERE s.project_id = :project_id
         GROUP BY ALL
         ORDER BY s.start_date
-    """)
+    """, params={"project_id": project_id}, user_token=user_token)
 
-def get_sprint_tasks(sprint_id: str) -> pd.DataFrame:
-    return query(f"""
+def get_sprint_tasks(sprint_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         SELECT t.*,
                tm.display_name as assignee_name
         FROM tasks t
         LEFT JOIN team_members tm ON t.assignee = tm.user_id
-        WHERE t.sprint_id = '{sprint_id}'
+        WHERE t.sprint_id = :sprint_id
         ORDER BY t.backlog_rank
-    """)
+    """, params={"sprint_id": sprint_id}, user_token=user_token)
 
-def get_backlog(project_id: str) -> pd.DataFrame:
-    return query(f"""
+def get_backlog(project_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         SELECT t.*,
                tm.display_name as assignee_name
         FROM tasks t
         LEFT JOIN team_members tm ON t.assignee = tm.user_id
-        WHERE t.project_id = '{project_id}'
+        WHERE t.project_id = :project_id
           AND t.sprint_id IS NULL
         ORDER BY t.backlog_rank
-    """)
+    """, params={"project_id": project_id}, user_token=user_token)
 
-def get_resource_allocations() -> pd.DataFrame:
+def get_resource_allocations(user_token: str = None) -> pd.DataFrame:
     return query("""
         SELECT tm.user_id, tm.display_name, tm.role,
                pr.name as project_name,
@@ -160,10 +187,16 @@ def get_resource_allocations() -> pd.DataFrame:
         WHERE tm.is_active = true
         GROUP BY ALL
         ORDER BY tm.display_name, pr.name
-    """)
+    """, user_token=user_token)
 
-def get_risks(portfolio_id: str = None) -> pd.DataFrame:
-    where = f"WHERE r.portfolio_id = '{portfolio_id}'" if portfolio_id else ""
+def get_risks(portfolio_id: str = None, user_token: str = None) -> pd.DataFrame:
+    params = {}
+    conditions = []
+    if portfolio_id:
+        conditions.append("r.portfolio_id = :portfolio_id")
+        params["portfolio_id"] = portfolio_id
+
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     return query(f"""
         SELECT r.*,
                pr.name as project_name,
@@ -173,18 +206,18 @@ def get_risks(portfolio_id: str = None) -> pd.DataFrame:
         LEFT JOIN portfolios pf ON r.portfolio_id = pf.portfolio_id
         {where}
         ORDER BY r.risk_score DESC
-    """)
+    """, params=params or None, user_token=user_token)
 
-def get_retro_items(sprint_id: str) -> pd.DataFrame:
-    return query(f"""
+def get_retro_items(sprint_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         SELECT ri.*
         FROM retro_items ri
-        WHERE ri.sprint_id = '{sprint_id}'
+        WHERE ri.sprint_id = :sprint_id
         ORDER BY ri.votes DESC
-    """)
+    """, params={"sprint_id": sprint_id}, user_token=user_token)
 
-def get_velocity(project_id: str) -> pd.DataFrame:
-    return query(f"""
+def get_velocity(project_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         SELECT s.name as sprint_name,
                s.start_date,
                s.end_date,
@@ -193,18 +226,17 @@ def get_velocity(project_id: str) -> pd.DataFrame:
                s.capacity_points
         FROM sprints s
         LEFT JOIN tasks t ON s.sprint_id = t.sprint_id
-        WHERE s.project_id = '{project_id}'
+        WHERE s.project_id = :project_id
           AND s.status = 'closed'
         GROUP BY ALL
         ORDER BY s.start_date
-    """)
+    """, params={"project_id": project_id}, user_token=user_token)
 
-def get_burndown(sprint_id: str) -> pd.DataFrame:
-    """Uses Delta time travel to reconstruct daily burndown."""
-    return query(f"""
+def get_burndown(sprint_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         WITH sprint_info AS (
             SELECT start_date, end_date
-            FROM sprints WHERE sprint_id = '{sprint_id}'
+            FROM sprints WHERE sprint_id = :sprint_id
         ),
         date_series AS (
             SELECT explode(sequence(
@@ -218,13 +250,13 @@ def get_burndown(sprint_id: str) -> pd.DataFrame:
                SUM(t.story_points) as total_points
         FROM date_series d
         CROSS JOIN tasks t TIMESTAMP AS OF d.burn_date
-        WHERE t.sprint_id = '{sprint_id}'
+        WHERE t.sprint_id = :sprint_id
         GROUP BY d.burn_date
         ORDER BY d.burn_date
-    """)
+    """, params={"sprint_id": sprint_id}, user_token=user_token)
 
-def get_status_cycle_times(project_id: str) -> pd.DataFrame:
-    return query(f"""
+def get_status_cycle_times(project_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         SELECT t.task_id, t.title, t.task_type,
                st.from_status, st.to_status,
                st.transitioned_at,
@@ -239,66 +271,78 @@ def get_status_cycle_times(project_id: str) -> pd.DataFrame:
                ) as hours_in_status
         FROM status_transitions st
         JOIN tasks t ON st.task_id = t.task_id
-        WHERE t.project_id = '{project_id}'
+        WHERE t.project_id = :project_id
         ORDER BY t.task_id, st.transitioned_at
-    """)
+    """, params={"project_id": project_id}, user_token=user_token)
 
-def get_gate_status(project_id: str) -> pd.DataFrame:
-    return query(f"""
+def get_gate_status(project_id: str, user_token: str = None) -> pd.DataFrame:
+    return query("""
         SELECT g.*,
                ph.name as phase_name
         FROM gates g
         JOIN phases ph ON g.phase_id = ph.phase_id
-        WHERE ph.project_id = '{project_id}'
+        WHERE ph.project_id = :project_id
         ORDER BY g.gate_order
-    """)
+    """, params={"project_id": project_id}, user_token=user_token)
 
 
 # ─── Write Operations (CRUD) ───────────────────────────────
 
-def create_task(task_data: dict) -> bool:
-    """Insert a new task into Unity Catalog."""
-    cols = ", ".join(task_data.keys())
-    vals = ", ".join([f"'{v}'" if isinstance(v, str) else str(v) for v in task_data.values()])
-    try:
-        query(f"INSERT INTO tasks ({cols}) VALUES ({vals})")
-        return True
-    except Exception as e:
-        print(f"Create task error: {e}")
-        return False
+def create_task(task_data: dict, user_token: str = None) -> bool:
+    """Insert a new task into Unity Catalog using parameterized query."""
+    columns = ["task_id", "title", "task_type", "status", "story_points",
+               "assignee", "project_id", "sprint_id", "phase_id",
+               "priority", "backlog_rank"]
+    params = {}
+    used_cols = []
+    for col in columns:
+        if col in task_data:
+            used_cols.append(col)
+            params[col] = task_data[col]
 
-def update_task_status(task_id: str, new_status: str, changed_by: str) -> bool:
-    """Update task status and log transition."""
-    try:
-        # Get current status
-        current = query(f"SELECT status FROM tasks WHERE task_id = '{task_id}'")
-        old_status = current.iloc[0]["status"] if len(current) > 0 else "unknown"
-        
-        # Update task
-        query(f"""
-            UPDATE tasks 
-            SET status = '{new_status}', updated_at = current_timestamp()
-            WHERE task_id = '{task_id}'
-        """)
-        
-        # Log transition
-        query(f"""
-            INSERT INTO status_transitions 
+    col_list = ", ".join(used_cols)
+    param_list = ", ".join(f":{col}" for col in used_cols)
+    return execute_write(
+        f"INSERT INTO tasks ({col_list}) VALUES ({param_list})",
+        params=params,
+        user_token=user_token,
+    )
+
+def update_task_status(task_id: str, new_status: str, changed_by: str, user_token: str = None) -> bool:
+    """Update task status and log transition using parameterized queries."""
+    current = query(
+        "SELECT status FROM tasks WHERE task_id = :task_id",
+        params={"task_id": task_id},
+        user_token=user_token,
+    )
+    old_status = current.iloc[0]["status"] if len(current) > 0 else "unknown"
+
+    success = execute_write("""
+        UPDATE tasks
+        SET status = :new_status, updated_at = current_timestamp()
+        WHERE task_id = :task_id
+    """, params={"task_id": task_id, "new_status": new_status}, user_token=user_token)
+
+    if success:
+        execute_write("""
+            INSERT INTO status_transitions
             (transition_id, task_id, from_status, to_status, changed_by, transitioned_at)
-            VALUES (uuid(), '{task_id}', '{old_status}', '{new_status}', '{changed_by}', current_timestamp())
-        """)
-        return True
-    except Exception as e:
-        print(f"Update task error: {e}")
-        return False
+            VALUES (uuid(), :task_id, :old_status, :new_status, :changed_by, current_timestamp())
+        """, params={
+            "task_id": task_id,
+            "old_status": old_status,
+            "new_status": new_status,
+            "changed_by": changed_by,
+        }, user_token=user_token)
 
-def move_task_to_sprint(task_id: str, sprint_id: str) -> bool:
-    try:
-        query(f"UPDATE tasks SET sprint_id = '{sprint_id}' WHERE task_id = '{task_id}'")
-        return True
-    except Exception as e:
-        print(f"Move task error: {e}")
-        return False
+    return success
+
+def move_task_to_sprint(task_id: str, sprint_id: str, user_token: str = None) -> bool:
+    return execute_write(
+        "UPDATE tasks SET sprint_id = :sprint_id WHERE task_id = :task_id",
+        params={"task_id": task_id, "sprint_id": sprint_id},
+        user_token=user_token,
+    )
 
 
 # ─── Sample Data Fallback (Local Development) ──────────────
@@ -306,7 +350,7 @@ def move_task_to_sprint(task_id: str, sprint_id: str) -> bool:
 def _sample_data_fallback(sql: str) -> pd.DataFrame:
     """Return realistic sample data when not connected to Databricks."""
     sql_lower = sql.lower().strip()
-    
+
     if "from portfolios" in sql_lower:
         return pd.DataFrame([
             {"portfolio_id": "pf-001", "name": "Data Platform Modernization", "owner": "Cory S.",
@@ -319,7 +363,7 @@ def _sample_data_fallback(sql: str) -> pd.DataFrame:
              "status": "active", "health": "green", "project_count": 3,
              "avg_completion": 42, "total_spent": 182400, "total_budget": 480000},
         ])
-    
+
     if "from projects" in sql_lower and "portfolio_id" in sql_lower:
         return pd.DataFrame([
             {"project_id": "prj-001", "name": "Unity Catalog Migration", "status": "active",
@@ -335,7 +379,7 @@ def _sample_data_fallback(sql: str) -> pd.DataFrame:
              "health": "green", "budget_total": 80000, "budget_spent": 68000,
              "active_sprint_name": None, "start_date": "2025-11-01", "target_date": "2026-03-15"},
         ])
-    
+
     if "from project_charters" in sql_lower:
         return pd.DataFrame([
             {"charter_id": "ch-001", "project_id": "prj-001",
@@ -351,7 +395,7 @@ def _sample_data_fallback(sql: str) -> pd.DataFrame:
              "delivery_method": "Hybrid — Waterfall phases with Agile sprint execution",
              "approved_by": "VP Data & Analytics", "approved_date": "2025-12-15"},
         ])
-    
+
     if "from sprints" in sql_lower:
         return pd.DataFrame([
             {"sprint_id": "sp-001", "name": "Sprint 1", "status": "closed",
@@ -367,7 +411,7 @@ def _sample_data_fallback(sql: str) -> pd.DataFrame:
              "start_date": "2026-03-02", "end_date": "2026-03-13",
              "total_points": 34, "done_points": 21, "capacity_points": 34},
         ])
-    
+
     if "from tasks" in sql_lower:
         return pd.DataFrame([
             {"task_id": "t-001", "title": "P&L Bronze ingestion", "task_type": "story",
@@ -387,6 +431,6 @@ def _sample_data_fallback(sql: str) -> pd.DataFrame:
             {"task_id": "t-008", "title": "Access policy — Finance", "task_type": "task",
              "status": "done", "story_points": 2, "assignee_name": "Cory S.", "priority": "medium"},
         ])
-    
+
     # Default empty
     return pd.DataFrame()
