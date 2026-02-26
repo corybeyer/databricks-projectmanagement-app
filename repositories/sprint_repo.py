@@ -13,6 +13,7 @@ def get_sprints(project_id: str, user_token: str = None) -> pd.DataFrame:
         FROM sprints s
         LEFT JOIN tasks t ON s.sprint_id = t.sprint_id
         WHERE s.project_id = :project_id
+          AND s.is_deleted = false
         GROUP BY ALL
         ORDER BY s.start_date
     """, params={"project_id": project_id}, user_token=user_token,
@@ -26,6 +27,7 @@ def get_sprint_tasks(sprint_id: str, user_token: str = None) -> pd.DataFrame:
         FROM tasks t
         LEFT JOIN team_members tm ON t.assignee = tm.user_id
         WHERE t.sprint_id = :sprint_id
+          AND t.is_deleted = false
         ORDER BY t.backlog_rank
     """, params={"sprint_id": sprint_id}, user_token=user_token,
         sample_fallback=sample_data.get_tasks)

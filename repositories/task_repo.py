@@ -13,6 +13,7 @@ def get_backlog(project_id: str, user_token: str = None) -> pd.DataFrame:
         LEFT JOIN team_members tm ON t.assignee = tm.user_id
         WHERE t.project_id = :project_id
           AND t.sprint_id IS NULL
+          AND t.is_deleted = false
         ORDER BY t.backlog_rank
     """, params={"project_id": project_id}, user_token=user_token,
         sample_fallback=sample_data.get_tasks)
@@ -40,7 +41,7 @@ def create_task(task_data: dict, user_token: str = None) -> bool:
 def update_task_status(task_id: str, new_status: str, changed_by: str,
                        user_token: str = None) -> bool:
     current = query(
-        "SELECT status FROM tasks WHERE task_id = :task_id",
+        "SELECT status FROM tasks WHERE task_id = :task_id AND is_deleted = false",
         params={"task_id": task_id}, user_token=user_token,
         sample_fallback=sample_data.get_empty,
     )

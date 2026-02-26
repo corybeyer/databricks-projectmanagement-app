@@ -17,6 +17,7 @@ def get_velocity(project_id: str, user_token: str = None) -> pd.DataFrame:
         LEFT JOIN tasks t ON s.sprint_id = t.sprint_id
         WHERE s.project_id = :project_id
           AND s.status = 'closed'
+          AND s.is_deleted = false
         GROUP BY ALL
         ORDER BY s.start_date
     """, params={"project_id": project_id}, user_token=user_token,
@@ -42,6 +43,7 @@ def get_burndown(sprint_id: str, user_token: str = None) -> pd.DataFrame:
         FROM date_series d
         CROSS JOIN tasks t TIMESTAMP AS OF d.burn_date
         WHERE t.sprint_id = :sprint_id
+          AND t.is_deleted = false
         GROUP BY d.burn_date
         ORDER BY d.burn_date
     """, params={"sprint_id": sprint_id}, user_token=user_token,
@@ -65,6 +67,7 @@ def get_status_cycle_times(project_id: str, user_token: str = None) -> pd.DataFr
         FROM status_transitions st
         JOIN tasks t ON st.task_id = t.task_id
         WHERE t.project_id = :project_id
+          AND t.is_deleted = false
         ORDER BY t.task_id, st.transitioned_at
     """, params={"project_id": project_id}, user_token=user_token,
         sample_fallback=sample_data.get_empty)
@@ -77,6 +80,7 @@ def get_gate_status(project_id: str, user_token: str = None) -> pd.DataFrame:
         FROM gates g
         JOIN phases ph ON g.phase_id = ph.phase_id
         WHERE ph.project_id = :project_id
+          AND g.is_deleted = false
         ORDER BY g.gate_order
     """, params={"project_id": project_id}, user_token=user_token,
         sample_fallback=sample_data.get_empty)

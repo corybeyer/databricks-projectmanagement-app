@@ -15,6 +15,7 @@ def get_project_detail(project_id: str, user_token: str = None) -> pd.DataFrame:
         LEFT JOIN portfolios pf ON pr.portfolio_id = pf.portfolio_id
         LEFT JOIN phases ph ON pr.current_phase_id = ph.phase_id
         WHERE pr.project_id = :project_id
+          AND pr.is_deleted = false
     """, params={"project_id": project_id}, user_token=user_token,
         sample_fallback=sample_data.get_empty)
 
@@ -27,6 +28,7 @@ def get_project_phases(project_id: str, user_token: str = None) -> pd.DataFrame:
         FROM phases ph
         LEFT JOIN tasks t ON ph.phase_id = t.phase_id
         WHERE ph.project_id = :project_id
+          AND ph.is_deleted = false
         GROUP BY ALL
         ORDER BY ph.phase_order
     """, params={"project_id": project_id}, user_token=user_token,
