@@ -23,6 +23,14 @@ def get_risks(portfolio_id: str = None, user_token: str = None):
     return risk_repo.get_risks(portfolio_id=portfolio_id, user_token=user_token)
 
 
+def get_risks_by_project(project_id: str, user_token: str = None):
+    return risk_repo.get_risks_by_project(project_id, user_token=user_token)
+
+
+def get_risks_overdue_review(days_threshold: int = 14, user_token: str = None):
+    return risk_repo.get_risks_overdue_review(days_threshold=days_threshold, user_token=user_token)
+
+
 def get_resource_allocations(user_token: str = None):
     return resource_repo.get_resource_allocations(user_token=user_token)
 

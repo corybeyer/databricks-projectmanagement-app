@@ -41,28 +41,49 @@ databricks-pm-app/
 │   ├── portfolios.py       # /portfolios — Portfolio detail view
 │   ├── roadmap.py          # /roadmap — Multi-project Gantt timeline
 │   ├── projects.py         # /projects — All projects list + filters
-│   ├── charters.py         # /charters — Project charter CRUD
+│   ├── charters.py         # /charters — Charter CRUD + approval workflow
 │   ├── gantt.py            # /gantt — Single project Gantt + gates
-│   ├── sprint.py           # /sprint — Kanban board for active sprint
-│   ├── my_work.py          # /my-work — Current user's assignments
-│   ├── backlog.py          # /backlog — Prioritized backlog management
+│   ├── sprint.py           # /sprint — Kanban board + task CRUD
+│   ├── my_work.py          # /my-work — Current user's assignments + edit
+│   ├── backlog.py          # /backlog — Backlog management + task CRUD
 │   ├── retros.py           # /retros — Sprint retrospective board
 │   ├── reports.py          # /reports — Velocity, burndown, cycle time
 │   ├── resources.py        # /resources — Team allocation heatmap
-│   └── risks.py            # /risks — Risk register + heatmap
+│   └── risks.py            # /risks — PMI risk lifecycle + CRUD + heatmap
+│
+├── repositories/           # Data access — ALL SQL lives here
+│   ├── base.py             # query(), write(), safe_update(), soft_delete()
+│   ├── task_repo.py        # Task CRUD + status transitions
+│   ├── sprint_repo.py      # Sprint CRUD + sprint tasks
+│   ├── portfolio_repo.py   # Portfolio queries
+│   ├── project_repo.py     # Project queries
+│   └── ...                 # charter, risk, analytics, resource repos
+│
+├── services/               # Business logic — NO Dash imports
+│   ├── task_service.py     # Task validation + orchestration
+│   ├── sprint_service.py   # Sprint validation + orchestration
+│   ├── charter_service.py  # Charter CRUD + approval workflow
+│   ├── risk_service.py     # PMI risk lifecycle management
+│   ├── auth_service.py     # OBO token, user identity
+│   └── ...                 # portfolio, project, analytics services
+│
+├── components/             # Reusable Dash UI components
+│   ├── crud_modal.py       # CRUD modal factory (6 public functions)
+│   ├── task_fields.py      # Shared TASK_FIELDS, SPRINT_FIELDS definitions
+│   ├── toast.py            # Toast notification system
+│   └── ...                 # kpi_card, empty_state, auto_refresh, etc.
+│
+├── charts/                 # Plotly figure builders
+│   ├── theme.py            # COLORS dict, apply_theme()
+│   └── ...                 # sprint, project, portfolio, analytics charts
 │
 ├── utils/
-│   ├── data_access.py      # Unity Catalog queries + local fallback
-│   └── charts.py           # Reusable Plotly chart components
-│
-├── static/
-│   ├── css/
-│   │   └── theme.css       # Custom dark theme overrides
-│   └── js/
-│       └── kanban.js       # Drag-drop for sprint board (optional)
+│   ├── validators.py       # Input validation layer (11 validators, 5 composites)
+│   ├── url_state.py        # URL query param helpers
+│   └── labels.py           # Centralized user-facing strings
 │
 └── assets/                 # Dash auto-loads CSS/JS from here
-    └── custom.css          # Global style overrides
+    └── custom.css          # Global dark theme overrides
 ```
 
 ## Schema Overview (17 Tables)
@@ -91,7 +112,7 @@ databricks-pm-app/
 - **team_members** — People (synced from Databricks identity)
 - **comments** — Task discussion threads
 - **time_entries** — Hours logged per task
-- **risks** — Risk register with probability × impact scoring
+- **risks** — PMI risk register with probability × impact scoring, residual risk tracking, lifecycle management
 
 ## Key Design Decisions
 
@@ -141,9 +162,9 @@ Your app will be available at:
 ```bash
 cd databricks-pm-app
 pip install -r requirements.txt
-python app.py
+USE_SAMPLE_DATA=true python app.py
 # Opens at http://localhost:8050
-# Uses sample data fallback when Databricks SDK unavailable
+# Uses in-memory sample data — full CRUD supported locally
 ```
 
 ## Reporting Queries

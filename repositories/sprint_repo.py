@@ -1,7 +1,7 @@
 """Sprint Repository — sprint and sprint task queries."""
 
 import pandas as pd
-from repositories.base import query
+from repositories.base import query, write, safe_update, soft_delete
 from models import sample_data
 
 
@@ -31,3 +31,52 @@ def get_sprint_tasks(sprint_id: str, user_token: str = None) -> pd.DataFrame:
         ORDER BY t.backlog_rank
     """, params={"sprint_id": sprint_id}, user_token=user_token,
         sample_fallback=sample_data.get_tasks)
+
+
+def get_sprint_by_id(sprint_id: str, user_token: str = None) -> pd.DataFrame:
+    return query(
+        "SELECT * FROM sprints WHERE sprint_id = :sprint_id AND is_deleted = false",
+        params={"sprint_id": sprint_id}, user_token=user_token,
+        sample_fallback=sample_data.get_sprints,
+    )
+
+
+def create_sprint(sprint_data: dict, user_token: str = None) -> bool:
+    allowed_columns = {"sprint_id", "name", "project_id", "phase_id", "status",
+                       "start_date", "end_date", "capacity_points", "goal",
+                       "created_by"}
+    params = {}
+    used_cols = []
+    for col in allowed_columns:
+        if col in sprint_data:
+            if not col.isidentifier():
+                raise ValueError(f"Invalid column name: {col!r}")
+            used_cols.append(col)
+            params[col] = sprint_data[col]
+
+    col_list = ", ".join(used_cols)
+    param_list = ", ".join(f":{col}" for col in used_cols)
+    return write(
+        f"INSERT INTO sprints ({col_list}) VALUES ({param_list})",
+        params=params, user_token=user_token,
+        table_name="sprints", record=sprint_data,
+    )
+
+
+def update_sprint(sprint_id: str, updates: dict, expected_updated_at: str,
+                  user_email: str = None, user_token: str = None) -> bool:
+    return safe_update(
+        "sprints", "sprint_id", sprint_id, updates,
+        expected_updated_at=expected_updated_at,
+        user_email=user_email, user_token=user_token,
+    )
+
+
+def close_sprint(sprint_id: str, user_email: str = None,
+                 user_token: str = None) -> bool:
+    return safe_update(
+        "sprints", "sprint_id", sprint_id,
+        {"status": "closed"},
+        expected_updated_at=None,
+        user_email=user_email, user_token=user_token,
+    )

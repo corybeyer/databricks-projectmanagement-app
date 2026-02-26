@@ -1,7 +1,7 @@
 """Task Repository — task CRUD and status transitions."""
 
 import pandas as pd
-from repositories.base import query, write
+from repositories.base import query, write, safe_update, soft_delete
 from models import sample_data
 
 
@@ -19,10 +19,19 @@ def get_backlog(project_id: str, user_token: str = None) -> pd.DataFrame:
         sample_fallback=sample_data.get_tasks)
 
 
+def get_task_by_id(task_id: str, user_token: str = None) -> pd.DataFrame:
+    return query(
+        "SELECT * FROM tasks WHERE task_id = :task_id AND is_deleted = false",
+        params={"task_id": task_id}, user_token=user_token,
+        sample_fallback=sample_data.get_tasks,
+    )
+
+
 def create_task(task_data: dict, user_token: str = None) -> bool:
     allowed_columns = {"task_id", "title", "task_type", "status", "story_points",
                        "assignee", "project_id", "sprint_id", "phase_id",
-                       "priority", "backlog_rank", "created_by"}
+                       "priority", "backlog_rank", "created_by", "description",
+                       "due_date"}
     params = {}
     used_cols = []
     for col in allowed_columns:
@@ -37,6 +46,24 @@ def create_task(task_data: dict, user_token: str = None) -> bool:
     return write(
         f"INSERT INTO tasks ({col_list}) VALUES ({param_list})",
         params=params, user_token=user_token,
+        table_name="tasks", record=task_data,
+    )
+
+
+def update_task(task_id: str, updates: dict, expected_updated_at: str,
+                user_email: str = None, user_token: str = None) -> bool:
+    return safe_update(
+        "tasks", "task_id", task_id, updates,
+        expected_updated_at=expected_updated_at,
+        user_email=user_email, user_token=user_token,
+    )
+
+
+def delete_task(task_id: str, user_email: str = None,
+                user_token: str = None) -> bool:
+    return soft_delete(
+        "tasks", "task_id", task_id,
+        user_email=user_email, user_token=user_token,
     )
 
 
@@ -49,11 +76,12 @@ def update_task_status(task_id: str, new_status: str, changed_by: str,
     )
     old_status = current.iloc[0]["status"] if len(current) > 0 else "unknown"
 
-    success = write("""
-        UPDATE tasks
-        SET status = :new_status, updated_at = current_timestamp()
-        WHERE task_id = :task_id
-    """, params={"task_id": task_id, "new_status": new_status}, user_token=user_token)
+    success = safe_update(
+        "tasks", "task_id", task_id,
+        {"status": new_status},
+        expected_updated_at=None,
+        user_token=user_token,
+    )
 
     if success:
         write("""
@@ -69,7 +97,9 @@ def update_task_status(task_id: str, new_status: str, changed_by: str,
 
 
 def move_task_to_sprint(task_id: str, sprint_id: str, user_token: str = None) -> bool:
-    return write(
-        "UPDATE tasks SET sprint_id = :sprint_id WHERE task_id = :task_id",
-        params={"task_id": task_id, "sprint_id": sprint_id}, user_token=user_token,
+    return safe_update(
+        "tasks", "task_id", task_id,
+        {"sprint_id": sprint_id},
+        expected_updated_at=None,
+        user_token=user_token,
     )

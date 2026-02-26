@@ -1,5 +1,13 @@
 # PM Hub — Architecture & Scaffolding Plan
 
+> **Status (2026-02-26):** This scaffolding plan is **complete**. The layered
+> architecture (Pages → Services → Repositories → DB), repository pattern,
+> sample data fallback, config layer, charts layer, and all 13 pages are built.
+> Phase 2a (Task CRUD + Kanban, Sprint Management) and Phase 2b.3/2b.4 (Charter
+> CRUD + Approval Workflow, PMI Risk Management Full Lifecycle) are complete.
+> 5 of 13 pages now have full CRUD: sprint, backlog, my-work, charters, risks.
+> See [PLAN.md](architecture/PLAN.md) for the production roadmap.
+
 ## Context
 
 The Databricks PM Hub app is ~20% complete (2 of 13 pages) with a solid foundation but needs production-ready architecture before building further. The current structure (flat `utils/` with a 393-line `data_access.py` and 441-line `charts.py`) won't scale to 13 pages and 20-100 department users. Additionally, the app needs PostgreSQL integration alongside Unity Catalog — Postgres for OLTP/CRUD, Unity Catalog for analytics/reporting with Delta time travel.

@@ -1,6 +1,6 @@
 # PM Hub — Road to Production Plan
 
-> Last updated: 2026-02-25 | Status: Phase 1 complete, ready for Phase 2
+> Last updated: 2026-02-26 | Status: Phase 2b partially complete (2.3 Charter + 2.4 Risk done), Phase 2b.5/2b.6 next
 
 ## Context
 
@@ -166,48 +166,87 @@ CREATE TABLE audit_log (
 ## Phase 2: Core CRUD Operations
 
 *The daily-use features that make this a PM tool, not a report viewer.*
+*Split into 2a (highest daily-use value) and 2b (remaining entities) for manageable delivery.*
 
-### 2.1 — Task CRUD + Kanban Interactivity
-- **Create task modal:** title, type (epic/story/task/bug), priority, story points, assignee, description
-- **Kanban status updates:** Click-to-move between columns (todo→in_progress→review→done) via dropdown per card
-- **Edit task modal:** Click task card → edit fields → save
-- **Delete task:** Soft delete with confirmation dialog
-- All writes record `created_by` / `updated_by` from OBO
-- Wire to existing `task_service.create_task()`, `update_task_status()`, `move_task_to_sprint()`
-- Add `task_service.update_task()`, `task_service.delete_task()`
-- Add `task_repo.update_task()`, `task_repo.delete_task()` (using `safe_update`, `soft_delete`)
-- **Files:** `pages/sprint.py`, `pages/my_work.py`, `pages/backlog.py`, `services/task_service.py`, `repositories/task_repo.py`
+### Prerequisites ✅ COMPLETE
 
-### 2.2 — Charter Form Submission + Approval Workflow
-- Wire the existing 11-field charter form to a submit callback
-- Charter versioning (version increments on update, old version preserved via Delta time travel)
+*Completed: 2026-02-26 | PR #22 merged to develop*
+
+#### 2.0a — In-Memory Write Mode for Local Dev ✅
+- Extended `models/sample_data.py` with mutable module-level store (`_store` dict)
+- Added `create_record()`, `update_record()`, `delete_record()` helpers with audit column defaults
+- Wired `repositories/base.py` — `write()` routes to in-memory store when `USE_SAMPLE_DATA=true`
+- `safe_update()` supports both optimistic locking (with `expected_updated_at`) and non-locking updates (when `None`)
+- **Files:** `models/sample_data.py`, `repositories/base.py`
+
+#### 2.0b — Shared CRUD Modal Component ✅
+- Created `components/crud_modal.py` — 6 public functions: `crud_modal()`, `confirm_delete_modal()`, `get_modal_values()`, `set_field_errors()`, `modal_field_states()`, `modal_error_outputs()`
+- ID convention: all component IDs prefixed with `id_prefix` to avoid collisions
+- Created `components/task_fields.py` — shared `TASK_FIELDS`, `SPRINT_FIELDS`, `TEAM_MEMBER_OPTIONS`
+- **Files:** `components/crud_modal.py` (new), `components/task_fields.py` (new), `components/__init__.py`
+
+### Phase 2a — Task & Sprint CRUD ✅ COMPLETE
+
+*Completed: 2026-02-26 | PR #23 merged to develop*
+
+#### 2.1 — Task CRUD + Kanban Interactivity ✅
+- **Sprint page** (`pages/sprint.py`): Full overhaul with task create/edit/delete modals, kanban status dropdowns, sprint selector, toolbar
+- **Backlog page** (`pages/backlog.py`): Create task, edit task, delete task, move-to-sprint dropdown per row
+- **My Work page** (`pages/my_work.py`): Edit task modal, inline status change dropdowns
+- Pattern-matching callbacks for per-card/per-row actions (`{"type": "sprint-task-status-dd", "index": task_id}`)
+- Mutation-triggered refresh: `dcc.Store` counter bridges CRUD callbacks and auto-refresh (avoids Dash single-Output constraint)
+- Toast feedback on all create/update/delete operations
+- Validation via `utils/validators.py` → service layer → specific field errors
+- **Repos:** `get_task_by_id()`, `update_task()`, `delete_task()` added to `task_repo.py` (using `safe_update`, `soft_delete`)
+- **Services:** `create_task_from_form()`, `update_task_from_form()`, `delete_task()`, `get_task()` with result dict pattern `{"success": bool, "errors": dict, "message": str}`
+- **Files:** `pages/sprint.py`, `pages/backlog.py`, `pages/my_work.py`, `services/task_service.py`, `repositories/task_repo.py`
+
+#### 2.2 — Sprint Management ✅
+- Sprint selector dropdown on sprint page (all sprints, active selected by default)
+- Create sprint modal (name, goal, start/end dates, capacity) with validation
+- Close sprint action (marks status → closed)
+- **Repos:** `create_sprint()`, `close_sprint()`, `get_sprint_by_id()`, `update_sprint()` in `sprint_repo.py`
+- **Services:** `create_sprint_from_form()`, `close_sprint()`, `get_sprint()` with result dict pattern
+- **Sample data:** Tasks now have `project_id`, `sprint_id`, `assignee` columns; sprints have `project_id`, `goal`; 2 backlog tasks added
+- **Files:** `pages/sprint.py`, `services/sprint_service.py`, `repositories/sprint_repo.py`, `models/sample_data.py`
+
+### Phase 2b — Charter, Risk, Retro & Portfolio CRUD
+
+#### 2.3 — Charter Form Submission + Approval Workflow ✅
+
+*Completed: 2026-02-26 | PR #24 to develop*
+
+- Full charter CRUD: create, edit, delete via crud_modal (12 fields, size xl)
 - Charter approval workflow: `draft → submitted → under_review → approved → rejected`
-- Approval action records `approved_by` + `approved_date` from OBO user
-- Add `charter_service.py` (new), `charter_repo.py` write operations
-- **Files:** `pages/charters.py`, `services/charter_service.py` (new), `repositories/charter_repo.py`
+- Status-guarded transitions: submit (draft/rejected only), approve/reject (submitted/under_review only)
+- Approval records `approved_by` + `approved_date` from OBO user with optimistic locking
+- `validate_charter_create()` composite validator added to `utils/validators.py`
+- **Services:** `charter_service.py` (new) — `create_charter_from_form()`, `update_charter_from_form()`, `submit_charter()`, `approve_charter()`, `reject_charter()`, `delete_charter()` with result dict pattern
+- **Repos:** `charter_repo.py` — expanded with `get_charters()`, `get_charter_by_id()`, `create_charter()`, `update_charter()`, `delete_charter()`, `update_charter_status()`
+- **Pages:** `pages/charters.py` — complete rewrite with 8 callbacks (refresh, toggle modal, save, submit, approve, reject, delete flow, cancel)
+- **Sample data:** Charter seed now includes `status`, `version`, `description`, `created_by`, `updated_by` fields
+- **Files:** `pages/charters.py`, `services/charter_service.py` (new), `repositories/charter_repo.py`, `utils/validators.py`, `models/sample_data.py`
 
-### 2.3 — Sprint Management
-- Create sprint modal (name, goal, start/end dates, capacity, phase assignment for hybrid)
-- Close sprint action (marks closed, captures velocity, optionally creates next sprint)
-- Sprint selector dropdown on sprint page
-- Move tasks between sprints
-- Add `sprint_service.create_sprint()`, `sprint_service.close_sprint()`
-- Add `sprint_repo.create_sprint()`, `sprint_repo.close_sprint()`
-- **Files:** `pages/sprint.py`, `services/sprint_service.py`, `repositories/sprint_repo.py`
+#### 2.4 — PMI Risk Management (Full Lifecycle) ✅
 
-### 2.4 — PMI Risk Management (Full Lifecycle)
-- **Create risk modal:** title, category, probability (1-5), impact (1-5), description, owner, response strategy (avoid/transfer/mitigate/accept/escalate), mitigation plan, contingency plan, triggers, urgency, proximity, response owner
-- **Risk scoring:** auto-calculate risk_score (P×I), residual_score after response
-- **Risk status lifecycle:** identified → qualitative_analysis → response_planning → monitoring → resolved → closed
-- **Risk review:** track last_review_date, flag risks overdue for review
-- **Residual risk tracking:** after response, what's the remaining risk?
-- **Secondary risk identification:** does the response introduce new risks?
-- **Enhanced heatmap:** toggle between inherent risk (before response) and residual risk (after response)
-- **Risk burndown:** chart showing open risk score over time
-- Add `risk_service.py` (new), expand `risk_repo.py` with CRUD
-- **Files:** `pages/risks.py`, `services/risk_service.py` (new), `repositories/risk_repo.py`, `charts/analytics_charts.py`, `models/sample_data.py`
+*Completed: 2026-02-26 | PR #24 to develop*
 
-### 2.5 — Retrospective CRUD + Voting
+- Full risk CRUD: create, edit, delete via crud_modal (12 PMI fields, size xl)
+- **Risk scoring:** auto-calculate `risk_score = P × I` on create and update
+- **Risk status lifecycle:** `identified → qualitative_analysis → response_planning → monitoring → resolved → closed` with validated enum transitions
+- **Risk review:** "Mark as reviewed" button updates `last_review_date`, overdue review KPI (>14 days)
+- **Residual risk tracking:** residual_probability, residual_impact, residual_score displayed in table
+- **Enhanced heatmap:** toggle between inherent risk (probability/impact) and residual risk (residual_probability/residual_impact)
+- **5 KPI cards:** Total Risks, High Severity, Avg Score, Open/Active, Overdue Review
+- Inline status dropdown per risk row (pattern-matching callbacks)
+- Defense-in-depth: status validation in both page callback and service layer
+- **Services:** `risk_service.py` (new) — `create_risk_from_form()`, `update_risk_from_form()`, `delete_risk()`, `update_risk_status()`, `review_risk()` with result dict pattern
+- **Repos:** `risk_repo.py` — expanded with `create_risk()`, `update_risk()`, `delete_risk()`, `update_risk_status()` (26-column allowlist)
+- **Charts:** `analytics_charts.py` — added `risk_heatmap_residual()` for residual risk view
+- **Analytics service:** added `get_risks_by_project()`, `get_risks_overdue_review()` passthroughs
+- **Files:** `pages/risks.py`, `services/risk_service.py` (new), `repositories/risk_repo.py`, `charts/analytics_charts.py`, `services/analytics_service.py`
+
+#### 2.5 — Retrospective CRUD + Voting
 - Add retro item (went_well / improve / action) via inline form
 - Vote on items (increment vote count, one vote per user)
 - Mark action items as done / convert to task
@@ -215,7 +254,7 @@ CREATE TABLE audit_log (
 - Add `retro_service.py` (new), `retro_repo.py` (new)
 - **Files:** `pages/retros.py`, `services/retro_service.py` (new), `repositories/retro_repo.py` (new), `models/sample_data.py`
 
-### 2.6 — Project & Portfolio CRUD
+#### 2.6 — Project & Portfolio CRUD
 - Create/edit project form (name, portfolio, department, delivery method, budget, dates, owner, sponsor)
 - Create/edit portfolio form (name, department, description, owner, strategic priority)
 - Soft delete with cascading considerations
@@ -226,6 +265,7 @@ CREATE TABLE audit_log (
 ## Phase 3: Navigation, Hierarchy & Multi-Department
 
 *Connect the pages so users flow naturally through the organizational hierarchy.*
+*Note: 3.1 and 3.2 (drill-down navigation, department selector) have no dependency on Phase 2 CRUD and can be developed in parallel with Phase 2b if desired.*
 
 ### 3.1 — Department → Portfolio → Project Drill-Down
 - Dashboard shows department-level rollup (or all departments for admins)
@@ -350,7 +390,7 @@ CREATE TABLE audit_log (
 | **Real-time edit visibility** | Delta CDC + audit_log table for change tracking; auto-refresh at 30s interval shows latest |
 | **Department data isolation** | All queries filter by `department_id` from user context; admin override for cross-dept views |
 | **Who changed what?** | `created_by`/`updated_by` on all tables + `audit_log` for field-level change history |
-| **Local dev can't test writes** | Add in-memory write mode that mutates sample DataFrames for local testing |
+| **Local dev can't test writes** | In-memory write mode (task 2.0a) — mutates sample DataFrames when `USE_SAMPLE_DATA=true` |
 | **Component ID explosion** | Dash pattern-matching callbacks (`MATCH`, `ALL`) for repeated elements |
 | **Form validation UX** | Client-side validation (required fields) + server-side (business rules) → specific field errors via toast |
 | **Large data volumes** | Paginate tables, lazy-load charts, limit default date ranges |
@@ -364,10 +404,12 @@ CREATE TABLE audit_log (
 
 Work in phase order. Within each phase, tasks can be parallelized.
 
-- **Phase 0** (Schema) → structural changes everything depends on
-- **Phase 1** (Foundation) → plumbing for interactivity
-- **Phase 2** (Core CRUD) → the bulk of the work, highest user value
-- **Phase 3** (Navigation & Multi-Dept) → organizational hierarchy
+- **Phase 0** (Schema) ✅ → structural changes everything depends on
+- **Phase 1** (Foundation) ✅ → plumbing for interactivity
+- **Phase 2 prereqs** (In-memory writes + shared modal) ✅ → unblocked all CRUD work
+- **Phase 2a** (Task & Sprint CRUD) ✅ → highest daily-use value, completed
+- **Phase 2b** (Charter + Risk CRUD) ✅ → 2.3 + 2.4 complete; 2.5 + 2.6 NEXT
+- **Phase 3** (Navigation & Multi-Dept) → organizational hierarchy (3.1/3.2 can parallel 2b)
 - **Phase 4** (PMI Features) → PMBOK 7 knowledge area coverage
 - **Phase 5** (Polish) → production hardening
 
@@ -382,3 +424,11 @@ After each phase:
 2. Run smoke tests: `pytest tests/test_pages/test_smoke.py`
 3. Run `/review-all` to check architecture, security, Databricks compliance
 4. Manual verification with sample data (pages render, callbacks fire, writes succeed)
+
+### Phase 2+ Test Requirements
+Starting with Phase 2, CRUD operations need deeper testing beyond `ast.parse`:
+- **Callback integration tests:** Simulate modal open/close, form submission, toast feedback using `dash.testing` or by mocking callback context
+- **Service layer tests:** Validate business logic (e.g., risk score calculation, charter version increment, sprint velocity capture)
+- **In-memory write tests:** Verify that create/update/delete operations against sample data produce correct state
+- **Validation round-trip tests:** Submit invalid data → verify field-level errors returned → fix → verify success
+- Test pattern: `tests/test_callbacks/test_{page}_crud.py` for each CRUD page
