@@ -11,10 +11,33 @@ COMMENT 'Portfolio & Project Management — Hybrid Waterfall/Agile';
 
 USE workspace.project_management;
 
+-- ─── DEPARTMENTS ──────────────────────────────────────────
+-- Organizational units — top-level grouping for multi-department support
+CREATE TABLE IF NOT EXISTS departments (
+    department_id   STRING      NOT NULL    COMMENT 'PK — UUID',
+    name            STRING      NOT NULL    COMMENT 'Department display name',
+    description     STRING                  COMMENT 'Department description',
+    parent_dept_id  STRING                  COMMENT 'FK → departments (self-ref for hierarchy)',
+    head            STRING                  COMMENT 'Department head user_id',
+    created_at      TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    updated_at      TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by      STRING                  COMMENT 'User email who created',
+    updated_by      STRING                  COMMENT 'User email who last updated',
+    deleted_by      STRING                  COMMENT 'User email who soft-deleted',
+    is_deleted      BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at      TIMESTAMP                             COMMENT 'When soft-deleted',
+
+    CONSTRAINT pk_departments PRIMARY KEY (department_id)
+)
+COMMENT 'Organizational departments — multi-department hierarchy'
+TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true');
+
+
 -- ─── PORTFOLIOS ────────────────────────────────────────────
 -- Top-level grouping of related projects by strategic theme
 CREATE TABLE IF NOT EXISTS portfolios (
     portfolio_id        STRING      NOT NULL    COMMENT 'PK — UUID',
+    department_id       STRING      NOT NULL    COMMENT 'FK → departments',
     name                STRING      NOT NULL    COMMENT 'Portfolio display name',
     description         STRING                  COMMENT 'Strategic description',
     owner               STRING      NOT NULL    COMMENT 'Portfolio manager / owner',
@@ -24,10 +47,14 @@ CREATE TABLE IF NOT EXISTS portfolios (
     strategic_priority  INT                     COMMENT 'Rank 1-N for prioritization',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
-    CONSTRAINT pk_portfolios PRIMARY KEY (portfolio_id)
+    CONSTRAINT pk_portfolios PRIMARY KEY (portfolio_id),
+    CONSTRAINT fk_portfolios_department FOREIGN KEY (department_id) REFERENCES departments(department_id)
 )
 COMMENT 'Strategic portfolios grouping related projects'
 TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true');
@@ -55,6 +82,9 @@ CREATE TABLE IF NOT EXISTS projects (
     actual_end_date     DATE                    COMMENT 'Actual completion date',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -87,6 +117,9 @@ CREATE TABLE IF NOT EXISTS project_charters (
     approved_date       DATE                    COMMENT 'Formal approval date',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -114,6 +147,9 @@ CREATE TABLE IF NOT EXISTS phases (
     pct_complete        DOUBLE      DEFAULT 0   COMMENT 'Phase % complete',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -137,6 +173,9 @@ CREATE TABLE IF NOT EXISTS gates (
     decided_at          TIMESTAMP               COMMENT 'When decision was made',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -160,6 +199,9 @@ CREATE TABLE IF NOT EXISTS deliverables (
     artifact_url        STRING                  COMMENT 'Link to document / artifact',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -183,6 +225,9 @@ CREATE TABLE IF NOT EXISTS sprints (
     capacity_points     INT                     COMMENT 'Team committed capacity',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -212,6 +257,9 @@ CREATE TABLE IF NOT EXISTS tasks (
     backlog_rank        DOUBLE                  COMMENT 'Ordering rank (float for insert-between)',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -249,6 +297,9 @@ CREATE TABLE IF NOT EXISTS comments (
     body                STRING      NOT NULL    COMMENT 'Comment text',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -268,6 +319,11 @@ CREATE TABLE IF NOT EXISTS time_entries (
     notes               STRING                  COMMENT 'Work notes',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
     CONSTRAINT pk_time_entries PRIMARY KEY (entry_id),
     CONSTRAINT fk_time_task FOREIGN KEY (task_id) REFERENCES tasks(task_id)
@@ -280,12 +336,20 @@ CREATE TABLE IF NOT EXISTS team_members (
     user_id             STRING      NOT NULL    COMMENT 'PK — maps to Databricks identity',
     display_name        STRING      NOT NULL    COMMENT 'Display name',
     email               STRING      NOT NULL    COMMENT 'Email address',
+    department_id       STRING      NOT NULL    COMMENT 'FK → departments',
     role                STRING      NOT NULL    COMMENT 'admin | lead | engineer | analyst | viewer',
     is_active           BOOLEAN     NOT NULL    DEFAULT true,
     capacity_pct        INT         DEFAULT 100 COMMENT 'Available capacity percentage (100=full time)',
-    joined_at           TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
-    CONSTRAINT pk_team_members PRIMARY KEY (user_id)
+    created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
+    CONSTRAINT pk_team_members PRIMARY KEY (user_id),
+    CONSTRAINT fk_team_members_department FOREIGN KEY (department_id) REFERENCES departments(department_id)
 )
 COMMENT 'Team members — synced from Databricks workspace identity';
 
@@ -299,7 +363,11 @@ CREATE TABLE IF NOT EXISTS project_team (
     allocation_pct      INT         NOT NULL    COMMENT 'Percentage of time allocated to this project',
     start_date          DATE                    COMMENT 'When assignment begins',
     end_date            DATE                    COMMENT 'When assignment ends',
+    created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -321,11 +389,26 @@ CREATE TABLE IF NOT EXISTS risks (
     probability         INT         NOT NULL    COMMENT '1-5 scale',
     impact              INT         NOT NULL    COMMENT '1-5 scale',
     risk_score          INT         NOT NULL    COMMENT 'probability × impact (auto-calculated)',
-    status              STRING      NOT NULL    COMMENT 'open | mitigating | accepted | closed',
+    status              STRING      NOT NULL    COMMENT 'identified | qualitative_analysis | response_planning | monitoring | resolved | closed',
     mitigation_plan     STRING                  COMMENT 'How we address this risk',
+    response_strategy   STRING                  COMMENT 'avoid | transfer | mitigate | accept | escalate',
+    contingency_plan    STRING                  COMMENT 'Fallback plan if risk materializes',
+    trigger_conditions  STRING                  COMMENT 'Early warning signs / risk triggers',
+    risk_proximity      STRING                  COMMENT 'near_term | mid_term | long_term',
+    risk_urgency        INT                     COMMENT '1-5 scale — how soon response needed',
+    residual_probability INT                    COMMENT '1-5 — probability after response',
+    residual_impact     INT                     COMMENT '1-5 — impact after response',
+    residual_score      INT                     COMMENT 'residual_probability × residual_impact',
+    secondary_risks     STRING                  COMMENT 'New risks introduced by the response',
+    identified_date     DATE                    COMMENT 'When risk was first identified',
+    last_review_date    DATE                    COMMENT 'When risk was last reviewed',
+    response_owner      STRING                  COMMENT 'Who executes the response (may differ from risk owner)',
     owner               STRING                  COMMENT 'Risk owner',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -346,6 +429,9 @@ CREATE TABLE IF NOT EXISTS retro_items (
     action_task_id      STRING                  COMMENT 'FK → tasks (if action item becomes a task)',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -369,6 +455,9 @@ CREATE TABLE IF NOT EXISTS dependencies (
     status              STRING      NOT NULL    COMMENT 'active | resolved | accepted',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    created_by          STRING                  COMMENT 'User email who created',
+    updated_by          STRING                  COMMENT 'User email who last updated',
+    deleted_by          STRING                  COMMENT 'User email who soft-deleted',
     is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
     deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
 
@@ -377,3 +466,22 @@ CREATE TABLE IF NOT EXISTS dependencies (
     CONSTRAINT fk_dep_target FOREIGN KEY (target_project_id) REFERENCES projects(project_id)
 )
 COMMENT 'Cross-project dependencies and blocking relationships';
+
+
+-- ─── AUDIT LOG ───────────────────────────────────────────
+-- Centralized audit trail for all entity changes
+CREATE TABLE IF NOT EXISTS audit_log (
+    audit_id        STRING      NOT NULL    COMMENT 'PK — UUID',
+    user_email      STRING      NOT NULL    COMMENT 'Who performed the action',
+    action          STRING      NOT NULL    COMMENT 'create | update | delete | approve | reject',
+    entity_type     STRING      NOT NULL    COMMENT 'task | project | charter | risk | sprint | etc.',
+    entity_id       STRING      NOT NULL    COMMENT 'PK of the affected entity',
+    field_changed   STRING                  COMMENT 'Which field changed (null for create/delete)',
+    old_value       STRING                  COMMENT 'Previous value',
+    new_value       STRING                  COMMENT 'New value',
+    details         STRING                  COMMENT 'JSON blob for complex changes',
+    created_at      TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+
+    CONSTRAINT pk_audit_log PRIMARY KEY (audit_id)
+)
+COMMENT 'Centralized audit trail — all entity mutations logged here';

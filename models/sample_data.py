@@ -8,15 +8,29 @@ Each function returns a pd.DataFrame matching the UC table schema.
 import pandas as pd
 
 
+def get_departments() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"department_id": "dept-001", "name": "Data Engineering", "description": "Data platform, pipelines, and infrastructure",
+         "parent_dept_id": None, "head": "u-001", "parent_name": None},
+        {"department_id": "dept-002", "name": "Finance Analytics", "description": "Financial reporting and analytics",
+         "parent_dept_id": None, "head": "u-003", "parent_name": None},
+        {"department_id": "dept-003", "name": "Platform Engineering", "description": "Developer tools and platforms",
+         "parent_dept_id": "dept-001", "head": "u-002", "parent_name": "Data Engineering"},
+    ])
+
+
 def get_portfolios() -> pd.DataFrame:
     return pd.DataFrame([
         {"portfolio_id": "pf-001", "name": "Data Platform Modernization", "owner": "Cory S.",
+         "department_id": "dept-001",
          "status": "active", "health": "yellow", "project_count": 5,
          "avg_completion": 58, "total_spent": 792000, "total_budget": 1100000},
         {"portfolio_id": "pf-002", "name": "Financial Reporting & Analytics", "owner": "Cory S.",
+         "department_id": "dept-002",
          "status": "active", "health": "green", "project_count": 4,
          "avg_completion": 64, "total_spent": 483800, "total_budget": 820000},
         {"portfolio_id": "pf-003", "name": "Self-Service & Applications", "owner": "Cory S.",
+         "department_id": "dept-001",
          "status": "active", "health": "green", "project_count": 3,
          "avg_completion": 42, "total_spent": 182400, "total_budget": 480000},
     ])
@@ -103,30 +117,61 @@ def get_risks() -> pd.DataFrame:
          "title": "SAP BW schema changes during migration",
          "project_name": "Unity Catalog Migration", "portfolio_name": "Data Platform Modernization",
          "category": "scope", "probability": 4, "impact": 4, "risk_score": 16,
-         "status": "mitigating", "owner": "Cory S."},
+         "status": "monitoring", "mitigation_plan": "Weekly sync with SAP team; maintain mapping layer",
+         "response_strategy": "mitigate", "contingency_plan": "Freeze migration, revert to Hive metastore",
+         "trigger_conditions": "SAP team announces schema change with <2 week notice",
+         "risk_proximity": "near_term", "risk_urgency": 4,
+         "residual_probability": 2, "residual_impact": 3, "residual_score": 6,
+         "secondary_risks": "Mapping layer adds maintenance overhead",
+         "identified_date": "2026-01-10", "last_review_date": "2026-02-20",
+         "response_owner": "Chris J.", "owner": "Cory S."},
         {"risk_id": "r-002", "project_id": "prj-002", "portfolio_id": "pf-001",
          "title": "DLT framework version upgrade mid-sprint",
          "project_name": "DLT Pipeline Framework", "portfolio_name": "Data Platform Modernization",
          "category": "technical", "probability": 3, "impact": 3, "risk_score": 9,
-         "status": "open", "owner": "Chris J."},
+         "status": "identified", "mitigation_plan": "Pin DLT version; test upgrades in staging first",
+         "response_strategy": "avoid", "contingency_plan": "Roll back to previous DLT version",
+         "trigger_conditions": "Databricks announces breaking DLT change in release notes",
+         "risk_proximity": "mid_term", "risk_urgency": 2,
+         "residual_probability": 1, "residual_impact": 2, "residual_score": 2,
+         "secondary_risks": None,
+         "identified_date": "2026-01-15", "last_review_date": "2026-02-18",
+         "response_owner": "Chris J.", "owner": "Chris J."},
+        {"risk_id": "r-003", "project_id": "prj-001", "portfolio_id": "pf-001",
+         "title": "Team capacity constraints during Q2",
+         "project_name": "Unity Catalog Migration", "portfolio_name": "Data Platform Modernization",
+         "category": "resource", "probability": 3, "impact": 4, "risk_score": 12,
+         "status": "response_planning", "mitigation_plan": "Cross-train analyst on migration tasks",
+         "response_strategy": "mitigate", "contingency_plan": "Hire contractor for 3-month engagement",
+         "trigger_conditions": "More than 1 team member unavailable for >1 week",
+         "risk_proximity": "near_term", "risk_urgency": 3,
+         "residual_probability": 2, "residual_impact": 3, "residual_score": 6,
+         "secondary_risks": "Contractor ramp-up time; knowledge transfer overhead",
+         "identified_date": "2026-02-01", "last_review_date": "2026-02-22",
+         "response_owner": "Cory S.", "owner": "Cory S."},
     ])
 
 
 def get_resource_allocations() -> pd.DataFrame:
     return pd.DataFrame([
         {"user_id": "u-001", "display_name": "Cory S.", "role": "lead",
+         "department_id": "dept-001",
          "project_name": "Unity Catalog Migration", "project_id": "prj-001",
          "task_count": 3, "points_assigned": 13, "points_done": 2, "allocation_pct": 60},
         {"user_id": "u-001", "display_name": "Cory S.", "role": "lead",
+         "department_id": "dept-001",
          "project_name": "DLT Pipeline Framework", "project_id": "prj-002",
          "task_count": 1, "points_assigned": 5, "points_done": 3, "allocation_pct": 30},
         {"user_id": "u-002", "display_name": "Chris J.", "role": "engineer",
+         "department_id": "dept-001",
          "project_name": "Unity Catalog Migration", "project_id": "prj-001",
          "task_count": 3, "points_assigned": 19, "points_done": 8, "allocation_pct": 80},
         {"user_id": "u-003", "display_name": "Anna K.", "role": "analyst",
+         "department_id": "dept-002",
          "project_name": "DLT Pipeline Framework", "project_id": "prj-002",
          "task_count": 1, "points_assigned": 5, "points_done": 5, "allocation_pct": 50},
         {"user_id": "u-003", "display_name": "Anna K.", "role": "analyst",
+         "department_id": "dept-002",
          "project_name": "Secrets Management Rollout", "project_id": "prj-003",
          "task_count": 2, "points_assigned": 6, "points_done": 4, "allocation_pct": 40},
     ])
@@ -237,17 +282,38 @@ def get_cycle_times() -> pd.DataFrame:
 def get_retro_items() -> pd.DataFrame:
     return pd.DataFrame([
         {"retro_id": "ret-001", "sprint_id": "sp-003", "category": "went_well",
-         "item_text": "DLT pipeline setup was smooth — reusable template pays off", "votes": 5},
+         "body": "DLT pipeline setup was smooth — reusable template pays off", "votes": 5},
         {"retro_id": "ret-002", "sprint_id": "sp-003", "category": "went_well",
-         "item_text": "Good collaboration between data eng and finance BA", "votes": 3},
+         "body": "Good collaboration between data eng and finance BA", "votes": 3},
         {"retro_id": "ret-003", "sprint_id": "sp-003", "category": "improve",
-         "item_text": "UAT environment setup took 2 days — need automation", "votes": 4},
+         "body": "UAT environment setup took 2 days — need automation", "votes": 4},
         {"retro_id": "ret-004", "sprint_id": "sp-003", "category": "improve",
-         "item_text": "Story points for infra tasks are consistently underestimated", "votes": 3},
+         "body": "Story points for infra tasks are consistently underestimated", "votes": 3},
         {"retro_id": "ret-005", "sprint_id": "sp-003", "category": "action",
-         "item_text": "Create Terraform module for UAT workspace provisioning", "votes": 4},
+         "body": "Create Terraform module for UAT workspace provisioning", "votes": 4},
         {"retro_id": "ret-006", "sprint_id": "sp-003", "category": "action",
-         "item_text": "Add spike tasks for infra estimation research", "votes": 2},
+         "body": "Add spike tasks for infra estimation research", "votes": 2},
+    ])
+
+
+def get_audit_log() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"audit_id": "aud-001", "user_email": "cory@example.com", "action": "create",
+         "entity_type": "task", "entity_id": "t-001", "field_changed": None,
+         "old_value": None, "new_value": None, "details": "Created task: P&L Bronze ingestion",
+         "created_at": "2026-02-01 09:00:00"},
+        {"audit_id": "aud-002", "user_email": "chris@example.com", "action": "update",
+         "entity_type": "task", "entity_id": "t-001", "field_changed": "status",
+         "old_value": "todo", "new_value": "in_progress", "details": None,
+         "created_at": "2026-02-03 10:30:00"},
+        {"audit_id": "aud-003", "user_email": "chris@example.com", "action": "update",
+         "entity_type": "task", "entity_id": "t-001", "field_changed": "status",
+         "old_value": "in_progress", "new_value": "done", "details": None,
+         "created_at": "2026-02-10 16:00:00"},
+        {"audit_id": "aud-004", "user_email": "cory@example.com", "action": "approve",
+         "entity_type": "gate", "entity_id": "g-002", "field_changed": "status",
+         "old_value": "pending", "new_value": "approved", "details": "Planning phase gate approved",
+         "created_at": "2026-02-07 14:00:00"},
     ])
 
 

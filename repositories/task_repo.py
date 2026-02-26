@@ -20,13 +20,15 @@ def get_backlog(project_id: str, user_token: str = None) -> pd.DataFrame:
 
 
 def create_task(task_data: dict, user_token: str = None) -> bool:
-    columns = ["task_id", "title", "task_type", "status", "story_points",
-               "assignee", "project_id", "sprint_id", "phase_id",
-               "priority", "backlog_rank"]
+    allowed_columns = {"task_id", "title", "task_type", "status", "story_points",
+                       "assignee", "project_id", "sprint_id", "phase_id",
+                       "priority", "backlog_rank", "created_by"}
     params = {}
     used_cols = []
-    for col in columns:
+    for col in allowed_columns:
         if col in task_data:
+            if not col.isidentifier():
+                raise ValueError(f"Invalid column name: {col!r}")
             used_cols.append(col)
             params[col] = task_data[col]
 
