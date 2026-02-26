@@ -27,15 +27,18 @@ def get_portfolio_projects() -> pd.DataFrame:
         {"project_id": "prj-001", "name": "Unity Catalog Migration", "status": "active",
          "delivery_method": "hybrid", "pct_complete": 55, "current_phase_name": "Build",
          "health": "yellow", "budget_total": 420000, "budget_spent": 302400,
-         "active_sprint_name": "Sprint 4", "start_date": "2026-01-06", "target_date": "2026-08-01"},
+         "active_sprint_name": "Sprint 4", "start_date": "2026-01-06", "target_date": "2026-08-01",
+         "portfolio_name": "Data Platform Modernization"},
         {"project_id": "prj-002", "name": "DLT Pipeline Framework", "status": "active",
          "delivery_method": "agile", "pct_complete": 72, "current_phase_name": "Build",
          "health": "green", "budget_total": 320000, "budget_spent": 230400,
-         "active_sprint_name": "Sprint 6", "start_date": "2026-01-13", "target_date": "2026-06-15"},
+         "active_sprint_name": "Sprint 6", "start_date": "2026-01-13", "target_date": "2026-06-15",
+         "portfolio_name": "Data Platform Modernization"},
         {"project_id": "prj-003", "name": "Secrets Management Rollout", "status": "active",
          "delivery_method": "waterfall", "pct_complete": 85, "current_phase_name": "UAT",
          "health": "green", "budget_total": 80000, "budget_spent": 68000,
-         "active_sprint_name": None, "start_date": "2025-11-01", "target_date": "2026-03-15"},
+         "active_sprint_name": None, "start_date": "2025-11-01", "target_date": "2026-03-15",
+         "portfolio_name": "Data Platform Modernization"},
     ])
 
 
@@ -113,13 +116,19 @@ def get_resource_allocations() -> pd.DataFrame:
     return pd.DataFrame([
         {"user_id": "u-001", "display_name": "Cory S.", "role": "lead",
          "project_name": "Unity Catalog Migration", "project_id": "prj-001",
-         "task_count": 3, "points_assigned": 13, "points_done": 2},
+         "task_count": 3, "points_assigned": 13, "points_done": 2, "allocation_pct": 60},
+        {"user_id": "u-001", "display_name": "Cory S.", "role": "lead",
+         "project_name": "DLT Pipeline Framework", "project_id": "prj-002",
+         "task_count": 1, "points_assigned": 5, "points_done": 3, "allocation_pct": 30},
         {"user_id": "u-002", "display_name": "Chris J.", "role": "engineer",
          "project_name": "Unity Catalog Migration", "project_id": "prj-001",
-         "task_count": 3, "points_assigned": 19, "points_done": 8},
+         "task_count": 3, "points_assigned": 19, "points_done": 8, "allocation_pct": 80},
         {"user_id": "u-003", "display_name": "Anna K.", "role": "analyst",
          "project_name": "DLT Pipeline Framework", "project_id": "prj-002",
-         "task_count": 1, "points_assigned": 5, "points_done": 5},
+         "task_count": 1, "points_assigned": 5, "points_done": 5, "allocation_pct": 50},
+        {"user_id": "u-003", "display_name": "Anna K.", "role": "analyst",
+         "project_name": "Secrets Management Rollout", "project_id": "prj-003",
+         "task_count": 2, "points_assigned": 6, "points_done": 4, "allocation_pct": 40},
     ])
 
 
