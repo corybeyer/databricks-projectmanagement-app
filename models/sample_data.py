@@ -215,6 +215,7 @@ def _init_project_charter() -> pd.DataFrame:
     return pd.DataFrame([
         {"charter_id": "ch-001", "project_id": "prj-001",
          "project_name": "Unity Catalog Migration",
+         "description": None,
          "business_case": "Migrate legacy Hive metastore to Unity Catalog for centralized governance, lineage tracking, and cross-workspace data sharing.",
          "objectives": "1. Migrate 100% of production tables to UC by Q2\n2. Implement domain-driven schema design\n3. Enable row-level security for Finance data\n4. Establish automated lineage tracking",
          "scope_in": "All production Databricks workspaces, Bronze/Silver/Gold layers, access policies, secrets management integration",
@@ -224,7 +225,9 @@ def _init_project_charter() -> pd.DataFrame:
          "risks": "Resource contention with DLT project, SAP BW schema changes mid-migration, team capacity constraints",
          "budget": "$420,000", "timeline": "Jan 2026 — Aug 2026",
          "delivery_method": "Hybrid — Waterfall phases with Agile sprint execution",
-         "approved_by": "VP Data & Analytics", "approved_date": "2025-12-15"},
+         "status": "approved", "version": 1,
+         "approved_by": "VP Data & Analytics", "approved_date": "2025-12-15",
+         "created_by": "cory@example.com", "updated_by": "cory@example.com"},
     ])
 
 

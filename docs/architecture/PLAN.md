@@ -1,6 +1,6 @@
 # PM Hub — Road to Production Plan
 
-> Last updated: 2026-02-26 | Status: Phase 2a complete, Phase 2b next (Phases 0, 1 & 2 prereqs complete)
+> Last updated: 2026-02-26 | Status: Phase 2b partially complete (2.3 Charter + 2.4 Risk done), Phase 2b.5/2b.6 next
 
 ## Context
 
@@ -187,7 +187,7 @@ CREATE TABLE audit_log (
 
 ### Phase 2a — Task & Sprint CRUD ✅ COMPLETE
 
-*Completed: 2026-02-26 | PR #23 to develop*
+*Completed: 2026-02-26 | PR #23 merged to develop*
 
 #### 2.1 — Task CRUD + Kanban Interactivity ✅
 - **Sprint page** (`pages/sprint.py`): Full overhaul with task create/edit/delete modals, kanban status dropdowns, sprint selector, toolbar
@@ -212,25 +212,39 @@ CREATE TABLE audit_log (
 
 ### Phase 2b — Charter, Risk, Retro & Portfolio CRUD
 
-#### 2.3 — Charter Form Submission + Approval Workflow
-- Wire the existing 11-field charter form to a submit callback
-- Charter versioning (version increments on update, old version preserved via Delta time travel)
-- Charter approval workflow: `draft → submitted → under_review → approved → rejected`
-- Approval action records `approved_by` + `approved_date` from OBO user
-- Add `charter_service.py` (new), `charter_repo.py` write operations
-- **Files:** `pages/charters.py`, `services/charter_service.py` (new), `repositories/charter_repo.py`
+#### 2.3 — Charter Form Submission + Approval Workflow ✅
 
-#### 2.4 — PMI Risk Management (Full Lifecycle)
-- **Create risk modal:** title, category, probability (1-5), impact (1-5), description, owner, response strategy (avoid/transfer/mitigate/accept/escalate), mitigation plan, contingency plan, triggers, urgency, proximity, response owner
-- **Risk scoring:** auto-calculate risk_score (P×I), residual_score after response
-- **Risk status lifecycle:** identified → qualitative_analysis → response_planning → monitoring → resolved → closed
-- **Risk review:** track last_review_date, flag risks overdue for review
-- **Residual risk tracking:** after response, what's the remaining risk?
-- **Secondary risk identification:** does the response introduce new risks?
-- **Enhanced heatmap:** toggle between inherent risk (before response) and residual risk (after response)
-- **Risk burndown:** chart showing open risk score over time
-- Add `risk_service.py` (new), expand `risk_repo.py` with CRUD
-- **Files:** `pages/risks.py`, `services/risk_service.py` (new), `repositories/risk_repo.py`, `charts/analytics_charts.py`, `models/sample_data.py`
+*Completed: 2026-02-26 | PR #24 to develop*
+
+- Full charter CRUD: create, edit, delete via crud_modal (12 fields, size xl)
+- Charter approval workflow: `draft → submitted → under_review → approved → rejected`
+- Status-guarded transitions: submit (draft/rejected only), approve/reject (submitted/under_review only)
+- Approval records `approved_by` + `approved_date` from OBO user with optimistic locking
+- `validate_charter_create()` composite validator added to `utils/validators.py`
+- **Services:** `charter_service.py` (new) — `create_charter_from_form()`, `update_charter_from_form()`, `submit_charter()`, `approve_charter()`, `reject_charter()`, `delete_charter()` with result dict pattern
+- **Repos:** `charter_repo.py` — expanded with `get_charters()`, `get_charter_by_id()`, `create_charter()`, `update_charter()`, `delete_charter()`, `update_charter_status()`
+- **Pages:** `pages/charters.py` — complete rewrite with 8 callbacks (refresh, toggle modal, save, submit, approve, reject, delete flow, cancel)
+- **Sample data:** Charter seed now includes `status`, `version`, `description`, `created_by`, `updated_by` fields
+- **Files:** `pages/charters.py`, `services/charter_service.py` (new), `repositories/charter_repo.py`, `utils/validators.py`, `models/sample_data.py`
+
+#### 2.4 — PMI Risk Management (Full Lifecycle) ✅
+
+*Completed: 2026-02-26 | PR #24 to develop*
+
+- Full risk CRUD: create, edit, delete via crud_modal (12 PMI fields, size xl)
+- **Risk scoring:** auto-calculate `risk_score = P × I` on create and update
+- **Risk status lifecycle:** `identified → qualitative_analysis → response_planning → monitoring → resolved → closed` with validated enum transitions
+- **Risk review:** "Mark as reviewed" button updates `last_review_date`, overdue review KPI (>14 days)
+- **Residual risk tracking:** residual_probability, residual_impact, residual_score displayed in table
+- **Enhanced heatmap:** toggle between inherent risk (probability/impact) and residual risk (residual_probability/residual_impact)
+- **5 KPI cards:** Total Risks, High Severity, Avg Score, Open/Active, Overdue Review
+- Inline status dropdown per risk row (pattern-matching callbacks)
+- Defense-in-depth: status validation in both page callback and service layer
+- **Services:** `risk_service.py` (new) — `create_risk_from_form()`, `update_risk_from_form()`, `delete_risk()`, `update_risk_status()`, `review_risk()` with result dict pattern
+- **Repos:** `risk_repo.py` — expanded with `create_risk()`, `update_risk()`, `delete_risk()`, `update_risk_status()` (26-column allowlist)
+- **Charts:** `analytics_charts.py` — added `risk_heatmap_residual()` for residual risk view
+- **Analytics service:** added `get_risks_by_project()`, `get_risks_overdue_review()` passthroughs
+- **Files:** `pages/risks.py`, `services/risk_service.py` (new), `repositories/risk_repo.py`, `charts/analytics_charts.py`, `services/analytics_service.py`
 
 #### 2.5 — Retrospective CRUD + Voting
 - Add retro item (went_well / improve / action) via inline form
@@ -394,7 +408,7 @@ Work in phase order. Within each phase, tasks can be parallelized.
 - **Phase 1** (Foundation) ✅ → plumbing for interactivity
 - **Phase 2 prereqs** (In-memory writes + shared modal) ✅ → unblocked all CRUD work
 - **Phase 2a** (Task & Sprint CRUD) ✅ → highest daily-use value, completed
-- **Phase 2b** (Charter, Risk, Retro, Portfolio CRUD) → remaining entities, NEXT
+- **Phase 2b** (Charter + Risk CRUD) ✅ → 2.3 + 2.4 complete; 2.5 + 2.6 NEXT
 - **Phase 3** (Navigation & Multi-Dept) → organizational hierarchy (3.1/3.2 can parallel 2b)
 - **Phase 4** (PMI Features) → PMBOK 7 knowledge area coverage
 - **Phase 5** (Polish) → production hardening

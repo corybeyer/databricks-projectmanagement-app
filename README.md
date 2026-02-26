@@ -41,15 +41,15 @@ databricks-pm-app/
 │   ├── portfolios.py       # /portfolios — Portfolio detail view
 │   ├── roadmap.py          # /roadmap — Multi-project Gantt timeline
 │   ├── projects.py         # /projects — All projects list + filters
-│   ├── charters.py         # /charters — Project charter CRUD
+│   ├── charters.py         # /charters — Charter CRUD + approval workflow
 │   ├── gantt.py            # /gantt — Single project Gantt + gates
-│   ├── sprint.py           # /sprint — Kanban board for active sprint
-│   ├── my_work.py          # /my-work — Current user's assignments
-│   ├── backlog.py          # /backlog — Prioritized backlog management
+│   ├── sprint.py           # /sprint — Kanban board + task CRUD
+│   ├── my_work.py          # /my-work — Current user's assignments + edit
+│   ├── backlog.py          # /backlog — Backlog management + task CRUD
 │   ├── retros.py           # /retros — Sprint retrospective board
 │   ├── reports.py          # /reports — Velocity, burndown, cycle time
 │   ├── resources.py        # /resources — Team allocation heatmap
-│   └── risks.py            # /risks — Risk register + heatmap
+│   └── risks.py            # /risks — PMI risk lifecycle + CRUD + heatmap
 │
 ├── repositories/           # Data access — ALL SQL lives here
 │   ├── base.py             # query(), write(), safe_update(), soft_delete()
@@ -62,6 +62,8 @@ databricks-pm-app/
 ├── services/               # Business logic — NO Dash imports
 │   ├── task_service.py     # Task validation + orchestration
 │   ├── sprint_service.py   # Sprint validation + orchestration
+│   ├── charter_service.py  # Charter CRUD + approval workflow
+│   ├── risk_service.py     # PMI risk lifecycle management
 │   ├── auth_service.py     # OBO token, user identity
 │   └── ...                 # portfolio, project, analytics services
 │
@@ -110,7 +112,7 @@ databricks-pm-app/
 - **team_members** — People (synced from Databricks identity)
 - **comments** — Task discussion threads
 - **time_entries** — Hours logged per task
-- **risks** — Risk register with probability × impact scoring
+- **risks** — PMI risk register with probability × impact scoring, residual risk tracking, lifecycle management
 
 ## Key Design Decisions
 

@@ -3,10 +3,10 @@
 > **Status (2026-02-26):** This scaffolding plan is **complete**. The layered
 > architecture (Pages → Services → Repositories → DB), repository pattern,
 > sample data fallback, config layer, charts layer, and all 13 pages are built.
-> Phase 2a (Task CRUD + Kanban, Sprint Management) adds full CRUD to sprint,
-> backlog, and my-work pages with mutation-triggered refresh, CRUD modals,
-> toast notifications, and in-memory write support. See
-> [PLAN.md](architecture/PLAN.md) for the production roadmap.
+> Phase 2a (Task CRUD + Kanban, Sprint Management) and Phase 2b.3/2b.4 (Charter
+> CRUD + Approval Workflow, PMI Risk Management Full Lifecycle) are complete.
+> 5 of 13 pages now have full CRUD: sprint, backlog, my-work, charters, risks.
+> See [PLAN.md](architecture/PLAN.md) for the production roadmap.
 
 ## Context
 

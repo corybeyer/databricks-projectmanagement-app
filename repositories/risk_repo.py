@@ -1,7 +1,7 @@
-"""Risk Repository — risk register queries."""
+"""Risk Repository — risk register queries and CRUD."""
 
 import pandas as pd
-from repositories.base import query
+from repositories.base import query, write, safe_update, soft_delete
 from models import sample_data
 
 
@@ -79,3 +79,62 @@ def get_risks_overdue_review(days_threshold: int = 14, user_token: str = None) -
         ORDER BY r.risk_score DESC
     """, params={"days_threshold": days_threshold}, user_token=user_token,
         sample_fallback=sample_data.get_risks)
+
+
+def create_risk(risk_data: dict, user_token: str = None) -> bool:
+    """Insert a new risk record."""
+    allowed_columns = {
+        "risk_id", "title", "category", "probability", "impact", "risk_score",
+        "status", "mitigation_plan", "response_strategy", "contingency_plan",
+        "trigger_conditions", "risk_proximity", "risk_urgency",
+        "residual_probability", "residual_impact", "residual_score",
+        "secondary_risks", "identified_date", "last_review_date",
+        "response_owner", "owner", "project_id", "portfolio_id",
+        "created_by", "description",
+    }
+    params = {}
+    used_cols = []
+    for col in allowed_columns:
+        if col in risk_data:
+            if not col.isidentifier():
+                raise ValueError(f"Invalid column name: {col!r}")
+            used_cols.append(col)
+            params[col] = risk_data[col]
+
+    col_list = ", ".join(used_cols)
+    param_list = ", ".join(f":{col}" for col in used_cols)
+    return write(
+        f"INSERT INTO risks ({col_list}) VALUES ({param_list})",
+        params=params, user_token=user_token,
+        table_name="risks", record=risk_data,
+    )
+
+
+def update_risk(risk_id: str, updates: dict, expected_updated_at: str,
+                user_email: str = None, user_token: str = None) -> bool:
+    """Update a risk using optimistic locking."""
+    return safe_update(
+        "risks", "risk_id", risk_id, updates,
+        expected_updated_at=expected_updated_at,
+        user_email=user_email, user_token=user_token,
+    )
+
+
+def delete_risk(risk_id: str, user_email: str = None,
+                user_token: str = None) -> bool:
+    """Soft-delete a risk."""
+    return soft_delete(
+        "risks", "risk_id", risk_id,
+        user_email=user_email, user_token=user_token,
+    )
+
+
+def update_risk_status(risk_id: str, new_status: str,
+                       user_email: str = None, user_token: str = None) -> bool:
+    """Update risk status via safe_update."""
+    return safe_update(
+        "risks", "risk_id", risk_id,
+        {"status": new_status},
+        expected_updated_at=None,
+        user_email=user_email, user_token=user_token,
+    )

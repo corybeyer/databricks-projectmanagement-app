@@ -39,6 +39,44 @@ def risk_heatmap(risks_df):
     return apply_theme(fig)
 
 
+def risk_heatmap_residual(risks_df):
+    """Same as risk_heatmap but uses residual_probability and residual_impact columns."""
+    # Filter to rows that have residual values
+    filtered = risks_df.dropna(subset=["residual_probability", "residual_impact"])
+    matrix = [[0] * 5 for _ in range(5)]
+    annotations = [[[] for _ in range(5)] for _ in range(5)]
+    for _, row in filtered.iterrows():
+        p = int(row["residual_probability"]) - 1
+        i = int(row["residual_impact"]) - 1
+        if 0 <= p < 5 and 0 <= i < 5:
+            matrix[i][p] += 1
+            annotations[i][p].append(row["title"][:15])
+    colorscale = [
+        [0.0, COLORS["surface"]], [0.25, "rgba(34,197,94,0.2)"],
+        [0.5, "rgba(234,179,8,0.3)"], [0.75, "rgba(239,68,68,0.3)"],
+        [1.0, "rgba(239,68,68,0.6)"],
+    ]
+    fig = go.Figure(go.Heatmap(
+        z=matrix,
+        x=["Very Low", "Low", "Medium", "High", "Critical"],
+        y=["Very Low", "Low", "Medium", "High", "Critical"],
+        colorscale=colorscale, showscale=False,
+        hovertemplate="Probability: %{x}<br>Impact: %{y}<br>Count: %{z}<extra></extra>",
+    ))
+    for i in range(5):
+        for j in range(5):
+            if annotations[i][j]:
+                fig.add_annotation(
+                    x=j, y=i, text="<br>".join(annotations[i][j]),
+                    showarrow=False, font=dict(size=9, color=COLORS["text_muted"]),
+                )
+    fig.update_layout(
+        xaxis=dict(title="Residual Probability →", side="bottom"),
+        yaxis=dict(title="Residual Impact →"), height=350,
+    )
+    return apply_theme(fig)
+
+
 def cycle_time_chart(transitions_df):
     status_order = ["todo", "in_progress", "review"]
     filtered = transitions_df[transitions_df["from_status"].isin(status_order)]
