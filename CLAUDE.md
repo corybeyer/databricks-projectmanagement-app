@@ -1,7 +1,13 @@
 # CLAUDE.md — PM Hub Project Intelligence
 
 > Claude reads this file automatically at the start of every session.
-> Last updated: 2026-02-25 | Current Phase: 1 (Planning & Design)
+> Last updated: 2026-02-26 | Current Phase: 2 (Page Buildout Complete)
+
+## Environment
+
+This project runs on Windows with Git Bash. Avoid shell commands that depend
+on Linux-only tools (e.g., jq). Use Python for JSON parsing instead of jq.
+Test all hook scripts for Git Bash compatibility before committing.
 
 ## Project Identity
 
@@ -32,9 +38,9 @@ See [docs/architecture-plan.md](docs/architecture-plan.md) for the full scaffold
 
 ## Current State
 
-- **Phase**: 1 — Planning & Design (Waterfall)
+- **Phase**: 2 — Page Buildout Complete
 - **Sprint**: N/A (sprints begin in Phase 3)
-- **Focus**: Architecture scaffolding complete — ready for page buildout
+- **Focus**: All 13/13 pages built — ready for callbacks, interactivity, testing
 - **Blockers**: None
 - **Next Gate**: Gate 1 — Charter & Architecture Approved
 
@@ -112,10 +118,20 @@ databricks-pm-app/
 ├── callbacks/              # Dash callbacks (separate from pages)
 │   ├── __init__.py         # Imports all callback modules
 │   └── navigation.py       # Breadcrumb callback
-├── pages/                  # One file per route
+├── pages/                  # One file per route (13/13 complete)
 │   ├── dashboard.py        # /
+│   ├── portfolios.py       # /portfolios
+│   ├── roadmap.py          # /roadmap
+│   ├── projects.py         # /projects
 │   ├── charters.py         # /charters
-│   └── ...                 # Future pages
+│   ├── gantt.py            # /gantt
+│   ├── sprint.py           # /sprint
+│   ├── my_work.py          # /my-work
+│   ├── backlog.py          # /backlog
+│   ├── retros.py           # /retros
+│   ├── reports.py          # /reports
+│   ├── resources.py        # /resources
+│   └── risks.py            # /risks
 ├── utils/
 │   ├── url_state.py        # URL query param helpers
 │   └── labels.py           # Centralized user-facing strings
@@ -219,6 +235,21 @@ Branch naming: `{type}/{short-kebab-description}`
 - Always branch from `develop` (except hotfixes)
 - Always PR into `develop` (except hotfixes)
 - `develop` → `main` merges are release events
+
+## Git Workflow
+
+This project uses a develop → main branching strategy. Always ensure develop
+is synced with main before creating feature branches. After merging PRs, pull
+latest into both main and develop. When performing git operations, verify
+branch status with `git log --oneline -5` and `git status` before and after
+merges.
+
+## Skills & Hooks
+
+After creating, renaming, or modifying any skill file (`.claude/commands/`),
+always remind the user to restart their Claude Code session for changes to
+take effect. Skills are loaded at session start and won't be recognized
+mid-session.
 
 ## What NOT To Do
 
