@@ -1,6 +1,6 @@
 # PM Hub — Road to Production Plan
 
-> Last updated: 2026-02-25 | Status: Phase 1 complete, ready for Phase 2
+> Last updated: 2026-02-26 | Status: Phase 2 in progress (Phases 0 & 1 complete)
 
 ## Context
 
@@ -166,8 +166,31 @@ CREATE TABLE audit_log (
 ## Phase 2: Core CRUD Operations
 
 *The daily-use features that make this a PM tool, not a report viewer.*
+*Split into 2a (highest daily-use value) and 2b (remaining entities) for manageable delivery.*
 
-### 2.1 — Task CRUD + Kanban Interactivity
+### Prerequisites (complete before 2a)
+
+#### 2.0a — In-Memory Write Mode for Local Dev
+Sample data fallback currently supports reads only. All Phase 2 CRUD work needs local write testing.
+- Extend `models/sample_data.py` with mutable module-level DataFrames
+- Add `create_record()`, `update_record()`, `delete_record()` helpers that mutate in-memory DataFrames
+- Wire into `repositories/base.py` — when `USE_SAMPLE_DATA=true`, route writes to in-memory store instead of Unity Catalog
+- Reset state on app restart (no persistence needed)
+- **Files:** `models/sample_data.py`, `repositories/base.py`, `db/unity_catalog.py`
+
+#### 2.0b — Shared CRUD Modal Component
+Phase 2 introduces 6+ modals. Define a reusable pattern to prevent duplication.
+- Create `components/crud_modal.py` — `crud_modal(id_prefix, title, fields, size="lg")` returns a `dbc.Modal`
+- `fields` is a list of field defs: `{"id": "task-title", "label": "Title", "type": "text|select|textarea|number|date", "required": True, "options": [...]}`
+- Helper: `get_modal_values(field_defs, *args)` — extracts form values from callback args into a dict
+- Helper: `set_field_errors(field_defs, errors)` — returns `is_invalid` props for specific fields
+- Confirmation dialog: `confirm_delete_modal(id_prefix, entity_name)` — reusable soft-delete confirmation
+- All CRUD modals in 2.1–2.6 use this component
+- **Files:** `components/crud_modal.py` (new), `components/__init__.py`
+
+### Phase 2a — Task & Sprint CRUD (highest daily-use value)
+
+#### 2.1 — Task CRUD + Kanban Interactivity
 - **Create task modal:** title, type (epic/story/task/bug), priority, story points, assignee, description
 - **Kanban status updates:** Click-to-move between columns (todo→in_progress→review→done) via dropdown per card
 - **Edit task modal:** Click task card → edit fields → save
@@ -178,15 +201,7 @@ CREATE TABLE audit_log (
 - Add `task_repo.update_task()`, `task_repo.delete_task()` (using `safe_update`, `soft_delete`)
 - **Files:** `pages/sprint.py`, `pages/my_work.py`, `pages/backlog.py`, `services/task_service.py`, `repositories/task_repo.py`
 
-### 2.2 — Charter Form Submission + Approval Workflow
-- Wire the existing 11-field charter form to a submit callback
-- Charter versioning (version increments on update, old version preserved via Delta time travel)
-- Charter approval workflow: `draft → submitted → under_review → approved → rejected`
-- Approval action records `approved_by` + `approved_date` from OBO user
-- Add `charter_service.py` (new), `charter_repo.py` write operations
-- **Files:** `pages/charters.py`, `services/charter_service.py` (new), `repositories/charter_repo.py`
-
-### 2.3 — Sprint Management
+#### 2.2 — Sprint Management
 - Create sprint modal (name, goal, start/end dates, capacity, phase assignment for hybrid)
 - Close sprint action (marks closed, captures velocity, optionally creates next sprint)
 - Sprint selector dropdown on sprint page
@@ -195,7 +210,17 @@ CREATE TABLE audit_log (
 - Add `sprint_repo.create_sprint()`, `sprint_repo.close_sprint()`
 - **Files:** `pages/sprint.py`, `services/sprint_service.py`, `repositories/sprint_repo.py`
 
-### 2.4 — PMI Risk Management (Full Lifecycle)
+### Phase 2b — Charter, Risk, Retro & Portfolio CRUD
+
+#### 2.3 — Charter Form Submission + Approval Workflow
+- Wire the existing 11-field charter form to a submit callback
+- Charter versioning (version increments on update, old version preserved via Delta time travel)
+- Charter approval workflow: `draft → submitted → under_review → approved → rejected`
+- Approval action records `approved_by` + `approved_date` from OBO user
+- Add `charter_service.py` (new), `charter_repo.py` write operations
+- **Files:** `pages/charters.py`, `services/charter_service.py` (new), `repositories/charter_repo.py`
+
+#### 2.4 — PMI Risk Management (Full Lifecycle)
 - **Create risk modal:** title, category, probability (1-5), impact (1-5), description, owner, response strategy (avoid/transfer/mitigate/accept/escalate), mitigation plan, contingency plan, triggers, urgency, proximity, response owner
 - **Risk scoring:** auto-calculate risk_score (P×I), residual_score after response
 - **Risk status lifecycle:** identified → qualitative_analysis → response_planning → monitoring → resolved → closed
@@ -207,7 +232,7 @@ CREATE TABLE audit_log (
 - Add `risk_service.py` (new), expand `risk_repo.py` with CRUD
 - **Files:** `pages/risks.py`, `services/risk_service.py` (new), `repositories/risk_repo.py`, `charts/analytics_charts.py`, `models/sample_data.py`
 
-### 2.5 — Retrospective CRUD + Voting
+#### 2.5 — Retrospective CRUD + Voting
 - Add retro item (went_well / improve / action) via inline form
 - Vote on items (increment vote count, one vote per user)
 - Mark action items as done / convert to task
@@ -215,7 +240,7 @@ CREATE TABLE audit_log (
 - Add `retro_service.py` (new), `retro_repo.py` (new)
 - **Files:** `pages/retros.py`, `services/retro_service.py` (new), `repositories/retro_repo.py` (new), `models/sample_data.py`
 
-### 2.6 — Project & Portfolio CRUD
+#### 2.6 — Project & Portfolio CRUD
 - Create/edit project form (name, portfolio, department, delivery method, budget, dates, owner, sponsor)
 - Create/edit portfolio form (name, department, description, owner, strategic priority)
 - Soft delete with cascading considerations
@@ -226,6 +251,7 @@ CREATE TABLE audit_log (
 ## Phase 3: Navigation, Hierarchy & Multi-Department
 
 *Connect the pages so users flow naturally through the organizational hierarchy.*
+*Note: 3.1 and 3.2 (drill-down navigation, department selector) have no dependency on Phase 2 CRUD and can be developed in parallel with Phase 2b if desired.*
 
 ### 3.1 — Department → Portfolio → Project Drill-Down
 - Dashboard shows department-level rollup (or all departments for admins)
@@ -350,7 +376,7 @@ CREATE TABLE audit_log (
 | **Real-time edit visibility** | Delta CDC + audit_log table for change tracking; auto-refresh at 30s interval shows latest |
 | **Department data isolation** | All queries filter by `department_id` from user context; admin override for cross-dept views |
 | **Who changed what?** | `created_by`/`updated_by` on all tables + `audit_log` for field-level change history |
-| **Local dev can't test writes** | Add in-memory write mode that mutates sample DataFrames for local testing |
+| **Local dev can't test writes** | In-memory write mode (task 2.0a) — mutates sample DataFrames when `USE_SAMPLE_DATA=true` |
 | **Component ID explosion** | Dash pattern-matching callbacks (`MATCH`, `ALL`) for repeated elements |
 | **Form validation UX** | Client-side validation (required fields) + server-side (business rules) → specific field errors via toast |
 | **Large data volumes** | Paginate tables, lazy-load charts, limit default date ranges |
@@ -364,10 +390,12 @@ CREATE TABLE audit_log (
 
 Work in phase order. Within each phase, tasks can be parallelized.
 
-- **Phase 0** (Schema) → structural changes everything depends on
-- **Phase 1** (Foundation) → plumbing for interactivity
-- **Phase 2** (Core CRUD) → the bulk of the work, highest user value
-- **Phase 3** (Navigation & Multi-Dept) → organizational hierarchy
+- **Phase 0** (Schema) ✅ → structural changes everything depends on
+- **Phase 1** (Foundation) ✅ → plumbing for interactivity
+- **Phase 2 prereqs** (In-memory writes + shared modal) → unblocks all CRUD work
+- **Phase 2a** (Task & Sprint CRUD) → highest daily-use value, do first
+- **Phase 2b** (Charter, Risk, Retro, Portfolio CRUD) → remaining entities
+- **Phase 3** (Navigation & Multi-Dept) → organizational hierarchy (3.1/3.2 can parallel 2b)
 - **Phase 4** (PMI Features) → PMBOK 7 knowledge area coverage
 - **Phase 5** (Polish) → production hardening
 
@@ -382,3 +410,11 @@ After each phase:
 2. Run smoke tests: `pytest tests/test_pages/test_smoke.py`
 3. Run `/review-all` to check architecture, security, Databricks compliance
 4. Manual verification with sample data (pages render, callbacks fire, writes succeed)
+
+### Phase 2+ Test Requirements
+Starting with Phase 2, CRUD operations need deeper testing beyond `ast.parse`:
+- **Callback integration tests:** Simulate modal open/close, form submission, toast feedback using `dash.testing` or by mocking callback context
+- **Service layer tests:** Validate business logic (e.g., risk score calculation, charter version increment, sprint velocity capture)
+- **In-memory write tests:** Verify that create/update/delete operations against sample data produce correct state
+- **Validation round-trip tests:** Submit invalid data → verify field-level errors returned → fix → verify success
+- Test pattern: `tests/test_callbacks/test_{page}_crud.py` for each CRUD page
