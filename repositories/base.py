@@ -38,3 +38,14 @@ def safe_update(table: str, id_column: str, id_value: str,
     )
     params = {**updates, "_id": id_value, "_expected_updated_at": expected_updated_at}
     return write(sql_str, params=params, user_token=user_token)
+
+
+def soft_delete(table: str, id_column: str, id_value: str,
+                user_token: str = None) -> bool:
+    """Soft delete — sets is_deleted = true and deleted_at = now()."""
+    sql_str = (
+        f"UPDATE {table} SET is_deleted = true, deleted_at = current_timestamp(), "
+        f"updated_at = current_timestamp() "
+        f"WHERE {id_column} = :_id AND is_deleted = false"
+    )
+    return write(sql_str, params={"_id": id_value}, user_token=user_token)

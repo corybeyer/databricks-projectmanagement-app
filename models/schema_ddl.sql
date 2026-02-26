@@ -24,7 +24,9 @@ CREATE TABLE IF NOT EXISTS portfolios (
     strategic_priority  INT                     COMMENT 'Rank 1-N for prioritization',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_portfolios PRIMARY KEY (portfolio_id)
 )
 COMMENT 'Strategic portfolios grouping related projects'
@@ -53,7 +55,9 @@ CREATE TABLE IF NOT EXISTS projects (
     actual_end_date     DATE                    COMMENT 'Actual completion date',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_projects PRIMARY KEY (project_id),
     CONSTRAINT fk_projects_portfolio FOREIGN KEY (portfolio_id) REFERENCES portfolios(portfolio_id)
 )
@@ -83,7 +87,9 @@ CREATE TABLE IF NOT EXISTS project_charters (
     approved_date       DATE                    COMMENT 'Formal approval date',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_charters PRIMARY KEY (charter_id),
     CONSTRAINT fk_charters_project FOREIGN KEY (project_id) REFERENCES projects(project_id)
 )
@@ -107,7 +113,10 @@ CREATE TABLE IF NOT EXISTS phases (
     actual_end          DATE                    COMMENT 'Actual end',
     pct_complete        DOUBLE      DEFAULT 0   COMMENT 'Phase % complete',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_phases PRIMARY KEY (phase_id),
     CONSTRAINT fk_phases_project FOREIGN KEY (project_id) REFERENCES projects(project_id)
 )
@@ -127,7 +136,10 @@ CREATE TABLE IF NOT EXISTS gates (
     decided_by          STRING                  COMMENT 'Who approved / rejected',
     decided_at          TIMESTAMP               COMMENT 'When decision was made',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_gates PRIMARY KEY (gate_id),
     CONSTRAINT fk_gates_phase FOREIGN KEY (phase_id) REFERENCES phases(phase_id)
 )
@@ -147,7 +159,10 @@ CREATE TABLE IF NOT EXISTS deliverables (
     completed_date      DATE                    COMMENT 'Actual completion',
     artifact_url        STRING                  COMMENT 'Link to document / artifact',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_deliverables PRIMARY KEY (deliverable_id),
     CONSTRAINT fk_deliverables_phase FOREIGN KEY (phase_id) REFERENCES phases(phase_id)
 )
@@ -167,7 +182,10 @@ CREATE TABLE IF NOT EXISTS sprints (
     status              STRING      NOT NULL    COMMENT 'planning | active | review | closed',
     capacity_points     INT                     COMMENT 'Team committed capacity',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_sprints PRIMARY KEY (sprint_id),
     CONSTRAINT fk_sprints_project FOREIGN KEY (project_id) REFERENCES projects(project_id),
     CONSTRAINT fk_sprints_phase FOREIGN KEY (phase_id) REFERENCES phases(phase_id)
@@ -194,7 +212,9 @@ CREATE TABLE IF NOT EXISTS tasks (
     backlog_rank        DOUBLE                  COMMENT 'Ordering rank (float for insert-between)',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_tasks PRIMARY KEY (task_id),
     CONSTRAINT fk_tasks_project FOREIGN KEY (project_id) REFERENCES projects(project_id),
     CONSTRAINT fk_tasks_sprint FOREIGN KEY (sprint_id) REFERENCES sprints(sprint_id),
@@ -227,8 +247,10 @@ CREATE TABLE IF NOT EXISTS comments (
     author              STRING      NOT NULL    COMMENT 'Comment author',
     body                STRING      NOT NULL    COMMENT 'Comment text',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    updated_at          TIMESTAMP               COMMENT 'Last edit timestamp',
-    
+    updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_comments PRIMARY KEY (comment_id),
     CONSTRAINT fk_comments_task FOREIGN KEY (task_id) REFERENCES tasks(task_id)
 )
@@ -275,7 +297,10 @@ CREATE TABLE IF NOT EXISTS project_team (
     allocation_pct      INT         NOT NULL    COMMENT 'Percentage of time allocated to this project',
     start_date          DATE                    COMMENT 'When assignment begins',
     end_date            DATE                    COMMENT 'When assignment ends',
-    
+    updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_project_team PRIMARY KEY (project_id, user_id),
     CONSTRAINT fk_pt_project FOREIGN KEY (project_id) REFERENCES projects(project_id),
     CONSTRAINT fk_pt_member FOREIGN KEY (user_id) REFERENCES team_members(user_id)
@@ -299,7 +324,9 @@ CREATE TABLE IF NOT EXISTS risks (
     owner               STRING                  COMMENT 'Risk owner',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
     updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_risks PRIMARY KEY (risk_id),
     CONSTRAINT fk_risks_project FOREIGN KEY (project_id) REFERENCES projects(project_id)
 )
@@ -316,7 +343,10 @@ CREATE TABLE IF NOT EXISTS retro_items (
     votes               INT         DEFAULT 0   COMMENT 'Team votes',
     action_task_id      STRING                  COMMENT 'FK → tasks (if action item becomes a task)',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_retros PRIMARY KEY (retro_id),
     CONSTRAINT fk_retros_sprint FOREIGN KEY (sprint_id) REFERENCES sprints(sprint_id)
 )
@@ -336,7 +366,10 @@ CREATE TABLE IF NOT EXISTS dependencies (
     description         STRING                  COMMENT 'What the dependency is',
     status              STRING      NOT NULL    COMMENT 'active | resolved | accepted',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP                             COMMENT 'When soft-deleted',
+
     CONSTRAINT pk_dependencies PRIMARY KEY (dependency_id),
     CONSTRAINT fk_dep_source FOREIGN KEY (source_project_id) REFERENCES projects(project_id),
     CONSTRAINT fk_dep_target FOREIGN KEY (target_project_id) REFERENCES projects(project_id)

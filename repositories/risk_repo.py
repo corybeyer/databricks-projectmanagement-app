@@ -7,12 +7,12 @@ from models import sample_data
 
 def get_risks(portfolio_id: str = None, user_token: str = None) -> pd.DataFrame:
     params = {}
-    conditions = []
+    conditions = ["r.is_deleted = false"]
     if portfolio_id:
         conditions.append("r.portfolio_id = :portfolio_id")
         params["portfolio_id"] = portfolio_id
 
-    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+    where = f"WHERE {' AND '.join(conditions)}"
     return query(f"""
         SELECT r.*,
                pr.name as project_name,
