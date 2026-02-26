@@ -780,6 +780,113 @@ def validate_project_create(
     return cleaned
 
 
+def validate_charter_create(
+    project_name,
+    business_case,
+    objectives,
+    scope_in,
+    scope_out=None,
+    stakeholders=None,
+    success_criteria=None,
+    risks=None,
+    budget=None,
+    timeline=None,
+    delivery_method=None,
+    description=None,
+) -> dict:
+    """Validate all fields for charter creation. Returns cleaned data dict."""
+    result = ValidationResult()
+
+    cleaned = {}
+
+    try:
+        cleaned["project_name"] = validate_string(
+            project_name, "project_name", max_length=200
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["business_case"] = validate_string(
+            business_case, "business_case", max_length=5000
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["objectives"] = validate_string(
+            objectives, "objectives", max_length=5000
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["scope_in"] = validate_string(
+            scope_in, "scope_in", max_length=5000
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["scope_out"] = validate_string(
+            scope_out, "scope_out", max_length=5000, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["stakeholders"] = validate_string(
+            stakeholders, "stakeholders", max_length=2000, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["success_criteria"] = validate_string(
+            success_criteria, "success_criteria", max_length=5000, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["risks"] = validate_string(
+            risks, "risks", max_length=5000, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["budget"] = validate_string(
+            budget, "budget", max_length=100, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["timeline"] = validate_string(
+            timeline, "timeline", max_length=200, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["delivery_method"] = validate_enum(
+            delivery_method, DELIVERY_METHODS, "delivery_method"
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["description"] = validate_string(
+            description, "description", max_length=5000, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    result.raise_if_invalid()
+    return cleaned
+
+
 def validate_retro_item_create(
     category,
     body,
