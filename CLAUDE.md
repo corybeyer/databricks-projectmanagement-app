@@ -1,7 +1,7 @@
 # CLAUDE.md — PM Hub Project Intelligence
 
 > Claude reads this file automatically at the start of every session.
-> Last updated: 2026-02-26 | Current Phase: 2 (Page Buildout Complete)
+> Last updated: 2026-02-25 | Current Phase: 3 (Production Roadmap)
 
 ## Environment
 
@@ -31,18 +31,20 @@ Unity Catalog Delta tables.
 
 ## Architecture Plan
 
-See [docs/architecture-plan.md](docs/architecture-plan.md) for the full scaffolding & architecture plan.
-**Current step**: Architecture scaffolding implemented (Steps 1–13 complete)
+See [docs/architecture-plan.md](docs/architecture-plan.md) for the scaffolding & architecture plan.
+See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production roadmap (Phase 0–5).
+**Current step**: Phase 0 — Schema & Data Model Evolution
 **Pattern**: Pragmatic Layered Architecture with Repository Pattern
 **Call direction**: Pages → Services → Repositories → DB (never skip layers)
 
 ## Current State
 
-- **Phase**: 2 — Page Buildout Complete
-- **Sprint**: N/A (sprints begin in Phase 3)
-- **Focus**: All 13/13 pages built — ready for callbacks, interactivity, testing
+- **Phase**: 3 — Production Roadmap (Schema → Foundation → CRUD → Navigation → PMI → Polish)
+- **Roadmap**: See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) — 32 tasks across 6 phases
+- **Current Work**: Phase 0 — Schema evolution (departments, user tracking, PMI risks, audit log)
+- **Pages**: All 13/13 built — read-only, awaiting callbacks and CRUD
 - **Blockers**: None
-- **Next Gate**: Gate 1 — Charter & Architecture Approved
+- **Next Gate**: Phase 0 complete → Phase 1 Foundation
 
 ## Architecture Rules
 
