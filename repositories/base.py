@@ -29,6 +29,13 @@ ALLOWED_ID_COLUMNS = {
 }
 
 
+def _use_sample_data() -> bool:
+    """Check if we're in sample data mode."""
+    from config import get_settings
+    settings = get_settings()
+    return settings.use_sample_data
+
+
 def _validate_identifier(value: str, allowlist: set, label: str) -> None:
     """Validate that a SQL identifier is in the allowlist."""
     if value not in allowlist:
@@ -38,14 +45,23 @@ def _validate_identifier(value: str, allowlist: set, label: str) -> None:
 def query(sql_str: str, params: dict = None, user_token: str = None,
           sample_fallback=None) -> pd.DataFrame:
     """Execute a read query with sample data fallback for local dev."""
+    if _use_sample_data() and sample_fallback is not None:
+        return sample_fallback()
     result = execute_query(sql_str, params=params, user_token=user_token)
     if result is None and sample_fallback is not None:
         return sample_fallback()
     return result if result is not None else pd.DataFrame()
 
 
-def write(sql_str: str, params: dict = None, user_token: str = None) -> bool:
-    """Execute a write operation."""
+def write(sql_str: str, params: dict = None, user_token: str = None,
+          table_name: Optional[str] = None, record: Optional[dict] = None) -> bool:
+    """Execute a write operation. In sample data mode, route to in-memory store."""
+    if table_name:
+        _validate_identifier(table_name, ALLOWED_TABLES, "table")
+    if _use_sample_data() and table_name and record is not None:
+        from models import sample_data
+        sample_data.create_record(table_name, record)
+        return True
     return execute_write(sql_str, params=params, user_token=user_token)
 
 
@@ -58,6 +74,15 @@ def safe_update(table: str, id_column: str, id_value: str,
     for col in updates:
         if not col.isidentifier():
             raise ValueError(f"Invalid column name: {col!r}")
+
+    if _use_sample_data():
+        from models import sample_data
+        if user_email:
+            updates = {**updates, "updated_by": user_email}
+        return sample_data.update_record(
+            table, id_column, id_value, updates,
+            expected_updated_at=expected_updated_at,
+        )
 
     if user_email:
         updates = {**updates, "updated_by": user_email}
@@ -76,6 +101,10 @@ def soft_delete(table: str, id_column: str, id_value: str,
     """Soft delete — sets is_deleted = true and deleted_at = now()."""
     _validate_identifier(table, ALLOWED_TABLES, "table")
     _validate_identifier(id_column, ALLOWED_ID_COLUMNS, "id_column")
+
+    if _use_sample_data():
+        from models import sample_data
+        return sample_data.delete_record(table, id_column, id_value, user_email=user_email)
 
     deleted_by_clause = ", deleted_by = :_email" if user_email else ""
     sql_str = (
