@@ -17,7 +17,7 @@ def get_project_detail(project_id: str, user_token: str = None) -> pd.DataFrame:
         WHERE pr.project_id = :project_id
           AND pr.is_deleted = false
     """, params={"project_id": project_id}, user_token=user_token,
-        sample_fallback=sample_data.get_empty)
+        sample_fallback=sample_data.get_project_detail)
 
 
 def get_project_phases(project_id: str, user_token: str = None) -> pd.DataFrame:
@@ -32,4 +32,4 @@ def get_project_phases(project_id: str, user_token: str = None) -> pd.DataFrame:
         GROUP BY ALL
         ORDER BY ph.phase_order
     """, params={"project_id": project_id}, user_token=user_token,
-        sample_fallback=sample_data.get_empty)
+        sample_fallback=sample_data.get_project_phases)

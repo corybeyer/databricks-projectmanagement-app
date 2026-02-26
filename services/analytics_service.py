@@ -25,3 +25,7 @@ def get_risks(portfolio_id: str = None, user_token: str = None):
 
 def get_resource_allocations(user_token: str = None):
     return resource_repo.get_resource_allocations(user_token=user_token)
+
+
+def get_retro_items(sprint_id: str, user_token: str = None):
+    return resource_repo.get_retro_items(sprint_id, user_token=user_token)
