@@ -88,11 +88,18 @@ def safe_update(table: str, id_column: str, id_value: str,
         updates = {**updates, "updated_by": user_email}
 
     set_clauses = ", ".join(f"{col} = :{col}" for col in updates)
-    sql_str = (
-        f"UPDATE {table} SET {set_clauses}, updated_at = current_timestamp() "
-        f"WHERE {id_column} = :_id AND updated_at = :_expected_updated_at"
-    )
-    params = {**updates, "_id": id_value, "_expected_updated_at": expected_updated_at}
+    if expected_updated_at is not None:
+        sql_str = (
+            f"UPDATE {table} SET {set_clauses}, updated_at = current_timestamp() "
+            f"WHERE {id_column} = :_id AND updated_at = :_expected_updated_at"
+        )
+        params = {**updates, "_id": id_value, "_expected_updated_at": expected_updated_at}
+    else:
+        sql_str = (
+            f"UPDATE {table} SET {set_clauses}, updated_at = current_timestamp() "
+            f"WHERE {id_column} = :_id AND is_deleted = false"
+        )
+        params = {**updates, "_id": id_value}
     return write(sql_str, params=params, user_token=user_token)
 
 

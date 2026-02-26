@@ -1,7 +1,7 @@
 # CLAUDE.md — PM Hub Project Intelligence
 
 > Claude reads this file automatically at the start of every session.
-> Last updated: 2026-02-25 | Current Phase: 3 (Production Roadmap)
+> Last updated: 2026-02-26 | Current Phase: 3 (Production Roadmap)
 
 ## Environment
 
@@ -33,7 +33,7 @@ Unity Catalog Delta tables.
 
 See [docs/architecture-plan.md](docs/architecture-plan.md) for the scaffolding & architecture plan.
 See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production roadmap (Phase 0–5).
-**Current step**: Phase 2 — Core CRUD Operations (Phase 0 & 1 complete)
+**Current step**: Phase 2b — Remaining CRUD (Phases 0, 1 & 2a complete)
 **Pattern**: Pragmatic Layered Architecture with Repository Pattern
 **Call direction**: Pages → Services → Repositories → DB (never skip layers)
 
@@ -41,12 +41,14 @@ See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production ro
 
 - **Phase**: 3 — Production Roadmap (Schema → Foundation → CRUD → Navigation → PMI → Polish)
 - **Roadmap**: See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) — 32 tasks across 6 phases
-- **Current Work**: Phase 2 — Core CRUD operations (task, charter, sprint, risk, retro, project/portfolio)
+- **Current Work**: Phase 2b — Remaining CRUD (charter, risk, retro, project/portfolio)
 - **Phase 0 Done**: Departments, user tracking, PMI risks, audit log, schema fixes (PR #19)
 - **Phase 1 Done**: Toast system, auto-refresh (13 pages), validation layer, dcc.Store state, error boundaries, change history (PR #20)
-- **Pages**: All 13/13 built with auto-refresh callbacks, awaiting CRUD modals
+- **Phase 2 Prereqs Done**: In-memory write mode, CRUD modal component, task_fields (PR #22)
+- **Phase 2a Done**: Task CRUD + kanban, sprint management, backlog CRUD, my-work edit (PR #23)
+- **Pages**: All 13/13 built; sprint, backlog, my-work have full CRUD; others awaiting CRUD modals
 - **Blockers**: None
-- **Next Gate**: Phase 2 complete → Phase 3 Navigation & Multi-Dept
+- **Next Gate**: Phase 2b complete → Phase 3 Navigation & Multi-Dept
 
 ## Architecture Rules
 
