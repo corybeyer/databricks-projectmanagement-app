@@ -278,6 +278,18 @@ mid-session.
 | 2026-02-25 | Skip Postgres for now | Unity Catalog only — Postgres deferred to future sprint |
 | 2026-02-25 | Pydantic BaseSettings | Type-safe config, env var loading, validation |
 
+## Planning Convention
+
+Before starting any non-trivial feature implementation, write the plan to a
+file and commit it first. This ensures design work is never lost between
+sessions.
+
+```
+Write this plan to docs/architecture/PLAN.md, commit it with message
+'docs: add architecture plan for [feature]', and push to the current
+branch. Do this before starting any implementation.
+```
+
 ## Quick Reference
 
 ### Start local dev
