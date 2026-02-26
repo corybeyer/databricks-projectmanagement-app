@@ -233,7 +233,8 @@ CREATE TABLE IF NOT EXISTS status_transitions (
     to_status           STRING      NOT NULL    COMMENT 'New status',
     changed_by          STRING      NOT NULL    COMMENT 'Who made the change',
     transitioned_at     TIMESTAMP   NOT NULL    COMMENT 'When the change occurred',
-    
+    created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+
     CONSTRAINT pk_transitions PRIMARY KEY (transition_id),
     CONSTRAINT fk_transitions_task FOREIGN KEY (task_id) REFERENCES tasks(task_id)
 )
@@ -266,7 +267,8 @@ CREATE TABLE IF NOT EXISTS time_entries (
     work_date           DATE        NOT NULL    COMMENT 'Date of work',
     notes               STRING                  COMMENT 'Work notes',
     created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
-    
+    updated_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+
     CONSTRAINT pk_time_entries PRIMARY KEY (entry_id),
     CONSTRAINT fk_time_task FOREIGN KEY (task_id) REFERENCES tasks(task_id)
 )
