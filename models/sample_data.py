@@ -3,12 +3,167 @@ Sample Data — Local Development Fallback
 ==========================================
 Returns realistic sample data when not connected to Databricks.
 Each function returns a pd.DataFrame matching the UC table schema.
+
+In-memory write mode: when USE_SAMPLE_DATA=true, CRUD operations
+modify a module-level mutable store so local dev can test writes.
 """
+
+import uuid
+from datetime import datetime
+from typing import Callable, Dict, Optional
 
 import pandas as pd
 
 
-def get_departments() -> pd.DataFrame:
+# ---------------------------------------------------------------------------
+# Mutable store — initialized lazily from read-only seed functions
+# ---------------------------------------------------------------------------
+
+_store: Dict[str, pd.DataFrame] = {}
+
+
+def _get_store(table_name: str, initializer_fn: Callable[[], pd.DataFrame]) -> pd.DataFrame:
+    """Lazy-init: first access copies the read-only sample data into mutable store.
+
+    Ensures standard audit columns (created_at, updated_at, is_deleted) exist
+    on all seeded DataFrames so filtering and optimistic locking work correctly.
+    """
+    if table_name not in _store:
+        df = initializer_fn()
+        if not df.empty:
+            if "created_at" not in df.columns:
+                df["created_at"] = "2026-01-01 00:00:00"
+            if "updated_at" not in df.columns:
+                df["updated_at"] = "2026-01-01 00:00:00"
+            if "is_deleted" not in df.columns:
+                df["is_deleted"] = False
+        _store[table_name] = df
+    return _store[table_name]
+
+
+def reset_store() -> None:
+    """Clear all mutable state. Called on app restart or in tests."""
+    _store.clear()
+
+
+# ---------------------------------------------------------------------------
+# Generic CRUD helpers (operate on the mutable store)
+# ---------------------------------------------------------------------------
+
+_TABLE_ID_COLUMNS = {
+    "departments": "department_id", "portfolios": "portfolio_id",
+    "projects": "project_id", "project_charters": "charter_id",
+    "phases": "phase_id", "gates": "gate_id", "deliverables": "deliverable_id",
+    "sprints": "sprint_id", "tasks": "task_id", "status_transitions": "transition_id",
+    "comments": "comment_id", "time_entries": "entry_id", "team_members": "user_id",
+    "risks": "risk_id", "retro_items": "retro_id", "project_team": "user_id",
+    "dependencies": "dependency_id", "audit_log": "audit_id",
+    "resource_allocations": "user_id", "portfolio_projects": "project_id",
+    "velocity": "sprint_name", "burndown": "burn_date", "cycle_times": "task_id",
+}
+
+
+def create_record(
+    table_name: str,
+    record: dict,
+    initializer_fn: Optional[Callable[[], pd.DataFrame]] = None,
+) -> str:
+    """Insert a new record into the in-memory store.
+
+    - Auto-generates UUID for the primary key ({singular}_id) if not provided.
+    - Sets created_at and updated_at to now.
+    - Returns the new record's ID.
+    """
+    df = _get_store(table_name, initializer_fn or (lambda: pd.DataFrame()))
+
+    # Generate ID if missing
+    id_col = _TABLE_ID_COLUMNS.get(table_name, f"{table_name.rstrip('s')}_id")
+    if id_col not in record or not record[id_col]:
+        record[id_col] = str(uuid.uuid4())[:8]
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    record.setdefault("created_at", now)
+    record.setdefault("updated_at", now)
+    record.setdefault("is_deleted", False)
+
+    new_row = pd.DataFrame([record])
+    _store[table_name] = pd.concat([df, new_row], ignore_index=True)
+    return record[id_col]
+
+
+def update_record(
+    table_name: str,
+    id_column: str,
+    id_value: str,
+    updates: dict,
+    expected_updated_at: Optional[str] = None,
+) -> bool:
+    """Update a record in the in-memory store.
+
+    - Supports optimistic locking via expected_updated_at.
+    - Sets updated_at to now.
+    - Returns True if updated, False if not found or conflict.
+    """
+    if table_name not in _store:
+        return False
+    df = _store[table_name]
+
+    # Build mask: match ID and not soft-deleted
+    mask = df[id_column] == id_value
+    if "is_deleted" in df.columns:
+        mask = mask & (df["is_deleted"] == False)  # noqa: E712
+    if mask.sum() == 0:
+        return False
+
+    # Optimistic lock check
+    if expected_updated_at is not None and "updated_at" in df.columns:
+        current = df.loc[mask, "updated_at"].iloc[0]
+        if str(current) != str(expected_updated_at):
+            return False
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    updates["updated_at"] = now
+    for col, val in updates.items():
+        if col in df.columns:
+            df.loc[mask, col] = val
+    return True
+
+
+def delete_record(
+    table_name: str,
+    id_column: str,
+    id_value: str,
+    user_email: Optional[str] = None,
+) -> bool:
+    """Soft-delete a record (set is_deleted=True, deleted_at=now).
+
+    Returns True if deleted, False if not found.
+    """
+    if table_name not in _store:
+        return False
+    df = _store[table_name]
+
+    mask = df[id_column] == id_value
+    if "is_deleted" in df.columns:
+        mask = mask & (df["is_deleted"] == False)  # noqa: E712
+    if mask.sum() == 0:
+        return False
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    df.loc[mask, "is_deleted"] = True
+    if "deleted_at" in df.columns:
+        df.loc[mask, "deleted_at"] = now
+    if "deleted_by" in df.columns and user_email:
+        df.loc[mask, "deleted_by"] = user_email
+    df.loc[mask, "updated_at"] = now
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Seed data initializers (read-only originals)
+# ---------------------------------------------------------------------------
+
+def _init_departments() -> pd.DataFrame:
     return pd.DataFrame([
         {"department_id": "dept-001", "name": "Data Engineering", "description": "Data platform, pipelines, and infrastructure",
          "parent_dept_id": None, "head": "u-001", "parent_name": None},
@@ -19,7 +174,7 @@ def get_departments() -> pd.DataFrame:
     ])
 
 
-def get_portfolios() -> pd.DataFrame:
+def _init_portfolios() -> pd.DataFrame:
     return pd.DataFrame([
         {"portfolio_id": "pf-001", "name": "Data Platform Modernization", "owner": "Cory S.",
          "department_id": "dept-001",
@@ -36,7 +191,7 @@ def get_portfolios() -> pd.DataFrame:
     ])
 
 
-def get_portfolio_projects() -> pd.DataFrame:
+def _init_portfolio_projects() -> pd.DataFrame:
     return pd.DataFrame([
         {"project_id": "prj-001", "name": "Unity Catalog Migration", "status": "active",
          "delivery_method": "hybrid", "pct_complete": 55, "current_phase_name": "Build",
@@ -56,7 +211,7 @@ def get_portfolio_projects() -> pd.DataFrame:
     ])
 
 
-def get_project_charter() -> pd.DataFrame:
+def _init_project_charter() -> pd.DataFrame:
     return pd.DataFrame([
         {"charter_id": "ch-001", "project_id": "prj-001",
          "project_name": "Unity Catalog Migration",
@@ -73,7 +228,7 @@ def get_project_charter() -> pd.DataFrame:
     ])
 
 
-def get_sprints() -> pd.DataFrame:
+def _init_sprints() -> pd.DataFrame:
     return pd.DataFrame([
         {"sprint_id": "sp-001", "name": "Sprint 1", "status": "closed",
          "start_date": "2026-01-20", "end_date": "2026-01-31",
@@ -90,7 +245,7 @@ def get_sprints() -> pd.DataFrame:
     ])
 
 
-def get_tasks() -> pd.DataFrame:
+def _init_tasks() -> pd.DataFrame:
     return pd.DataFrame([
         {"task_id": "t-001", "title": "P&L Bronze ingestion", "task_type": "story",
          "status": "done", "story_points": 8, "assignee_name": "Chris J.", "priority": "high"},
@@ -111,7 +266,7 @@ def get_tasks() -> pd.DataFrame:
     ])
 
 
-def get_risks() -> pd.DataFrame:
+def _init_risks() -> pd.DataFrame:
     return pd.DataFrame([
         {"risk_id": "r-001", "project_id": "prj-001", "portfolio_id": "pf-001",
          "title": "SAP BW schema changes during migration",
@@ -152,7 +307,7 @@ def get_risks() -> pd.DataFrame:
     ])
 
 
-def get_resource_allocations() -> pd.DataFrame:
+def _init_resource_allocations() -> pd.DataFrame:
     return pd.DataFrame([
         {"user_id": "u-001", "display_name": "Cory S.", "role": "lead",
          "department_id": "dept-001",
@@ -177,7 +332,7 @@ def get_resource_allocations() -> pd.DataFrame:
     ])
 
 
-def get_project_detail() -> pd.DataFrame:
+def _init_project_detail() -> pd.DataFrame:
     return pd.DataFrame([
         {"project_id": "prj-001", "name": "Unity Catalog Migration", "status": "active",
          "delivery_method": "hybrid", "pct_complete": 55, "current_phase_name": "Build",
@@ -188,7 +343,7 @@ def get_project_detail() -> pd.DataFrame:
     ])
 
 
-def get_project_phases() -> pd.DataFrame:
+def _init_project_phases() -> pd.DataFrame:
     return pd.DataFrame([
         {"phase_id": "ph-001", "name": "Initiation", "phase_type": "initiation",
          "delivery_method": "waterfall", "status": "done", "pct_complete": 100,
@@ -213,7 +368,7 @@ def get_project_phases() -> pd.DataFrame:
     ])
 
 
-def get_velocity() -> pd.DataFrame:
+def _init_velocity() -> pd.DataFrame:
     return pd.DataFrame([
         {"sprint_name": "Sprint 1", "committed_points": 26, "completed_points": 24,
          "capacity_points": 28, "start_date": "2026-01-20", "end_date": "2026-01-31"},
@@ -224,7 +379,7 @@ def get_velocity() -> pd.DataFrame:
     ])
 
 
-def get_burndown() -> pd.DataFrame:
+def _init_burndown() -> pd.DataFrame:
     return pd.DataFrame([
         {"burn_date": "2026-03-02", "remaining_points": 34, "total_points": 34},
         {"burn_date": "2026-03-03", "remaining_points": 32, "total_points": 34},
@@ -239,7 +394,7 @@ def get_burndown() -> pd.DataFrame:
     ])
 
 
-def get_gate_status() -> pd.DataFrame:
+def _init_gate_status() -> pd.DataFrame:
     return pd.DataFrame([
         {"gate_id": "g-001", "phase_id": "ph-001", "phase_name": "Initiation",
          "status": "approved", "gate_order": 1, "decided_by": "VP Data",
@@ -256,7 +411,7 @@ def get_gate_status() -> pd.DataFrame:
     ])
 
 
-def get_cycle_times() -> pd.DataFrame:
+def _init_cycle_times() -> pd.DataFrame:
     return pd.DataFrame([
         {"task_id": "t-001", "title": "P&L Bronze ingestion", "task_type": "story",
          "from_status": "todo", "hours_in_status": 4},
@@ -279,7 +434,7 @@ def get_cycle_times() -> pd.DataFrame:
     ])
 
 
-def get_retro_items() -> pd.DataFrame:
+def _init_retro_items() -> pd.DataFrame:
     return pd.DataFrame([
         {"retro_id": "ret-001", "sprint_id": "sp-003", "category": "went_well",
          "body": "DLT pipeline setup was smooth — reusable template pays off", "votes": 5},
@@ -296,7 +451,7 @@ def get_retro_items() -> pd.DataFrame:
     ])
 
 
-def get_audit_log() -> pd.DataFrame:
+def _init_audit_log() -> pd.DataFrame:
     return pd.DataFrame([
         {"audit_id": "aud-001", "user_email": "cory@example.com", "action": "create",
          "entity_type": "task", "entity_id": "t-001", "field_changed": None,
@@ -317,5 +472,90 @@ def get_audit_log() -> pd.DataFrame:
     ])
 
 
+# ---------------------------------------------------------------------------
+# Public getters — route through mutable store
+# ---------------------------------------------------------------------------
+
+def get_departments() -> pd.DataFrame:
+    """Return departments from mutable store."""
+    return _get_store("departments", _init_departments).copy()
+
+
+def get_portfolios() -> pd.DataFrame:
+    """Return portfolios from mutable store."""
+    return _get_store("portfolios", _init_portfolios).copy()
+
+
+def get_portfolio_projects() -> pd.DataFrame:
+    """Return portfolio projects from mutable store."""
+    return _get_store("portfolio_projects", _init_portfolio_projects).copy()
+
+
+def get_project_charter() -> pd.DataFrame:
+    """Return project charter from mutable store."""
+    return _get_store("project_charters", _init_project_charter).copy()
+
+
+def get_sprints() -> pd.DataFrame:
+    """Return sprints from mutable store."""
+    return _get_store("sprints", _init_sprints).copy()
+
+
+def get_tasks() -> pd.DataFrame:
+    """Return tasks from mutable store."""
+    return _get_store("tasks", _init_tasks).copy()
+
+
+def get_risks() -> pd.DataFrame:
+    """Return risks from mutable store."""
+    return _get_store("risks", _init_risks).copy()
+
+
+def get_resource_allocations() -> pd.DataFrame:
+    """Return resource allocations from mutable store."""
+    return _get_store("resource_allocations", _init_resource_allocations).copy()
+
+
+def get_project_detail() -> pd.DataFrame:
+    """Return project detail from mutable store."""
+    return _get_store("projects", _init_project_detail).copy()
+
+
+def get_project_phases() -> pd.DataFrame:
+    """Return project phases from mutable store."""
+    return _get_store("phases", _init_project_phases).copy()
+
+
+def get_velocity() -> pd.DataFrame:
+    """Return velocity data from mutable store."""
+    return _get_store("velocity", _init_velocity).copy()
+
+
+def get_burndown() -> pd.DataFrame:
+    """Return burndown data from mutable store."""
+    return _get_store("burndown", _init_burndown).copy()
+
+
+def get_gate_status() -> pd.DataFrame:
+    """Return gate status from mutable store."""
+    return _get_store("gates", _init_gate_status).copy()
+
+
+def get_cycle_times() -> pd.DataFrame:
+    """Return cycle times from mutable store."""
+    return _get_store("cycle_times", _init_cycle_times).copy()
+
+
+def get_retro_items() -> pd.DataFrame:
+    """Return retro items from mutable store."""
+    return _get_store("retro_items", _init_retro_items).copy()
+
+
+def get_audit_log() -> pd.DataFrame:
+    """Return audit log from mutable store."""
+    return _get_store("audit_log", _init_audit_log).copy()
+
+
 def get_empty() -> pd.DataFrame:
+    """Return an empty DataFrame."""
     return pd.DataFrame()
