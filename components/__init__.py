@@ -9,6 +9,7 @@ from components.crud_modal import (
     modal_error_outputs,
 )
 from components.error_boundary import error_boundary, safe_render, safe_callback
+from components.task_fields import TASK_FIELDS, SPRINT_FIELDS, TEAM_MEMBER_OPTIONS
 from components.toast import toast_container, make_toast_output
 
 __all__ = [
@@ -24,6 +25,9 @@ __all__ = [
     "error_boundary",
     "safe_render",
     "safe_callback",
+    "TASK_FIELDS",
+    "SPRINT_FIELDS",
+    "TEAM_MEMBER_OPTIONS",
     "toast_container",
     "make_toast_output",
 ]

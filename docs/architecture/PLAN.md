@@ -1,6 +1,6 @@
 # PM Hub — Road to Production Plan
 
-> Last updated: 2026-02-26 | Status: Phase 2 in progress (Phases 0 & 1 complete)
+> Last updated: 2026-02-26 | Status: Phase 2a complete, Phase 2b next (Phases 0, 1 & 2 prereqs complete)
 
 ## Context
 
@@ -168,47 +168,47 @@ CREATE TABLE audit_log (
 *The daily-use features that make this a PM tool, not a report viewer.*
 *Split into 2a (highest daily-use value) and 2b (remaining entities) for manageable delivery.*
 
-### Prerequisites (complete before 2a)
+### Prerequisites ✅ COMPLETE
 
-#### 2.0a — In-Memory Write Mode for Local Dev
-Sample data fallback currently supports reads only. All Phase 2 CRUD work needs local write testing.
-- Extend `models/sample_data.py` with mutable module-level DataFrames
-- Add `create_record()`, `update_record()`, `delete_record()` helpers that mutate in-memory DataFrames
-- Wire into `repositories/base.py` — when `USE_SAMPLE_DATA=true`, route writes to in-memory store instead of Unity Catalog
-- Reset state on app restart (no persistence needed)
-- **Files:** `models/sample_data.py`, `repositories/base.py`, `db/unity_catalog.py`
+*Completed: 2026-02-26 | PR #22 merged to develop*
 
-#### 2.0b — Shared CRUD Modal Component
-Phase 2 introduces 6+ modals. Define a reusable pattern to prevent duplication.
-- Create `components/crud_modal.py` — `crud_modal(id_prefix, title, fields, size="lg")` returns a `dbc.Modal`
-- `fields` is a list of field defs: `{"id": "task-title", "label": "Title", "type": "text|select|textarea|number|date", "required": True, "options": [...]}`
-- Helper: `get_modal_values(field_defs, *args)` — extracts form values from callback args into a dict
-- Helper: `set_field_errors(field_defs, errors)` — returns `is_invalid` props for specific fields
-- Confirmation dialog: `confirm_delete_modal(id_prefix, entity_name)` — reusable soft-delete confirmation
-- All CRUD modals in 2.1–2.6 use this component
-- **Files:** `components/crud_modal.py` (new), `components/__init__.py`
+#### 2.0a — In-Memory Write Mode for Local Dev ✅
+- Extended `models/sample_data.py` with mutable module-level store (`_store` dict)
+- Added `create_record()`, `update_record()`, `delete_record()` helpers with audit column defaults
+- Wired `repositories/base.py` — `write()` routes to in-memory store when `USE_SAMPLE_DATA=true`
+- `safe_update()` supports both optimistic locking (with `expected_updated_at`) and non-locking updates (when `None`)
+- **Files:** `models/sample_data.py`, `repositories/base.py`
 
-### Phase 2a — Task & Sprint CRUD (highest daily-use value)
+#### 2.0b — Shared CRUD Modal Component ✅
+- Created `components/crud_modal.py` — 6 public functions: `crud_modal()`, `confirm_delete_modal()`, `get_modal_values()`, `set_field_errors()`, `modal_field_states()`, `modal_error_outputs()`
+- ID convention: all component IDs prefixed with `id_prefix` to avoid collisions
+- Created `components/task_fields.py` — shared `TASK_FIELDS`, `SPRINT_FIELDS`, `TEAM_MEMBER_OPTIONS`
+- **Files:** `components/crud_modal.py` (new), `components/task_fields.py` (new), `components/__init__.py`
 
-#### 2.1 — Task CRUD + Kanban Interactivity
-- **Create task modal:** title, type (epic/story/task/bug), priority, story points, assignee, description
-- **Kanban status updates:** Click-to-move between columns (todo→in_progress→review→done) via dropdown per card
-- **Edit task modal:** Click task card → edit fields → save
-- **Delete task:** Soft delete with confirmation dialog
-- All writes record `created_by` / `updated_by` from OBO
-- Wire to existing `task_service.create_task()`, `update_task_status()`, `move_task_to_sprint()`
-- Add `task_service.update_task()`, `task_service.delete_task()`
-- Add `task_repo.update_task()`, `task_repo.delete_task()` (using `safe_update`, `soft_delete`)
-- **Files:** `pages/sprint.py`, `pages/my_work.py`, `pages/backlog.py`, `services/task_service.py`, `repositories/task_repo.py`
+### Phase 2a — Task & Sprint CRUD ✅ COMPLETE
 
-#### 2.2 — Sprint Management
-- Create sprint modal (name, goal, start/end dates, capacity, phase assignment for hybrid)
-- Close sprint action (marks closed, captures velocity, optionally creates next sprint)
-- Sprint selector dropdown on sprint page
-- Move tasks between sprints
-- Add `sprint_service.create_sprint()`, `sprint_service.close_sprint()`
-- Add `sprint_repo.create_sprint()`, `sprint_repo.close_sprint()`
-- **Files:** `pages/sprint.py`, `services/sprint_service.py`, `repositories/sprint_repo.py`
+*Completed: 2026-02-26 | PR #23 to develop*
+
+#### 2.1 — Task CRUD + Kanban Interactivity ✅
+- **Sprint page** (`pages/sprint.py`): Full overhaul with task create/edit/delete modals, kanban status dropdowns, sprint selector, toolbar
+- **Backlog page** (`pages/backlog.py`): Create task, edit task, delete task, move-to-sprint dropdown per row
+- **My Work page** (`pages/my_work.py`): Edit task modal, inline status change dropdowns
+- Pattern-matching callbacks for per-card/per-row actions (`{"type": "sprint-task-status-dd", "index": task_id}`)
+- Mutation-triggered refresh: `dcc.Store` counter bridges CRUD callbacks and auto-refresh (avoids Dash single-Output constraint)
+- Toast feedback on all create/update/delete operations
+- Validation via `utils/validators.py` → service layer → specific field errors
+- **Repos:** `get_task_by_id()`, `update_task()`, `delete_task()` added to `task_repo.py` (using `safe_update`, `soft_delete`)
+- **Services:** `create_task_from_form()`, `update_task_from_form()`, `delete_task()`, `get_task()` with result dict pattern `{"success": bool, "errors": dict, "message": str}`
+- **Files:** `pages/sprint.py`, `pages/backlog.py`, `pages/my_work.py`, `services/task_service.py`, `repositories/task_repo.py`
+
+#### 2.2 — Sprint Management ✅
+- Sprint selector dropdown on sprint page (all sprints, active selected by default)
+- Create sprint modal (name, goal, start/end dates, capacity) with validation
+- Close sprint action (marks status → closed)
+- **Repos:** `create_sprint()`, `close_sprint()`, `get_sprint_by_id()`, `update_sprint()` in `sprint_repo.py`
+- **Services:** `create_sprint_from_form()`, `close_sprint()`, `get_sprint()` with result dict pattern
+- **Sample data:** Tasks now have `project_id`, `sprint_id`, `assignee` columns; sprints have `project_id`, `goal`; 2 backlog tasks added
+- **Files:** `pages/sprint.py`, `services/sprint_service.py`, `repositories/sprint_repo.py`, `models/sample_data.py`
 
 ### Phase 2b — Charter, Risk, Retro & Portfolio CRUD
 
@@ -392,9 +392,9 @@ Work in phase order. Within each phase, tasks can be parallelized.
 
 - **Phase 0** (Schema) ✅ → structural changes everything depends on
 - **Phase 1** (Foundation) ✅ → plumbing for interactivity
-- **Phase 2 prereqs** (In-memory writes + shared modal) → unblocks all CRUD work
-- **Phase 2a** (Task & Sprint CRUD) → highest daily-use value, do first
-- **Phase 2b** (Charter, Risk, Retro, Portfolio CRUD) → remaining entities
+- **Phase 2 prereqs** (In-memory writes + shared modal) ✅ → unblocked all CRUD work
+- **Phase 2a** (Task & Sprint CRUD) ✅ → highest daily-use value, completed
+- **Phase 2b** (Charter, Risk, Retro, Portfolio CRUD) → remaining entities, NEXT
 - **Phase 3** (Navigation & Multi-Dept) → organizational hierarchy (3.1/3.2 can parallel 2b)
 - **Phase 4** (PMI Features) → PMBOK 7 knowledge area coverage
 - **Phase 5** (Polish) → production hardening
