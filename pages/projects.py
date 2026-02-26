@@ -5,7 +5,7 @@ Project list with health badges, progress bars, and key metrics.
 """
 
 import dash
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.portfolio_service import get_portfolio_projects
@@ -81,7 +81,8 @@ def _project_card(project):
     ], width=4, className="mb-3")
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     projects = get_portfolio_projects("pf-001", user_token=token)
 
@@ -129,6 +130,19 @@ def layout():
         ] if not projects.empty else [
             dbc.Col(empty_state("No projects found."), width=12),
         ]),
-
-        auto_refresh(),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="projects-content"),
+        auto_refresh(interval_id="projects-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("projects-content", "children"),
+    Input("projects-refresh-interval", "n_intervals"),
+)
+def refresh_projects(n):
+    return _build_content()

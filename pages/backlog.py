@@ -5,7 +5,7 @@ Product backlog with unscheduled tasks, priority ordering, and task details.
 """
 
 import dash
-from dash import html
+from dash import html, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.task_service import get_backlog
@@ -69,7 +69,8 @@ def _backlog_row(task):
     ], className="bg-transparent border-secondary")
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     backlog = get_backlog("prj-001", user_token=token)
 
@@ -109,6 +110,19 @@ def layout():
                 ]),
             ] if not backlog.empty else [empty_state("No backlog items.")]),
         ]),
-
-        auto_refresh(),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="backlog-content"),
+        auto_refresh(interval_id="backlog-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("backlog-content", "children"),
+    Input("backlog-refresh-interval", "n_intervals"),
+)
+def refresh_backlog(n):
+    return _build_content()

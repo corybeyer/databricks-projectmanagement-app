@@ -5,7 +5,7 @@ Risk heatmap and risk table with severity, owner, and status.
 """
 
 import dash
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.analytics_service import get_risks
@@ -42,7 +42,8 @@ def _risk_score_display(score):
     return html.Span(str(score), style={"color": color, "fontWeight": "bold"})
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     risks = get_risks(user_token=token)
 
@@ -127,6 +128,19 @@ def layout():
                 ], className="chart-card"),
             ], width=7),
         ]),
-
-        auto_refresh(),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="risks-content"),
+        auto_refresh(interval_id="risks-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("risks-content", "children"),
+    Input("risks-refresh-interval", "n_intervals"),
+)
+def refresh_risks(n):
+    return _build_content()

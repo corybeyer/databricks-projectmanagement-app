@@ -5,17 +5,19 @@ View and create formal project charter documents.
 """
 
 import dash
-from dash import html
+from dash import html, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.project_service import get_project_charter
 from components.charter_display import charter_display
 from components.charter_form import charter_form
+from components.auto_refresh import auto_refresh
 
 dash.register_page(__name__, path="/charters", name="Project Charters")
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     charter_data = get_project_charter("prj-001", user_token=token)
 
@@ -45,3 +47,18 @@ def layout():
             ),
         ], id="charter-tabs", active_tab="charter-uc"),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="charters-content"),
+        auto_refresh(interval_id="charters-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("charters-content", "children"),
+    Input("charters-refresh-interval", "n_intervals"),
+)
+def refresh_charters(n):
+    return _build_content()

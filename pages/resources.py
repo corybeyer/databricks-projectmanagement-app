@@ -5,7 +5,7 @@ Team workload overview with utilization chart and member details.
 """
 
 import dash
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.analytics_service import get_resource_allocations
@@ -18,7 +18,8 @@ from charts.analytics_charts import resource_utilization_chart
 dash.register_page(__name__, path="/resources", name="Resource Allocation")
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     resources = get_resource_allocations(user_token=token)
 
@@ -104,6 +105,19 @@ def layout():
                     className="table-dark table-sm"),
             ] if not resources.empty else [empty_state("No team data available.")]),
         ]),
-
-        auto_refresh(),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="resources-content"),
+        auto_refresh(interval_id="resources-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("resources-content", "children"),
+    Input("resources-refresh-interval", "n_intervals"),
+)
+def refresh_resources(n):
+    return _build_content()

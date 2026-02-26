@@ -5,7 +5,7 @@ Personal task view showing the current user's assigned tasks.
 """
 
 import dash
-from dash import html
+from dash import html, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token, get_user_email
 from services.sprint_service import get_sprint_tasks
@@ -65,7 +65,8 @@ def _task_item(task):
     ], className="bg-transparent border-secondary")
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     user_email = get_user_email()
 
@@ -127,6 +128,19 @@ def layout():
                 else empty_state("No completed tasks yet."),
             ]),
         ]),
-
-        auto_refresh(),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="my-work-content"),
+        auto_refresh(interval_id="my-work-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("my-work-content", "children"),
+    Input("my-work-refresh-interval", "n_intervals"),
+)
+def refresh_my_work(n):
+    return _build_content()

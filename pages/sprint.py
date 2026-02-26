@@ -5,7 +5,7 @@ Kanban-style sprint board with velocity and burndown charts.
 """
 
 import dash
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.sprint_service import get_sprints, get_sprint_tasks
@@ -82,7 +82,8 @@ def _kanban_column(status, tasks_df):
     ], width=3)
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     sprints = get_sprints("prj-001", user_token=token)
     active_sprint = sprints[sprints["status"] == "active"] if not sprints.empty else sprints
@@ -157,6 +158,19 @@ def layout():
                 ], className="chart-card"),
             ], width=6),
         ]),
-
-        auto_refresh(),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="sprint-content"),
+        auto_refresh(interval_id="sprint-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("sprint-content", "children"),
+    Input("sprint-refresh-interval", "n_intervals"),
+)
+def refresh_sprint(n):
+    return _build_content()
