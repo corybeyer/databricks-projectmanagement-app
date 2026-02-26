@@ -1,7 +1,7 @@
 # CLAUDE.md — PM Hub Project Intelligence
 
 > Claude reads this file automatically at the start of every session.
-> Last updated: 2026-02-24 | Current Phase: 1 (Planning & Design)
+> Last updated: 2026-02-25 | Current Phase: 1 (Planning & Design)
 
 ## Project Identity
 
@@ -26,63 +26,141 @@ Unity Catalog Delta tables.
 ## Architecture Plan
 
 See [docs/architecture-plan.md](docs/architecture-plan.md) for the full scaffolding & architecture plan.
-**Current step**: Not started — plan approved, ready for Step 1 (Local Postgres setup)
+**Current step**: Architecture scaffolding implemented (Steps 1–13 complete)
 **Pattern**: Pragmatic Layered Architecture with Repository Pattern
 **Call direction**: Pages → Services → Repositories → DB (never skip layers)
 
 ## Current State
 
-<!-- UPDATE THIS SECTION AS THE PROJECT PROGRESSES -->
 - **Phase**: 1 — Planning & Design (Waterfall)
 - **Sprint**: N/A (sprints begin in Phase 3)
-- **Focus**: Architecture scaffolding — implementing the layered architecture plan
+- **Focus**: Architecture scaffolding complete — ready for page buildout
 - **Blockers**: None
 - **Next Gate**: Gate 1 — Charter & Architecture Approved
 
 ## Architecture Rules
 
-### File Structure — Follow Exactly
+### Layered Architecture — Call Direction
+
+```
+Pages (UI) → Services (logic) → Repositories (data) → DB (connection)
+```
+
+- **Pages** import from services, components, and charts. Never from repositories or db.
+- **Services** import from repositories. Never import Dash. Accept/return pure Python types.
+- **Repositories** import from db. Return `pd.DataFrame`. All SQL lives here.
+- **DB** manages connections (Unity Catalog via OBO auth). No business logic.
+
+### File Structure
+
 ```
 databricks-pm-app/
-├── app.py                  # Main entry point — DO NOT put page logic here
-├── app.yaml                # Databricks Apps config — warehouse ID goes here
+├── app.py                  # Entry point — imports callbacks, reads config
+├── app.yaml                # Databricks Apps config
 ├── requirements.txt        # Pin versions. Always.
+├── .env.example            # Template for local dev env vars
+├── config/
+│   ├── __init__.py         # Exports get_settings()
+│   ├── settings.py         # Pydantic BaseSettings (env vars)
+│   └── logging.py          # Structured logging setup
+├── db/
+│   ├── __init__.py
+│   ├── unity_catalog.py    # OBO auth connection, execute_query/write
+│   └── postgres.py         # Placeholder (future)
 ├── models/
-│   ├── schema_ddl.sql      # Single source of truth for all table definitions
-│   └── migrations/         # Incremental schema changes (numbered: 001_, 002_)
-├── pages/                  # One file per route. Dash multi-page app pattern.
+│   ├── schema_ddl.sql      # Single source of truth for table definitions
+│   ├── sample_data.py      # Sample data for local dev fallback
+│   └── migrations/         # Numbered migration scripts (001_, 002_)
+├── repositories/           # Data access — ALL SQL lives here
+│   ├── base.py             # query(), write(), safe_update()
+│   ├── portfolio_repo.py
+│   ├── project_repo.py
+│   ├── charter_repo.py
+│   ├── sprint_repo.py
+│   ├── task_repo.py
+│   ├── risk_repo.py
+│   ├── analytics_repo.py
+│   └── resource_repo.py
+├── services/               # Business logic — NO Dash imports
+│   ├── auth_service.py     # OBO token, user identity, permissions
+│   ├── portfolio_service.py
+│   ├── project_service.py
+│   ├── sprint_service.py
+│   ├── task_service.py
+│   ├── analytics_service.py
+│   ├── audit_service.py    # Placeholder
+│   ├── notification_service.py  # Placeholder
+│   └── export_service.py   # Placeholder
+├── charts/                 # Plotly figure builders
+│   ├── __init__.py         # Exports COLORS, apply_theme
+│   ├── theme.py            # COLORS, LAYOUT_DEFAULTS, apply_theme()
+│   ├── portfolio_charts.py
+│   ├── sprint_charts.py
+│   ├── project_charts.py
+│   └── analytics_charts.py
+├── components/             # Reusable Dash UI components
+│   ├── kpi_card.py
+│   ├── portfolio_card.py
+│   ├── charter_display.py
+│   ├── charter_form.py
+│   ├── health_badge.py
+│   ├── empty_state.py
+│   ├── loading_wrapper.py
+│   ├── auto_refresh.py
+│   ├── error_boundary.py
+│   └── export_button.py
+├── callbacks/              # Dash callbacks (separate from pages)
+│   ├── __init__.py         # Imports all callback modules
+│   └── navigation.py       # Breadcrumb callback
+├── pages/                  # One file per route
 │   ├── dashboard.py        # /
 │   ├── charters.py         # /charters
-│   └── sprint.py           # /sprint (etc.)
+│   └── ...                 # Future pages
 ├── utils/
-│   ├── data_access.py      # ALL database queries go here. No SQL in pages.
-│   └── charts.py           # ALL Plotly figure builders go here.
-├── static/css/             # Custom CSS overrides
-├── assets/                 # Dash auto-loads from here (custom.css)
-└── tests/                  # Validation queries and smoke tests
+│   ├── url_state.py        # URL query param helpers
+│   └── labels.py           # Centralized user-facing strings
+├── assets/                 # Dash auto-loads (custom.css)
+└── tests/
+    ├── conftest.py
+    ├── test_pages/
+    └── test_charts/
 ```
 
-### Patterns — Always Follow These
+### Layer Rules
 
 **Pages** — Every page file must:
-1. Import `dash` and register with `dash.register_page(__name__, path="/route")`
+1. Register with `dash.register_page(__name__, path="/route")`
 2. Define a `layout()` function (not a variable)
-3. Import data from `utils/data_access.py` — never write SQL inline
-4. Import chart builders from `utils/charts.py` — never build figures inline
-5. Use Dash Bootstrap Components for layout (dbc.Row, dbc.Col, dbc.Card)
+3. Import data from `services/` — never write SQL or call repositories
+4. Import chart builders from `charts/` — never build figures inline
+5. Import UI pieces from `components/` — extract reusable parts
+6. Use Dash Bootstrap Components for layout (dbc.Row, dbc.Col, dbc.Card)
 
-**Data Access** — `utils/data_access.py` rules:
+**Services** — `services/` rules:
+1. Never import Dash (`dash`, `dbc`, `dcc`, `html`)
+2. Accept and return pure Python types (dicts, lists, DataFrames)
+3. Call repositories for data access
+4. Contain business logic, KPI calculations, orchestration
+
+**Repositories** — `repositories/` rules:
 1. Every query is a named function: `get_portfolios()`, `get_sprint_tasks(sprint_id)`
 2. Functions return `pd.DataFrame` always
-3. Parameterized queries use f-strings with the parameter (we're inside Unity Catalog auth)
-4. Every function has a sample data fallback for local development
-5. Write operations (INSERT, UPDATE) are separate functions with explicit names
+3. All SQL uses parameterized queries (`:param_name` with `parameters={}` dict)
+4. **Never** use f-strings for SQL — this is a security rule
+5. Every function has a sample data fallback via `@query` decorator
+6. `safe_update()` uses optimistic locking via `updated_at`
+7. All queries include `WHERE is_deleted = false` by default
 
-**Charts** — `utils/charts.py` rules:
-1. Every chart is a function that takes a DataFrame and returns a `go.Figure`
+**Charts** — `charts/` rules:
+1. Every chart function takes a DataFrame and returns a `go.Figure`
 2. All figures call `apply_theme(fig)` before returning
-3. Color constants live in the `COLORS` dict at the top of the file
+3. Color constants live in `charts/theme.py` COLORS dict
 4. Never hardcode colors inside chart functions
+
+**Components** — `components/` rules:
+1. Each file exports one or more functions returning Dash components
+2. Functions accept simple arguments (strings, dicts, DataFrames)
+3. Reusable across pages
 
 **Schema** — Unity Catalog conventions:
 1. Table names: lowercase, underscores, plural (`projects`, `team_members`)
@@ -97,7 +175,7 @@ databricks-pm-app/
 ### Styling
 
 - Dark theme. Always. The app uses a dark color palette.
-- COLORS dict in `charts.py` is the single source for all color values.
+- COLORS dict in `charts/theme.py` is the single source for all color values.
 - Use Dash Bootstrap SLATE theme as the base.
 - Custom CSS goes in `assets/custom.css` — never inline styles in Python
   unless it's dynamic (e.g., conditional coloring based on data).
@@ -144,10 +222,12 @@ Branch naming: `{type}/{short-kebab-description}`
 
 ## What NOT To Do
 
-- **Never** put SQL queries directly in page files
+- **Never** put SQL queries in page or service files — SQL lives in repositories only
+- **Never** use f-string SQL — always parameterized (`:param_name`)
+- **Never** import Dash in services — services are UI-framework-agnostic
+- **Never** skip layers (pages must not call repositories directly)
 - **Never** build Plotly figures inside page files
 - **Never** use Streamlit patterns (st.write, st.columns) — this is Dash
-- **Never** use `WidthType.PERCENTAGE` in docx generation — always DXA
 - **Never** commit secrets, tokens, or warehouse IDs
 - **Never** modify `schema_ddl.sql` without creating a migration script
 - **Never** push directly to `main` — always PR through `develop`
@@ -163,19 +243,27 @@ Branch naming: `{type}/{short-kebab-description}`
 | 2026-02-24 | Hybrid waterfall/agile | PMI PMBOK 7 tailoring — governance + execution flexibility |
 | 2026-02-24 | Delta time travel over snapshots | Burndown reconstruction without building audit tables |
 | 2026-02-24 | sprints.phase_id bridge | Enables hybrid — sprints live inside waterfall phases |
+| 2026-02-25 | Layered architecture | Scalable to 13 pages, testable, secure (no SQL injection) |
+| 2026-02-25 | Skip Postgres for now | Unity Catalog only — Postgres deferred to future sprint |
+| 2026-02-25 | Pydantic BaseSettings | Type-safe config, env var loading, validation |
 
 ## Quick Reference
 
 ### Start local dev
 ```bash
 pip install -r requirements.txt
-python app.py
+USE_SAMPLE_DATA=true python app.py
 # → http://localhost:8050 (uses sample data fallback)
 ```
 
 ### Deploy to Databricks
 ```bash
 databricks apps deploy pm-hub --source-code-path .
+```
+
+### Run tests
+```bash
+USE_SAMPLE_DATA=true pytest tests/
 ```
 
 ### Run schema
@@ -185,7 +273,9 @@ databricks apps deploy pm-hub --source-code-path .
 ```
 
 ### Create a new page
-1. Create `pages/your_page.py`
-2. Add query functions to `utils/data_access.py`
-3. Add chart builders to `utils/charts.py` (if needed)
-4. Add nav link in `app.py` sidebar
+1. Create `pages/your_page.py` — register route, define `layout()`
+2. Add repository functions in `repositories/your_repo.py`
+3. Add service functions in `services/your_service.py`
+4. Add chart builders in `charts/` (if needed)
+5. Extract reusable UI into `components/` (if needed)
+6. Add nav link in `app.py` sidebar
