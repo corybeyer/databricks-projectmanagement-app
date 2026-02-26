@@ -12,6 +12,28 @@ from db.unity_catalog import execute_query, execute_write
 
 logger = logging.getLogger(__name__)
 
+# Allowlists for dynamic SQL construction — defense-in-depth against injection.
+# Only tables and columns listed here can be used in safe_update/soft_delete.
+ALLOWED_TABLES = {
+    "portfolios", "projects", "project_charters", "phases", "gates",
+    "deliverables", "sprints", "tasks", "status_transitions", "comments",
+    "time_entries", "team_members", "risks", "retro_items",
+    "resource_allocations", "dependencies", "audit_log", "notifications",
+}
+
+ALLOWED_ID_COLUMNS = {
+    "portfolio_id", "project_id", "charter_id", "phase_id", "gate_id",
+    "deliverable_id", "sprint_id", "task_id", "transition_id", "comment_id",
+    "entry_id", "user_id", "risk_id", "retro_id", "allocation_id",
+    "dependency_id", "log_id", "notification_id",
+}
+
+
+def _validate_identifier(value: str, allowlist: set, label: str) -> None:
+    """Validate that a SQL identifier is in the allowlist."""
+    if value not in allowlist:
+        raise ValueError(f"Invalid {label}: {value!r}")
+
 
 def query(sql_str: str, params: dict = None, user_token: str = None,
           sample_fallback=None) -> pd.DataFrame:
@@ -31,6 +53,12 @@ def safe_update(table: str, id_column: str, id_value: str,
                 updates: dict, expected_updated_at: str,
                 user_token: str = None) -> bool:
     """Optimistic locking update — fails if record was modified since last read."""
+    _validate_identifier(table, ALLOWED_TABLES, "table")
+    _validate_identifier(id_column, ALLOWED_ID_COLUMNS, "id_column")
+    for col in updates:
+        if not col.isidentifier():
+            raise ValueError(f"Invalid column name: {col!r}")
+
     set_clauses = ", ".join(f"{col} = :{col}" for col in updates)
     sql_str = (
         f"UPDATE {table} SET {set_clauses}, updated_at = current_timestamp() "
@@ -43,6 +71,9 @@ def safe_update(table: str, id_column: str, id_value: str,
 def soft_delete(table: str, id_column: str, id_value: str,
                 user_token: str = None) -> bool:
     """Soft delete — sets is_deleted = true and deleted_at = now()."""
+    _validate_identifier(table, ALLOWED_TABLES, "table")
+    _validate_identifier(id_column, ALLOWED_ID_COLUMNS, "id_column")
+
     sql_str = (
         f"UPDATE {table} SET is_deleted = true, deleted_at = current_timestamp(), "
         f"updated_at = current_timestamp() "

@@ -10,6 +10,8 @@ Deploy:       databricks apps deploy pm-app --source-code-path ./databricks-pm-a
 """
 
 import os
+import signal
+import sys
 import dash
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
@@ -118,7 +120,17 @@ app.layout = html.Div(
 )
 
 
+# ─── Graceful Shutdown ──────────────────────────────────────
+def _handle_sigterm(signum, frame):
+    """Handle SIGTERM from Databricks Apps for graceful shutdown."""
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, _handle_sigterm)
+
+
 # ─── Entry Point ────────────────────────────────────────────
 if __name__ == "__main__":
+    if settings.is_production and settings.debug:
+        raise RuntimeError("Debug mode must not be enabled in production")
     port = int(os.getenv("DATABRICKS_APP_PORT", settings.app_port))
     app.run(debug=settings.debug, host="0.0.0.0", port=port)
