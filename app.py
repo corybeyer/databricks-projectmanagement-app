@@ -2,18 +2,24 @@
 Databricks PM App — Portfolio & Project Management
 ====================================================
 Dash (Plotly) application deployed via Databricks Apps.
-Supports: Portfolio Management, Hybrid Waterfall/Agile, 
+Supports: Portfolio Management, Hybrid Waterfall/Agile,
 Project Charters, Sprint Boards, Gantt Timelines, Reporting.
 
 Run locally:  python app.py
 Deploy:       databricks apps deploy pm-app --source-code-path ./databricks-pm-app
 """
 
+import os
 import dash
-from dash import Dash, html, dcc, callback, Input, Output, State
+from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
+from config import get_settings
+from config.logging import setup_logging
 
-# ─── App Init ───────────────────────────────────────────────
+# ─── Init ──────────────────────────────────────────────────
+setup_logging()
+settings = get_settings()
+
 app = Dash(
     __name__,
     use_pages=True,
@@ -23,6 +29,9 @@ app = Dash(
     title="PM Hub — Portfolio & Project Management",
 )
 server = app.server  # Required for Databricks Apps deployment
+
+# Register callbacks
+import callbacks  # noqa: F401, E402
 
 # ─── Sidebar Navigation ────────────────────────────────────
 def make_nav_link(label, href, icon):
@@ -35,7 +44,6 @@ def make_nav_link(label, href, icon):
 
 sidebar = html.Div(
     [
-        # Logo / Brand
         html.Div(
             [
                 html.Div("PM", className="sidebar-logo"),
@@ -45,7 +53,6 @@ sidebar = html.Div(
         ),
         html.Hr(className="sidebar-divider"),
 
-        # Navigation sections
         html.Div("PORTFOLIO", className="sidebar-section-label"),
         make_nav_link("Dashboard", "/", "grid-1x2-fill"),
         make_nav_link("Portfolios", "/portfolios", "collection-fill"),
@@ -67,7 +74,6 @@ sidebar = html.Div(
         make_nav_link("Resource Allocation", "/resources", "people-fill"),
         make_nav_link("Risk Register", "/risks", "shield-exclamation"),
 
-        # Footer
         html.Div(
             [
                 html.Div("Unity Catalog", className="sidebar-footer-item"),
@@ -86,7 +92,6 @@ app.layout = html.Div(
         sidebar,
         html.Div(
             [
-                # Top bar
                 html.Div(
                     [
                         html.Div(id="page-breadcrumb", className="topbar-breadcrumb"),
@@ -101,7 +106,6 @@ app.layout = html.Div(
                     ],
                     className="topbar",
                 ),
-                # Page content
                 html.Div(
                     dash.page_container,
                     className="page-content",
@@ -114,35 +118,7 @@ app.layout = html.Div(
 )
 
 
-# ─── Breadcrumb callback ────────────────────────────────────
-@callback(
-    Output("page-breadcrumb", "children"),
-    Input("url", "pathname"),
-)
-def update_breadcrumb(pathname):
-    page_names = {
-        "/": "Portfolio Dashboard",
-        "/portfolios": "Portfolios",
-        "/roadmap": "Roadmap Timeline",
-        "/projects": "All Projects",
-        "/charters": "Project Charters",
-        "/gantt": "Gantt Timeline",
-        "/sprint": "Sprint Board",
-        "/my-work": "My Work",
-        "/backlog": "Backlog",
-        "/retros": "Retrospectives",
-        "/reports": "Reports",
-        "/resources": "Resource Allocation",
-        "/risks": "Risk Register",
-    }
-    name = page_names.get(pathname, "Page")
-    return [
-        html.Span("PM Hub", className="breadcrumb-root"),
-        html.Span(" / ", className="breadcrumb-sep"),
-        html.Span(name, className="breadcrumb-current"),
-    ]
-
-
 # ─── Entry Point ────────────────────────────────────────────
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=8050)
+    port = int(os.getenv("DATABRICKS_APP_PORT", settings.app_port))
+    app.run(debug=settings.debug, host="0.0.0.0", port=port)
