@@ -5,7 +5,7 @@ Portfolio list with drill-down, budget burn chart, strategic bubble chart.
 """
 
 import dash
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.portfolio_service import get_dashboard_data, get_portfolio_projects
@@ -47,7 +47,8 @@ def _project_row(project):
     ], className="bg-transparent border-secondary")
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     data = get_dashboard_data(user_token=token)
     portfolios = data["portfolios"]
@@ -118,6 +119,19 @@ def layout():
             ], className="mb-3")
             for _, row in portfolios.iterrows()
         ] if not portfolios.empty else [empty_state("No portfolios found.")]),
-
-        auto_refresh(),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="portfolios-content"),
+        auto_refresh(interval_id="portfolios-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("portfolios-content", "children"),
+    Input("portfolios-refresh-interval", "n_intervals"),
+)
+def refresh_portfolios(n):
+    return _build_content()

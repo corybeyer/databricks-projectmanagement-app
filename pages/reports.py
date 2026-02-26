@@ -5,7 +5,7 @@ Analytics dashboard: velocity trends, cycle time analysis, gate status.
 """
 
 import dash
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.analytics_service import get_velocity, get_cycle_times, get_gate_status
@@ -58,7 +58,8 @@ def _gate_row(gate):
     ])
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     velocity_df = get_velocity("prj-001", user_token=token)
     cycle_df = get_cycle_times("prj-001", user_token=token)
@@ -144,6 +145,19 @@ def layout():
                     className="table-dark table-sm"),
             ] if not gates_df.empty else [empty_state("No gate data.")]),
         ]),
-
-        auto_refresh(),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="reports-content"),
+        auto_refresh(interval_id="reports-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("reports-content", "children"),
+    Input("reports-refresh-interval", "n_intervals"),
+)
+def refresh_reports(n):
+    return _build_content()
