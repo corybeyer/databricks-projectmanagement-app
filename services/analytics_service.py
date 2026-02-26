@@ -1,6 +1,6 @@
 """Analytics Service — report aggregation."""
 
-from repositories import analytics_repo, risk_repo, resource_repo
+from repositories import analytics_repo, risk_repo, resource_repo, retro_repo
 
 
 def get_velocity(project_id: str, user_token: str = None):
@@ -36,4 +36,4 @@ def get_resource_allocations(user_token: str = None):
 
 
 def get_retro_items(sprint_id: str, user_token: str = None):
-    return resource_repo.get_retro_items(sprint_id, user_token=user_token)
+    return retro_repo.get_retro_items(sprint_id, user_token=user_token)

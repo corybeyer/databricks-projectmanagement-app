@@ -1,7 +1,7 @@
-"""Portfolio Repository — portfolio and portfolio-project queries."""
+"""Portfolio Repository — portfolio CRUD and portfolio-project queries."""
 
 import pandas as pd
-from repositories.base import query
+from repositories.base import query, write, safe_update, soft_delete
 from models import sample_data
 
 
@@ -20,6 +20,15 @@ def get_portfolios(user_token: str = None) -> pd.DataFrame:
     """, user_token=user_token, sample_fallback=sample_data.get_portfolios)
 
 
+def get_portfolio_by_id(portfolio_id: str, user_token: str = None) -> pd.DataFrame:
+    """Get a single portfolio by ID."""
+    return query(
+        "SELECT * FROM portfolios WHERE portfolio_id = :portfolio_id AND is_deleted = false",
+        params={"portfolio_id": portfolio_id}, user_token=user_token,
+        sample_fallback=sample_data.get_portfolios,
+    )
+
+
 def get_portfolio_projects(portfolio_id: str, user_token: str = None) -> pd.DataFrame:
     return query("""
         SELECT pr.*,
@@ -35,3 +44,46 @@ def get_portfolio_projects(portfolio_id: str, user_token: str = None) -> pd.Data
         ORDER BY pr.priority_rank
     """, params={"portfolio_id": portfolio_id}, user_token=user_token,
         sample_fallback=sample_data.get_portfolio_projects)
+
+
+def create_portfolio(portfolio_data: dict, user_token: str = None) -> bool:
+    """Insert a new portfolio. Uses allowed_columns whitelist."""
+    allowed_columns = {
+        "portfolio_id", "name", "owner", "department_id", "status",
+        "health", "description", "strategic_priority", "created_by",
+    }
+    params = {}
+    used_cols = []
+    for col in allowed_columns:
+        if col in portfolio_data:
+            if not col.isidentifier():
+                raise ValueError(f"Invalid column name: {col!r}")
+            used_cols.append(col)
+            params[col] = portfolio_data[col]
+
+    col_list = ", ".join(used_cols)
+    param_list = ", ".join(f":{col}" for col in used_cols)
+    return write(
+        f"INSERT INTO portfolios ({col_list}) VALUES ({param_list})",
+        params=params, user_token=user_token,
+        table_name="portfolios", record=portfolio_data,
+    )
+
+
+def update_portfolio(portfolio_id: str, updates: dict, expected_updated_at: str,
+                     user_email: str = None, user_token: str = None) -> bool:
+    """Update a portfolio via optimistic locking."""
+    return safe_update(
+        "portfolios", "portfolio_id", portfolio_id, updates,
+        expected_updated_at=expected_updated_at,
+        user_email=user_email, user_token=user_token,
+    )
+
+
+def delete_portfolio(portfolio_id: str, user_email: str = None,
+                     user_token: str = None) -> bool:
+    """Soft-delete a portfolio."""
+    return soft_delete(
+        "portfolios", "portfolio_id", portfolio_id,
+        user_email=user_email, user_token=user_token,
+    )

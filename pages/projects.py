@@ -1,28 +1,66 @@
 """
-All Projects Page
-==================
-Project list with health badges, progress bars, and key metrics.
+All Projects Page -- Full CRUD
+===============================
+Project list with health badges, progress bars, key metrics,
+and create/edit/delete via CRUD modal.
 """
 
+import json
 import dash
-from dash import html, dcc, callback, Input, Output
+from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token
-from services.portfolio_service import get_portfolio_projects
+from services.auth_service import get_user_token, get_user_email
+from services import project_service
 from components.health_badge import health_badge
 from components.empty_state import empty_state
 from components.auto_refresh import auto_refresh
+from components.crud_modal import (
+    crud_modal, confirm_delete_modal, get_modal_values,
+    set_field_errors, modal_field_states, modal_error_outputs,
+)
 from charts.theme import COLORS
 
 dash.register_page(__name__, path="/projects", name="All Projects")
 
+# -- CRUD Modal Field Definitions -----------------------------------
+
+PROJECT_FIELDS = [
+    {"id": "name", "label": "Project Name", "type": "text", "required": True,
+     "placeholder": "Enter project name"},
+    {"id": "delivery_method", "label": "Delivery Method", "type": "select", "required": True,
+     "options": [{"label": "Waterfall", "value": "waterfall"},
+                 {"label": "Agile", "value": "agile"},
+                 {"label": "Hybrid", "value": "hybrid"}]},
+    {"id": "status", "label": "Status", "type": "select", "required": True,
+     "options": [{"label": "Planning", "value": "planning"},
+                 {"label": "Active", "value": "active"},
+                 {"label": "On Hold", "value": "on_hold"},
+                 {"label": "Completed", "value": "completed"}]},
+    {"id": "health", "label": "Health", "type": "select", "required": True,
+     "options": [{"label": "On Track", "value": "green"},
+                 {"label": "At Risk", "value": "yellow"},
+                 {"label": "Off Track", "value": "red"}]},
+    {"id": "owner", "label": "Owner", "type": "text", "required": True,
+     "placeholder": "Project owner"},
+    {"id": "start_date", "label": "Start Date", "type": "date", "required": True},
+    {"id": "target_date", "label": "Target Date", "type": "date", "required": False},
+    {"id": "budget_total", "label": "Budget ($)", "type": "number", "required": False,
+     "placeholder": "Total budget"},
+    {"id": "description", "label": "Description", "type": "textarea", "required": False,
+     "rows": 3},
+]
+
+
+# -- Helper functions -----------------------------------------------
+
 
 def _project_card(project):
-    """Render a project summary card."""
-    pct = project.get("pct_complete", 0)
-    budget_pct = (
-        project.get("budget_spent", 0) / max(project.get("budget_total", 1), 1) * 100
-    )
+    """Render a project summary card with edit/delete buttons."""
+    pct = project.get("pct_complete", 0) or 0
+    budget_total = max(project.get("budget_total", 1) or 1, 1)
+    budget_pct = (project.get("budget_spent", 0) or 0) / budget_total * 100
+    project_id = project.get("project_id", "")
+
     return dbc.Col([
         dbc.Card([
             dbc.CardHeader([
@@ -35,9 +73,13 @@ def _project_card(project):
                 html.Div([
                     html.Small("Method", className="text-muted d-block"),
                     html.Span(
-                        project.get("delivery_method", "N/A").title(),
+                        (project.get("delivery_method") or "N/A").title(),
                         className="badge bg-secondary",
                     ),
+                ], className="mb-2"),
+                html.Div([
+                    html.Small("Owner", className="text-muted d-block"),
+                    html.Span(project.get("owner") or "Unassigned"),
                 ], className="mb-2"),
                 html.Div([
                     html.Small("Phase", className="text-muted d-block"),
@@ -71,11 +113,25 @@ def _project_card(project):
                 ]),
             ]),
             dbc.CardFooter([
-                html.Small(
-                    f"${project.get('budget_spent', 0):,.0f} / "
-                    f"${project.get('budget_total', 0):,.0f}",
-                    className="text-muted",
-                ),
+                html.Div([
+                    html.Small(
+                        f"${project.get('budget_spent', 0) or 0:,.0f} / "
+                        f"${project.get('budget_total', 0) or 0:,.0f}",
+                        className="text-muted",
+                    ),
+                    html.Div([
+                        dbc.Button(
+                            html.I(className="bi bi-pencil-square"),
+                            id={"type": "projects-project-edit-btn", "index": project_id},
+                            size="sm", color="link", className="p-0 me-2 text-muted",
+                        ),
+                        dbc.Button(
+                            html.I(className="bi bi-trash"),
+                            id={"type": "projects-project-delete-btn", "index": project_id},
+                            size="sm", color="link", className="p-0 text-muted",
+                        ),
+                    ], className="d-flex align-items-center"),
+                ], className="d-flex justify-content-between align-items-center"),
             ]),
         ], className="project-card h-100"),
     ], width=4, className="mb-3")
@@ -84,7 +140,19 @@ def _project_card(project):
 def _build_content():
     """Build the actual page content."""
     token = get_user_token()
-    projects = get_portfolio_projects("pf-001", user_token=token)
+    projects = project_service.get_projects(user_token=token)
+
+    # Filter out deleted
+    if not projects.empty and "is_deleted" in projects.columns:
+        projects = projects[projects["is_deleted"] == False]  # noqa: E712
+
+    total = len(projects)
+    if not projects.empty:
+        green_count = len(projects[projects["health"] == "green"])
+        yellow_count = len(projects[projects["health"] == "yellow"])
+        red_count = len(projects[projects["health"] == "red"])
+    else:
+        green_count = yellow_count = red_count = 0
 
     return html.Div([
         html.H4("All Projects", className="page-title mb-3"),
@@ -98,25 +166,25 @@ def _build_content():
         dbc.Row([
             dbc.Col([
                 html.Div([
-                    html.Span(str(len(projects)), className="fs-4 fw-bold me-2"),
+                    html.Span(str(total), className="fs-4 fw-bold me-2"),
                     html.Span("projects", className="text-muted"),
                 ]),
             ], width="auto"),
             dbc.Col([
                 html.Div([
-                    html.Span("● ", style={"color": COLORS["green"]}),
+                    html.Span("* ", style={"color": COLORS["green"]}),
                     html.Span(
-                        f"{len(projects[projects['health'] == 'green'])} on track",
+                        f"{green_count} on track",
                         className="text-muted me-3",
                     ),
-                    html.Span("● ", style={"color": COLORS["yellow"]}),
+                    html.Span("* ", style={"color": COLORS["yellow"]}),
                     html.Span(
-                        f"{len(projects[projects['health'] == 'yellow'])} at risk",
+                        f"{yellow_count} at risk",
                         className="text-muted me-3",
                     ),
-                    html.Span("● ", style={"color": COLORS["red"]}),
+                    html.Span("* ", style={"color": COLORS["red"]}),
                     html.Span(
-                        f"{len(projects[projects['health'] == 'red'])} off track",
+                        f"{red_count} off track",
                         className="text-muted",
                     ),
                 ]) if not projects.empty else html.Span(),
@@ -128,21 +196,203 @@ def _build_content():
             _project_card(row.to_dict())
             for _, row in projects.iterrows()
         ] if not projects.empty else [
-            dbc.Col(empty_state("No projects found."), width=12),
+            dbc.Col(empty_state("No projects found. Create one to get started."), width=12),
         ]),
     ])
 
 
+# -- Layout ----------------------------------------------------------
+
+
 def layout():
     return html.Div([
+        # Stores
+        dcc.Store(id="projects-mutation-counter", data=0),
+        dcc.Store(id="projects-selected-project-store", data=None),
+
+        # Toolbar
+        dbc.Row([
+            dbc.Col([], width=8),
+            dbc.Col([
+                dbc.Button(
+                    [html.I(className="bi bi-plus-circle me-1"), "New Project"],
+                    id="projects-add-project-btn", color="primary", size="sm",
+                ),
+            ], width=4, className="d-flex align-items-start justify-content-end"),
+        ], className="mb-3"),
+
+        # Content area
         html.Div(id="projects-content"),
         auto_refresh(interval_id="projects-refresh-interval"),
+
+        # Modals
+        crud_modal("projects-project", "Create Project", PROJECT_FIELDS, size="lg"),
+        confirm_delete_modal("projects-project", "project"),
     ])
+
+
+# -- Callbacks -------------------------------------------------------
 
 
 @callback(
     Output("projects-content", "children"),
     Input("projects-refresh-interval", "n_intervals"),
+    Input("projects-mutation-counter", "data"),
 )
-def refresh_projects(n):
+def refresh_projects(n, mutation_count):
+    """Refresh project content on interval or mutation."""
     return _build_content()
+
+
+@callback(
+    Output("projects-project-modal", "is_open", allow_duplicate=True),
+    Output("projects-project-modal-title", "children", allow_duplicate=True),
+    Output("projects-selected-project-store", "data", allow_duplicate=True),
+    Output("projects-project-name", "value", allow_duplicate=True),
+    Output("projects-project-delivery_method", "value", allow_duplicate=True),
+    Output("projects-project-status", "value", allow_duplicate=True),
+    Output("projects-project-health", "value", allow_duplicate=True),
+    Output("projects-project-owner", "value", allow_duplicate=True),
+    Output("projects-project-start_date", "value", allow_duplicate=True),
+    Output("projects-project-target_date", "value", allow_duplicate=True),
+    Output("projects-project-budget_total", "value", allow_duplicate=True),
+    Output("projects-project-description", "value", allow_duplicate=True),
+    Input("projects-add-project-btn", "n_clicks"),
+    Input({"type": "projects-project-edit-btn", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def toggle_project_modal(add_clicks, edit_clicks):
+    """Open project modal for create (blank) or edit (populated)."""
+    triggered = ctx.triggered_id
+
+    # Create mode
+    if triggered == "projects-add-project-btn":
+        return (True, "Create Project", None,
+                "", None, None, None, "", None, None, None, "")
+
+    # Edit mode -- pattern-match button
+    if isinstance(triggered, dict) and triggered.get("type") == "projects-project-edit-btn":
+        project_id = triggered["index"]
+        token = get_user_token()
+        project_df = project_service.get_project(project_id, user_token=token)
+        if project_df.empty:
+            return (no_update,) * 12
+        p = project_df.iloc[0]
+        stored = {"project_id": project_id, "updated_at": str(p.get("updated_at", ""))}
+        return (
+            True, f"Edit Project -- {p.get('name', project_id)}",
+            json.dumps(stored),
+            p.get("name", ""),
+            p.get("delivery_method"),
+            p.get("status"),
+            p.get("health"),
+            p.get("owner", ""),
+            p.get("start_date", ""),
+            p.get("target_date", ""),
+            p.get("budget_total"),
+            p.get("description", ""),
+        )
+
+    return (no_update,) * 12
+
+
+@callback(
+    Output("projects-project-modal", "is_open", allow_duplicate=True),
+    Output("projects-mutation-counter", "data", allow_duplicate=True),
+    Output("toast-message", "children", allow_duplicate=True),
+    Output("toast-message", "header", allow_duplicate=True),
+    Output("toast-message", "icon", allow_duplicate=True),
+    Output("toast-message", "is_open", allow_duplicate=True),
+    *modal_error_outputs("projects-project", PROJECT_FIELDS),
+    Input("projects-project-save-btn", "n_clicks"),
+    State("projects-selected-project-store", "data"),
+    State("projects-mutation-counter", "data"),
+    *modal_field_states("projects-project", PROJECT_FIELDS),
+    prevent_initial_call=True,
+)
+def save_project(n_clicks, stored_project, counter, *field_values):
+    """Save (create or update) a project."""
+    form_data = get_modal_values("projects-project", PROJECT_FIELDS, *field_values)
+
+    token = get_user_token()
+    email = get_user_email()
+
+    if stored_project:
+        stored = json.loads(stored_project) if isinstance(stored_project, str) else stored_project
+        project_id = stored["project_id"]
+        expected = stored.get("updated_at", "")
+        result = project_service.update_project_from_form(
+            project_id, form_data, expected,
+            user_email=email, user_token=token,
+        )
+    else:
+        result = project_service.create_project_from_form(
+            form_data, user_email=email, user_token=token,
+        )
+
+    if result["success"]:
+        no_errors = set_field_errors("projects-project", PROJECT_FIELDS, {})
+        error_outputs = []
+        for inv, fb in zip(no_errors[0], no_errors[1]):
+            error_outputs.extend([inv, fb])
+        return (False, (counter or 0) + 1, result["message"], "Success", "success", True,
+                *error_outputs)
+
+    errors = result.get("errors", {})
+    field_errors = set_field_errors("projects-project", PROJECT_FIELDS, errors)
+    error_outputs = []
+    for inv, fb in zip(field_errors[0], field_errors[1]):
+        error_outputs.extend([inv, fb])
+    return (True, no_update, result["message"], "Error", "danger", True,
+            *error_outputs)
+
+
+@callback(
+    Output("projects-project-delete-modal", "is_open", allow_duplicate=True),
+    Output("projects-project-delete-target-store", "data", allow_duplicate=True),
+    Input({"type": "projects-project-delete-btn", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def open_delete_modal(n_clicks_list):
+    """Open delete confirmation with the project ID."""
+    triggered = ctx.triggered_id
+    if not isinstance(triggered, dict):
+        return no_update, no_update
+    project_id = triggered["index"]
+    return True, project_id
+
+
+@callback(
+    Output("projects-project-delete-modal", "is_open", allow_duplicate=True),
+    Output("projects-mutation-counter", "data", allow_duplicate=True),
+    Output("toast-message", "children", allow_duplicate=True),
+    Output("toast-message", "header", allow_duplicate=True),
+    Output("toast-message", "icon", allow_duplicate=True),
+    Output("toast-message", "is_open", allow_duplicate=True),
+    Input("projects-project-delete-confirm-btn", "n_clicks"),
+    State("projects-project-delete-target-store", "data"),
+    State("projects-mutation-counter", "data"),
+    prevent_initial_call=True,
+)
+def confirm_delete_project(n_clicks, project_id, counter):
+    """Soft-delete the project."""
+    if not project_id:
+        return no_update, no_update, no_update, no_update, no_update, no_update
+
+    token = get_user_token()
+    email = get_user_email()
+    success = project_service.delete_project(project_id, user_email=email, user_token=token)
+
+    if success:
+        return False, (counter or 0) + 1, "Project deleted", "Deleted", "success", True
+    return False, no_update, "Failed to delete project", "Error", "danger", True
+
+
+@callback(
+    Output("projects-project-modal", "is_open", allow_duplicate=True),
+    Input("projects-project-cancel-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def cancel_project_modal(n):
+    """Close project modal on cancel."""
+    return False

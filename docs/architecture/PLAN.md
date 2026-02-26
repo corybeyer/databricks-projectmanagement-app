@@ -1,6 +1,6 @@
 # PM Hub — Road to Production Plan
 
-> Last updated: 2026-02-26 | Status: Phase 2b partially complete (2.3 Charter + 2.4 Risk done), Phase 2b.5/2b.6 next
+> Last updated: 2026-02-26 | Status: Phase 2 COMPLETE (all CRUD done), Phase 3 next
 
 ## Context
 
@@ -246,19 +246,38 @@ CREATE TABLE audit_log (
 - **Analytics service:** added `get_risks_by_project()`, `get_risks_overdue_review()` passthroughs
 - **Files:** `pages/risks.py`, `services/risk_service.py` (new), `repositories/risk_repo.py`, `charts/analytics_charts.py`, `services/analytics_service.py`
 
-#### 2.5 — Retrospective CRUD + Voting
-- Add retro item (went_well / improve / action) via inline form
-- Vote on items (increment vote count, one vote per user)
-- Mark action items as done / convert to task
-- Sprint selector for retros
-- Add `retro_service.py` (new), `retro_repo.py` (new)
-- **Files:** `pages/retros.py`, `services/retro_service.py` (new), `repositories/retro_repo.py` (new), `models/sample_data.py`
+#### 2.5 — Retrospective CRUD + Voting ✅
 
-#### 2.6 — Project & Portfolio CRUD
-- Create/edit project form (name, portfolio, department, delivery method, budget, dates, owner, sponsor)
-- Create/edit portfolio form (name, department, description, owner, strategic priority)
-- Soft delete with cascading considerations
-- **Files:** `pages/projects.py`, `pages/portfolios.py`, `services/project_service.py`, `services/portfolio_service.py`, `repositories/project_repo.py`, `repositories/portfolio_repo.py`
+*Completed: 2026-02-26 | PR #26 to develop*
+
+- Full retro item CRUD: create, edit, delete via crud_modal (category + body fields)
+- Sprint selector dropdown (all sprints, defaults to most recent closed)
+- Vote on items (atomic increment, works in both sample data and production)
+- Convert action items to tasks (marks status as "converted")
+- Three-column retro board (went_well, improve, action_item) with per-card action buttons
+- 4 KPI cards: Total Items, Total Votes, Action Items, Converted
+- Pattern-matching callbacks for vote/edit/delete/convert per card
+- **Services:** `retro_service.py` (new) — `create_retro_item_from_form()`, `update_retro_item_from_form()`, `delete_retro_item()`, `vote_retro_item()`, `convert_to_task()` with result dict pattern
+- **Repos:** `retro_repo.py` (new) — `get_retro_items()`, `get_retro_item_by_id()`, `create_retro_item()`, `update_retro_item()`, `delete_retro_item()`, `vote_retro_item()`, `convert_to_task()`
+- **Analytics:** `analytics_service.py` now routes retro items through `retro_repo` instead of `resource_repo`
+- **Sample data:** Retro items now include `author`, `status`, `item_text` alias columns
+- **Files:** `pages/retros.py`, `services/retro_service.py` (new), `repositories/retro_repo.py` (new), `services/analytics_service.py`, `models/sample_data.py`
+
+#### 2.6 — Project & Portfolio CRUD ✅
+
+*Completed: 2026-02-26 | PR #26 to develop*
+
+- Full project CRUD: create, edit, delete via crud_modal (9 fields: name, delivery_method, status, health, owner, start_date, target_date, budget, description)
+- Full portfolio CRUD: create, edit, delete via crud_modal (4 fields: name, owner, description, strategic_priority)
+- `validate_portfolio_create()` composite validator added to `utils/validators.py`
+- Project cards with edit/delete buttons, health badges, progress bars
+- Portfolio sections with edit/delete buttons, KPI strip, charts preserved
+- **Services:** `project_service.py` expanded — `create_project_from_form()`, `update_project_from_form()`, `delete_project()`, `get_projects()`
+- **Services:** `portfolio_service.py` expanded — `create_portfolio_from_form()`, `update_portfolio_from_form()`, `delete_portfolio()`, `get_portfolio()`
+- **Repos:** `project_repo.py` expanded — `get_projects()`, `get_project_by_id()`, `create_project()`, `update_project()`, `delete_project()` (17-column allowlist)
+- **Repos:** `portfolio_repo.py` expanded — `get_portfolio_by_id()`, `create_portfolio()`, `update_portfolio()`, `delete_portfolio()` (9-column allowlist)
+- **Sample data:** Portfolios now include `description`, `strategic_priority`, `created_by`; projects include `owner`, `sponsor`, `department_id`, `created_by`
+- **Files:** `pages/projects.py`, `pages/portfolios.py`, `services/project_service.py`, `services/portfolio_service.py`, `repositories/project_repo.py`, `repositories/portfolio_repo.py`, `utils/validators.py`, `models/sample_data.py`
 
 ---
 
@@ -408,8 +427,8 @@ Work in phase order. Within each phase, tasks can be parallelized.
 - **Phase 1** (Foundation) ✅ → plumbing for interactivity
 - **Phase 2 prereqs** (In-memory writes + shared modal) ✅ → unblocked all CRUD work
 - **Phase 2a** (Task & Sprint CRUD) ✅ → highest daily-use value, completed
-- **Phase 2b** (Charter + Risk CRUD) ✅ → 2.3 + 2.4 complete; 2.5 + 2.6 NEXT
-- **Phase 3** (Navigation & Multi-Dept) → organizational hierarchy (3.1/3.2 can parallel 2b)
+- **Phase 2b** (Charter + Risk + Retro + Project/Portfolio CRUD) ✅ → ALL COMPLETE
+- **Phase 3** (Navigation & Multi-Dept) → organizational hierarchy — NEXT
 - **Phase 4** (PMI Features) → PMBOK 7 knowledge area coverage
 - **Phase 5** (Polish) → production hardening
 
