@@ -21,7 +21,7 @@ def get_velocity(project_id: str, user_token: str = None) -> pd.DataFrame:
         GROUP BY ALL
         ORDER BY s.start_date
     """, params={"project_id": project_id}, user_token=user_token,
-        sample_fallback=sample_data.get_empty)
+        sample_fallback=sample_data.get_velocity)
 
 
 def get_burndown(sprint_id: str, user_token: str = None) -> pd.DataFrame:
@@ -47,7 +47,7 @@ def get_burndown(sprint_id: str, user_token: str = None) -> pd.DataFrame:
         GROUP BY d.burn_date
         ORDER BY d.burn_date
     """, params={"sprint_id": sprint_id}, user_token=user_token,
-        sample_fallback=sample_data.get_empty)
+        sample_fallback=sample_data.get_burndown)
 
 
 def get_status_cycle_times(project_id: str, user_token: str = None) -> pd.DataFrame:
@@ -70,7 +70,7 @@ def get_status_cycle_times(project_id: str, user_token: str = None) -> pd.DataFr
           AND t.is_deleted = false
         ORDER BY t.task_id, st.transitioned_at
     """, params={"project_id": project_id}, user_token=user_token,
-        sample_fallback=sample_data.get_empty)
+        sample_fallback=sample_data.get_cycle_times)
 
 
 def get_gate_status(project_id: str, user_token: str = None) -> pd.DataFrame:
@@ -83,4 +83,4 @@ def get_gate_status(project_id: str, user_token: str = None) -> pd.DataFrame:
           AND g.is_deleted = false
         ORDER BY g.gate_order
     """, params={"project_id": project_id}, user_token=user_token,
-        sample_fallback=sample_data.get_empty)
+        sample_fallback=sample_data.get_gate_status)

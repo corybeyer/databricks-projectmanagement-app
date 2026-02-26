@@ -30,4 +30,4 @@ def get_retro_items(sprint_id: str, user_token: str = None) -> pd.DataFrame:
           AND ri.is_deleted = false
         ORDER BY ri.votes DESC
     """, params={"sprint_id": sprint_id}, user_token=user_token,
-        sample_fallback=sample_data.get_empty)
+        sample_fallback=sample_data.get_retro_items)

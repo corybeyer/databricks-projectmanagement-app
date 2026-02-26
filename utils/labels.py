@@ -38,8 +38,36 @@ HEALTH_LABELS = {
     "red": "Off Track",
 }
 
+# Priority display
+PRIORITY_LABELS = {
+    "critical": "Critical",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+}
+
+# Retro categories
+RETRO_LABELS = {
+    "went_well": "Went Well",
+    "improve": "To Improve",
+    "action": "Action Items",
+}
+
+# Gate status
+GATE_LABELS = {
+    "approved": "Approved",
+    "pending": "Pending",
+    "rejected": "Rejected",
+    "deferred": "Deferred",
+}
+
 # Empty states
 EMPTY_PORTFOLIO = "No portfolios found."
 EMPTY_PROJECTS = "No projects found."
 EMPTY_TASKS = "No tasks found."
 EMPTY_CHARTER = "No charter found."
+EMPTY_RISKS = "No risks found."
+EMPTY_SPRINTS = "No sprints found."
+EMPTY_RETROS = "No retrospective items found."
+EMPTY_RESOURCES = "No resource data available."
+EMPTY_PHASES = "No phase data available."

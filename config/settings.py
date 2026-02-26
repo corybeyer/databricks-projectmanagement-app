@@ -26,15 +26,15 @@ class Settings(BaseSettings):
 
     # Feature flags
     feature_portfolios: bool = True
-    feature_roadmap: bool = False
-    feature_gantt: bool = False
-    feature_sprint: bool = False
-    feature_my_work: bool = False
-    feature_backlog: bool = False
-    feature_retros: bool = False
-    feature_reports: bool = False
-    feature_resources: bool = False
-    feature_risks: bool = False
+    feature_roadmap: bool = True
+    feature_gantt: bool = True
+    feature_sprint: bool = True
+    feature_my_work: bool = True
+    feature_backlog: bool = True
+    feature_retros: bool = True
+    feature_reports: bool = True
+    feature_resources: bool = True
+    feature_risks: bool = True
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

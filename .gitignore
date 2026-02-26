@@ -1,7 +1,40 @@
+# Environment files
 .env
+.env.*
+
+# Python
 __pycache__/
 *.pyc
-.pytest_cache/
+*.pyo
 *.egg-info/
 dist/
 build/
+venv/
+.venv/
+
+# Testing
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Credentials / secrets
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Databricks
+.databricks/
+.databrickscfg
+
+# Logs
+*.log

@@ -30,3 +30,80 @@ def test_charters_layout():
     result = layout()
     assert result is not None
     assert isinstance(result, html.Div)
+
+
+def test_portfolios_layout():
+    from pages.portfolios import layout
+    result = layout()
+    assert result is not None
+    assert isinstance(result, html.Div)
+
+
+def test_projects_layout():
+    from pages.projects import layout
+    result = layout()
+    assert result is not None
+    assert isinstance(result, html.Div)
+
+
+def test_sprint_layout():
+    from pages.sprint import layout
+    result = layout()
+    assert result is not None
+    assert isinstance(result, html.Div)
+
+
+def test_risks_layout():
+    from pages.risks import layout
+    result = layout()
+    assert result is not None
+    assert isinstance(result, html.Div)
+
+
+def test_resources_layout():
+    from pages.resources import layout
+    result = layout()
+    assert result is not None
+    assert isinstance(result, html.Div)
+
+
+def test_roadmap_layout():
+    from pages.roadmap import layout
+    result = layout()
+    assert result is not None
+    assert isinstance(result, html.Div)
+
+
+def test_gantt_layout():
+    from pages.gantt import layout
+    result = layout()
+    assert result is not None
+    assert isinstance(result, html.Div)
+
+
+def test_backlog_layout():
+    from pages.backlog import layout
+    result = layout()
+    assert result is not None
+    assert isinstance(result, html.Div)
+
+
+def test_my_work_layout():
+    from pages.my_work import layout
+    result = layout()
+    assert result is not None
+    assert isinstance(result, html.Div)
+
+
+def test_retros_layout():
+    from pages.retros import layout
+    result = layout()
+    assert result is not None
+    assert isinstance(result, html.Div)
+
+
+def test_reports_layout():
+    from pages.reports import layout
+    result = layout()
+    assert result is not None
+    assert isinstance(result, html.Div)
