@@ -1,6 +1,6 @@
 # PM Hub — Road to Production Plan
 
-> Last updated: 2026-02-25 | Status: Phase 0 complete, ready for Phase 1
+> Last updated: 2026-02-25 | Status: Phase 1 complete, ready for Phase 2
 
 ## Context
 
@@ -115,44 +115,51 @@ CREATE TABLE audit_log (
 
 ---
 
-## Phase 1: Foundation for Interactivity
+## Phase 1: Foundation for Interactivity ✅ COMPLETE
 
 *Wire the plumbing that all interactive features depend on.*
+*Completed: 2026-02-25 | PR #20 merged to develop | 24 files changed, +1,524 lines*
 
-### 1.1 — Toast/Alert Feedback System
-- Create `components/toast.py` — reusable success/error/warning toast
-- Add a toast container to `app.py` main layout
-- Pattern: callbacks return toast messages on write success/failure
-- **Files:** `components/toast.py` (new), `components/__init__.py`, `app.py`
+### 1.1 — Toast/Alert Feedback System ✅
+- Created `components/toast.py` — `toast_container()` with `dbc.Toast` (auto-dismiss 4s, positioned top-right)
+- Created `callbacks/toast_callbacks.py` — listens on `toast-store` for success/error/warning/info messages
+- `make_toast_output()` helper for callbacks that want direct toast control
+- Pages trigger toasts via: `Output("toast-store", "data")` → `{"message": "...", "type": "success", "header": "..."}`
+- **Files:** `components/toast.py` (new), `callbacks/toast_callbacks.py` (new), `components/__init__.py`, `app.py`
 
-### 1.2 — Auto-Refresh Callbacks (All 13 Pages)
-- Wire `dcc.Interval.n_intervals` → page content refresh on every page
-- Pattern: wrap page body in a callback that re-calls the service layer
-- Use `dash.callback_context` to distinguish initial load vs refresh
+### 1.2 — Auto-Refresh Callbacks (All 13 Pages) ✅
+- All 13 pages refactored: `layout()` → thin wrapper, `_build_content()` → full content builder
+- Each page has unique `dcc.Interval` ID (e.g., `dashboard-refresh-interval`) — no duplicate IDs
+- Callbacks wire interval Input to content container Output for 30-second auto-refresh
+- `charters.py` gained auto-refresh (previously missing)
 - **Files:** All 13 `pages/*.py`
 
-### 1.3 — Input Validation Layer
-- Create `utils/validators.py` — UUID validation, string length limits, enum checks, date range validation
-- Services call validators before passing to repos
+### 1.3 — Input Validation Layer ✅
+- Created `utils/validators.py` — 11 individual validators, 5 composite validators
+- `ValidationError` and `ValidationResult` classes for batch error collection
+- 20+ domain enum constants aligned with `schema_ddl.sql` (TASK_STATUSES, RISK_STATUSES, etc.)
+- Composite validators: `validate_task_create`, `validate_risk_create`, `validate_sprint_create`, `validate_project_create`, `validate_retro_item_create`
 - **Files:** `utils/validators.py` (new)
 
-### 1.4 — Client-Side State with dcc.Store
-- Add `dcc.Store` components for: active department_id, portfolio_id, project_id, sprint_id, user context
-- Pages read from Store rather than hardcoding IDs
-- Enables drill-down navigation (click department → portfolio → project)
-- **Files:** `app.py`, pages that need context
+### 1.4 — Client-Side State with dcc.Store ✅
+- Created `components/app_state.py` — `app_stores()` returns 6 `dcc.Store` components
+- Stores: `active-department-store`, `active-portfolio-store`, `active-project-store`, `active-sprint-store`, `user-context-store` (session), `toast-store` (memory)
+- Created `callbacks/state_callbacks.py` — URL-driven state updates (`?department_id=`, `?portfolio_id=`, etc.) and user context initialization
+- **Files:** `components/app_state.py` (new), `callbacks/state_callbacks.py` (new), `app.py`
 
-### 1.5 — Error Boundary Implementation
-- Make `components/error_boundary.py` actually catch callback exceptions
-- Show user-friendly error message instead of blank screen
+### 1.5 — Error Boundary Implementation ✅
+- Rewrote `components/error_boundary.py` with proper Dash error handling
+- `safe_render(fn)` — catches exceptions during layout building, shows error card
+- `safe_callback(msg)` — decorator for callbacks, catches and logs exceptions, returns error UI
+- `_error_card()` — dismissable `dbc.Alert` with expandable technical details
+- Original `error_boundary()` kept as passthrough for backwards compatibility
 - **Files:** `components/error_boundary.py`
 
-### 1.6 — Change History Pattern
-- Leverage Delta Lake time travel for point-in-time reconstruction (burndown already uses this)
-- For user-facing history: audit_log table (Phase 0.4) records field-level changes
-- `safe_update()` already does optimistic locking via `updated_at` — enforce it on ALL writes
-- Add "Last modified by [user] at [time]" footer to all edit modals
-- **Files:** `repositories/base.py` (ensure safe_update used everywhere), `services/audit_service.py`
+### 1.6 — Change History Pattern ✅
+- Created `services/change_history_service.py` — `track_update()` (field-level diff), `track_create()`, `track_delete()`, `track_approval()`, `get_history()`
+- Field-level change detection: compares old vs new dicts, logs each changed field to `audit_log` via `audit_service`
+- Created `components/change_history.py` — `change_history_panel()` timeline UI, `last_modified_footer()` for edit modals
+- **Files:** `services/change_history_service.py` (new), `components/change_history.py` (new), `components/__init__.py`
 
 ---
 

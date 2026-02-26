@@ -5,7 +5,7 @@ Sprint retrospective feedback organized by category with vote counts.
 """
 
 import dash
-from dash import html
+from dash import html, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.sprint_service import get_sprints
@@ -78,7 +78,8 @@ def _retro_column(category, items_df):
     ], width=4)
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     sprints = get_sprints("prj-001", user_token=token)
 
@@ -124,6 +125,19 @@ def layout():
                 ]),
             ]),
         ]),
-
-        auto_refresh(),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="retros-content"),
+        auto_refresh(interval_id="retros-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("retros-content", "children"),
+    Input("retros-refresh-interval", "n_intervals"),
+)
+def refresh_retros(n):
+    return _build_content()

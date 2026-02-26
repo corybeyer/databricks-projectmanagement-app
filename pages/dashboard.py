@@ -5,7 +5,7 @@ Top-level KPIs, portfolio health cards, project rollup.
 """
 
 import dash
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.portfolio_service import get_dashboard_data
@@ -18,7 +18,8 @@ from charts.portfolio_charts import portfolio_health_donut
 dash.register_page(__name__, path="/", name="Portfolio Dashboard")
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     data = get_dashboard_data(user_token=token)
     portfolios = data["portfolios"]
@@ -66,6 +67,19 @@ def layout():
                 ], className="portfolios-list"),
             ], width=8),
         ]),
-
-        auto_refresh(),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="dashboard-content"),
+        auto_refresh(interval_id="dashboard-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("dashboard-content", "children"),
+    Input("dashboard-refresh-interval", "n_intervals"),
+)
+def refresh_dashboard(n):
+    return _build_content()

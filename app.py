@@ -17,6 +17,8 @@ from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 from config import get_settings
 from config.logging import setup_logging
+from components.app_state import app_stores
+from components.toast import toast_container
 
 # ─── Init ──────────────────────────────────────────────────
 setup_logging()
@@ -91,6 +93,8 @@ sidebar = html.Div(
 app.layout = html.Div(
     [
         dcc.Location(id="url"),
+        *app_stores(),
+        toast_container(),
         sidebar,
         html.Div(
             [

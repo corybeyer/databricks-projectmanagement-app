@@ -5,7 +5,7 @@ Project phase Gantt chart with delivery method color coding.
 """
 
 import dash
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.project_service import get_project_phases, get_project_detail
@@ -18,7 +18,8 @@ from charts.project_charts import gantt_chart
 dash.register_page(__name__, path="/gantt", name="Gantt Timeline")
 
 
-def layout():
+def _build_content():
+    """Build the actual page content."""
     token = get_user_token()
     phases = get_project_phases("prj-001", user_token=token)
     project = get_project_detail("prj-001", user_token=token)
@@ -115,6 +116,19 @@ def layout():
                     className="table-dark table-sm"),
             ] if not phases.empty else [empty_state("No phase data.")]),
         ]),
-
-        auto_refresh(),
     ])
+
+
+def layout():
+    return html.Div([
+        html.Div(id="gantt-content"),
+        auto_refresh(interval_id="gantt-refresh-interval"),
+    ])
+
+
+@callback(
+    Output("gantt-content", "children"),
+    Input("gantt-refresh-interval", "n_intervals"),
+)
+def refresh_gantt(n):
+    return _build_content()
