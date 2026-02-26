@@ -918,3 +918,49 @@ def validate_retro_item_create(
 
     result.raise_if_invalid()
     return cleaned
+
+
+def validate_portfolio_create(
+    name,
+    owner,
+    description=None,
+    strategic_priority=None,
+    department_id=None,
+) -> dict:
+    """Validate all fields for portfolio creation. Returns cleaned data dict."""
+    result = ValidationResult()
+    cleaned = {}
+
+    try:
+        cleaned["name"] = validate_string(name, "name", max_length=200)
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["owner"] = validate_string(owner, "owner", max_length=200)
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["description"] = validate_string(
+            description, "description", max_length=5000, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["strategic_priority"] = validate_string(
+            strategic_priority, "strategic_priority", max_length=500, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["department_id"] = validate_string(
+            department_id, "department_id", max_length=50, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    result.raise_if_invalid()
+    return cleaned

@@ -38,15 +38,15 @@ databricks-pm-app/
 │
 ├── pages/                  # Dash multi-page app — one file per view
 │   ├── dashboard.py        # / — Portfolio KPIs, health, rollup
-│   ├── portfolios.py       # /portfolios — Portfolio detail view
+│   ├── portfolios.py       # /portfolios — Portfolio CRUD + budget burn charts
 │   ├── roadmap.py          # /roadmap — Multi-project Gantt timeline
-│   ├── projects.py         # /projects — All projects list + filters
+│   ├── projects.py         # /projects — Project CRUD + health tracking
 │   ├── charters.py         # /charters — Charter CRUD + approval workflow
 │   ├── gantt.py            # /gantt — Single project Gantt + gates
 │   ├── sprint.py           # /sprint — Kanban board + task CRUD
 │   ├── my_work.py          # /my-work — Current user's assignments + edit
 │   ├── backlog.py          # /backlog — Backlog management + task CRUD
-│   ├── retros.py           # /retros — Sprint retrospective board
+│   ├── retros.py           # /retros — Retro CRUD + voting + convert-to-task
 │   ├── reports.py          # /reports — Velocity, burndown, cycle time
 │   ├── resources.py        # /resources — Team allocation heatmap
 │   └── risks.py            # /risks — PMI risk lifecycle + CRUD + heatmap
@@ -55,8 +55,9 @@ databricks-pm-app/
 │   ├── base.py             # query(), write(), safe_update(), soft_delete()
 │   ├── task_repo.py        # Task CRUD + status transitions
 │   ├── sprint_repo.py      # Sprint CRUD + sprint tasks
-│   ├── portfolio_repo.py   # Portfolio queries
-│   ├── project_repo.py     # Project queries
+│   ├── portfolio_repo.py   # Portfolio CRUD
+│   ├── project_repo.py     # Project CRUD
+│   ├── retro_repo.py       # Retro item CRUD + voting
 │   └── ...                 # charter, risk, analytics, resource repos
 │
 ├── services/               # Business logic — NO Dash imports
@@ -64,8 +65,11 @@ databricks-pm-app/
 │   ├── sprint_service.py   # Sprint validation + orchestration
 │   ├── charter_service.py  # Charter CRUD + approval workflow
 │   ├── risk_service.py     # PMI risk lifecycle management
+│   ├── retro_service.py    # Retro CRUD + voting + convert-to-task
+│   ├── portfolio_service.py # Portfolio CRUD + dashboard aggregation
+│   ├── project_service.py  # Project CRUD + detail retrieval
 │   ├── auth_service.py     # OBO token, user identity
-│   └── ...                 # portfolio, project, analytics services
+│   └── ...                 # analytics services
 │
 ├── components/             # Reusable Dash UI components
 │   ├── crud_modal.py       # CRUD modal factory (6 public functions)
@@ -78,7 +82,7 @@ databricks-pm-app/
 │   └── ...                 # sprint, project, portfolio, analytics charts
 │
 ├── utils/
-│   ├── validators.py       # Input validation layer (11 validators, 5 composites)
+│   ├── validators.py       # Input validation layer (11 validators, 7 composites)
 │   ├── url_state.py        # URL query param helpers
 │   └── labels.py           # Centralized user-facing strings
 │

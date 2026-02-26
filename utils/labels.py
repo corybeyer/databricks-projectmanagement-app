@@ -51,6 +51,7 @@ RETRO_LABELS = {
     "went_well": "Went Well",
     "improve": "To Improve",
     "action": "Action Items",
+    "action_item": "Action Items",
 }
 
 # Gate status

@@ -1,6 +1,8 @@
-"""Portfolio Service — KPI calculations and portfolio data."""
+"""Portfolio Service — KPI calculations, portfolio CRUD orchestration."""
 
+import uuid
 from repositories import portfolio_repo
+from utils.validators import validate_portfolio_create, ValidationError
 
 
 def get_dashboard_data(user_token: str = None) -> dict:
@@ -29,3 +31,89 @@ def get_dashboard_data(user_token: str = None) -> dict:
 
 def get_portfolio_projects(portfolio_id: str, user_token: str = None):
     return portfolio_repo.get_portfolio_projects(portfolio_id, user_token=user_token)
+
+
+def get_portfolio(portfolio_id: str, user_token: str = None):
+    """Get a single portfolio by ID."""
+    return portfolio_repo.get_portfolio_by_id(portfolio_id, user_token=user_token)
+
+
+def create_portfolio_from_form(form_data: dict, user_email: str = None,
+                               user_token: str = None) -> dict:
+    """Validate and create a portfolio. Returns result dict."""
+    try:
+        cleaned = validate_portfolio_create(
+            name=form_data.get("name"),
+            owner=form_data.get("owner"),
+            description=form_data.get("description"),
+            strategic_priority=form_data.get("strategic_priority"),
+            department_id=form_data.get("department_id"),
+        )
+    except ValidationError as exc:
+        return {"success": False, "errors": {exc.field: exc.message}, "message": exc.message}
+
+    portfolio_data = {
+        "portfolio_id": f"pf-{str(uuid.uuid4())[:6]}",
+        "name": cleaned["name"],
+        "owner": cleaned["owner"],
+        "status": "active",
+        "health": "green",
+        "created_by": user_email,
+    }
+
+    # Optional fields
+    if cleaned.get("description"):
+        portfolio_data["description"] = cleaned["description"]
+    if cleaned.get("strategic_priority"):
+        portfolio_data["strategic_priority"] = cleaned["strategic_priority"]
+    if cleaned.get("department_id"):
+        portfolio_data["department_id"] = cleaned["department_id"]
+
+    success = portfolio_repo.create_portfolio(portfolio_data, user_token=user_token)
+    if success:
+        return {"success": True, "errors": {},
+                "message": f"Portfolio '{cleaned['name']}' created"}
+    return {"success": False, "errors": {}, "message": "Failed to create portfolio"}
+
+
+def update_portfolio_from_form(portfolio_id: str, form_data: dict,
+                               expected_updated_at: str,
+                               user_email: str = None,
+                               user_token: str = None) -> dict:
+    """Validate and update a portfolio. Returns result dict."""
+    try:
+        cleaned = validate_portfolio_create(
+            name=form_data.get("name"),
+            owner=form_data.get("owner"),
+            description=form_data.get("description"),
+            strategic_priority=form_data.get("strategic_priority"),
+            department_id=form_data.get("department_id"),
+        )
+    except ValidationError as exc:
+        return {"success": False, "errors": {exc.field: exc.message}, "message": exc.message}
+
+    updates = {
+        "name": cleaned["name"],
+        "owner": cleaned["owner"],
+    }
+    for field in ("description", "strategic_priority", "department_id"):
+        if cleaned.get(field) is not None:
+            updates[field] = cleaned[field]
+
+    success = portfolio_repo.update_portfolio(
+        portfolio_id, updates, expected_updated_at,
+        user_email=user_email, user_token=user_token,
+    )
+    if success:
+        return {"success": True, "errors": {},
+                "message": f"Portfolio '{cleaned['name']}' updated"}
+    return {"success": False, "errors": {},
+            "message": "Update conflict — record was modified by another user"}
+
+
+def delete_portfolio(portfolio_id: str, user_email: str = None,
+                     user_token: str = None) -> bool:
+    """Soft-delete a portfolio."""
+    return portfolio_repo.delete_portfolio(
+        portfolio_id, user_email=user_email, user_token=user_token,
+    )

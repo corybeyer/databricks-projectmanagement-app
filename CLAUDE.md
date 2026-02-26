@@ -33,7 +33,7 @@ Unity Catalog Delta tables.
 
 See [docs/architecture-plan.md](docs/architecture-plan.md) for the scaffolding & architecture plan.
 See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production roadmap (Phase 0–5).
-**Current step**: Phase 2b — Remaining CRUD (Phases 0, 1, 2a & 2b.3/2b.4 complete)
+**Current step**: Phase 3 — Navigation & Multi-Dept (Phase 2 fully complete)
 **Pattern**: Pragmatic Layered Architecture with Repository Pattern
 **Call direction**: Pages → Services → Repositories → DB (never skip layers)
 
@@ -41,16 +41,18 @@ See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production ro
 
 - **Phase**: 3 — Production Roadmap (Schema → Foundation → CRUD → Navigation → PMI → Polish)
 - **Roadmap**: See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) — 32 tasks across 6 phases
-- **Current Work**: Phase 2b remaining — retro CRUD (2.5) and project/portfolio CRUD (2.6)
+- **Current Work**: Phase 3 — Navigation, hierarchy, multi-department
 - **Phase 0 Done**: Departments, user tracking, PMI risks, audit log, schema fixes (PR #19)
 - **Phase 1 Done**: Toast system, auto-refresh (13 pages), validation layer, dcc.Store state, error boundaries, change history (PR #20)
 - **Phase 2 Prereqs Done**: In-memory write mode, CRUD modal component, task_fields (PR #22)
 - **Phase 2a Done**: Task CRUD + kanban, sprint management, backlog CRUD, my-work edit (PR #23)
-- **Phase 2b.3 Done**: Charter CRUD + approval workflow (draft→submitted→approved→rejected) (PR #24)
-- **Phase 2b.4 Done**: PMI Risk Management full lifecycle — create/edit/delete, status transitions, residual risk heatmap, review tracking (PR #24)
-- **Pages**: All 13/13 built; sprint, backlog, my-work, charters, risks have full CRUD; others awaiting CRUD modals
+- **Phase 2b.3 Done**: Charter CRUD + approval workflow (PR #24)
+- **Phase 2b.4 Done**: PMI Risk Management full lifecycle (PR #24)
+- **Phase 2b.5 Done**: Retrospective CRUD + voting, sprint selector, convert-to-task (PR #26)
+- **Phase 2b.6 Done**: Project & Portfolio CRUD + validate_portfolio_create (PR #26)
+- **Pages**: All 13/13 built; all 8 CRUD pages fully interactive (sprint, backlog, my-work, charters, risks, retros, projects, portfolios)
 - **Blockers**: None
-- **Next Gate**: Phase 2b.5/2b.6 complete → Phase 3 Navigation & Multi-Dept
+- **Next Gate**: Phase 3 Navigation & Multi-Dept
 
 ## Architecture Rules
 
