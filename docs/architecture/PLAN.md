@@ -1,6 +1,6 @@
 # PM Hub — Road to Production Plan
 
-> Last updated: 2026-02-25 | Status: Approved, ready for Phase 0
+> Last updated: 2026-02-25 | Status: Phase 0 complete, ready for Phase 1
 
 ## Context
 
@@ -17,9 +17,10 @@ PM Hub is a Databricks-hosted portfolio and project management app (Dash/Plotly)
 
 ---
 
-## Phase 0: Schema & Data Model Evolution
+## Phase 0: Schema & Data Model Evolution ✅ COMPLETE
 
 *Structural changes that everything else depends on. Must come first.*
+*Completed: 2026-02-25 | PR #19 merged to develop*
 
 ### 0.1 — Multi-Department Hierarchy
 The app must support multiple departments/business units operating independently.

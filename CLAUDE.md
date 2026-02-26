@@ -33,7 +33,7 @@ Unity Catalog Delta tables.
 
 See [docs/architecture-plan.md](docs/architecture-plan.md) for the scaffolding & architecture plan.
 See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production roadmap (Phase 0–5).
-**Current step**: Phase 0 — Schema & Data Model Evolution
+**Current step**: Phase 1 — Foundation for Interactivity (Phase 0 complete)
 **Pattern**: Pragmatic Layered Architecture with Repository Pattern
 **Call direction**: Pages → Services → Repositories → DB (never skip layers)
 
@@ -41,10 +41,11 @@ See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production ro
 
 - **Phase**: 3 — Production Roadmap (Schema → Foundation → CRUD → Navigation → PMI → Polish)
 - **Roadmap**: See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) — 32 tasks across 6 phases
-- **Current Work**: Phase 0 — Schema evolution (departments, user tracking, PMI risks, audit log)
+- **Current Work**: Phase 1 — Foundation for interactivity (toast, auto-refresh, validation, dcc.Store)
+- **Phase 0 Done**: Departments, user tracking, PMI risks, audit log, schema fixes (PR #19)
 - **Pages**: All 13/13 built — read-only, awaiting callbacks and CRUD
 - **Blockers**: None
-- **Next Gate**: Phase 0 complete → Phase 1 Foundation
+- **Next Gate**: Phase 1 complete → Phase 2 Core CRUD
 
 ## Architecture Rules
 
