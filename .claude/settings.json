@@ -31,6 +31,17 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -m py_compile \"$CLAUDE_FILE\" 2>&1 || echo 'Syntax error in edited file'"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "",
