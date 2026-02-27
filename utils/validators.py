@@ -920,6 +920,350 @@ def validate_retro_item_create(
     return cleaned
 
 
+def validate_phase_create(
+    name,
+    phase_type,
+    delivery_method,
+    phase_order,
+    start_date=None,
+    end_date=None,
+) -> dict:
+    """Validate all fields for phase creation. Returns cleaned data dict."""
+    result = ValidationResult()
+    cleaned = {}
+
+    try:
+        cleaned["name"] = validate_string(name, "name", max_length=200)
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["phase_type"] = validate_enum(
+            phase_type, PHASE_TYPES, "phase_type"
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["delivery_method"] = validate_enum(
+            delivery_method, DELIVERY_METHODS, "delivery_method"
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["phase_order"] = validate_integer(
+            phase_order, "phase_order", min_val=1, max_val=99
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["start_date"] = validate_date(
+            start_date, "start_date", required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["end_date"] = validate_date(
+            end_date, "end_date", required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    # If both dates present, ensure end >= start
+    if cleaned.get("start_date") and cleaned.get("end_date"):
+        if cleaned["end_date"] < cleaned["start_date"]:
+            result.add_error(
+                "end_date",
+                f"must be on or after start_date ({cleaned['start_date'].isoformat()})",
+            )
+
+    result.raise_if_invalid()
+    return cleaned
+
+
+def validate_gate_create(
+    name,
+    criteria=None,
+) -> dict:
+    """Validate all fields for gate creation. Returns cleaned data dict."""
+    result = ValidationResult()
+    cleaned = {}
+
+    try:
+        cleaned["name"] = validate_string(name, "name", max_length=200)
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["criteria"] = validate_string(
+            criteria, "criteria", max_length=5000, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    result.raise_if_invalid()
+    return cleaned
+
+
+def validate_dependency_create(
+    source_project_id,
+    target_project_id,
+    dependency_type,
+    risk_level,
+    description=None,
+    status=None,
+) -> dict:
+    """Validate all fields for dependency creation. Returns cleaned data dict."""
+    result = ValidationResult()
+
+    cleaned = {}
+
+    try:
+        cleaned["source_project_id"] = validate_string(
+            source_project_id, "source_project_id", max_length=50
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["target_project_id"] = validate_string(
+            target_project_id, "target_project_id", max_length=50
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    # Source and target must be different
+    if (cleaned.get("source_project_id") and cleaned.get("target_project_id")
+            and cleaned["source_project_id"] == cleaned["target_project_id"]):
+        result.add_error(
+            "target_project_id",
+            "target project must be different from source project",
+        )
+
+    try:
+        cleaned["dependency_type"] = validate_enum(
+            dependency_type, DEPENDENCY_TYPES, "dependency_type"
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["risk_level"] = validate_enum(
+            risk_level, DEPENDENCY_RISK_LEVELS, "risk_level"
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["description"] = validate_string(
+            description, "description", max_length=5000, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["status"] = validate_enum(
+            status, DEPENDENCY_STATUSES, "status", required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    result.raise_if_invalid()
+    return cleaned
+
+
+def validate_deliverable_create(
+    name,
+    status,
+    owner=None,
+    due_date=None,
+    description=None,
+    artifact_url=None,
+) -> dict:
+    """Validate all fields for deliverable creation. Returns cleaned data dict."""
+    result = ValidationResult()
+
+    cleaned = {}
+
+    try:
+        cleaned["name"] = validate_string(name, "name", max_length=200)
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["status"] = validate_enum(
+            status, DELIVERABLE_STATUSES, "status", required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["owner"] = validate_string(
+            owner, "owner", max_length=200, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["due_date"] = validate_date(
+            due_date, "due_date", required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["description"] = validate_string(
+            description, "description", max_length=5000, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["artifact_url"] = validate_string(
+            artifact_url, "artifact_url", max_length=2000, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    result.raise_if_invalid()
+    return cleaned
+
+
+def validate_time_entry_create(
+    task_id,
+    user_id,
+    hours,
+    work_date,
+    notes=None,
+) -> dict:
+    """Validate all fields for time entry creation. Returns cleaned data dict."""
+    result = ValidationResult()
+
+    cleaned = {}
+
+    try:
+        cleaned["task_id"] = validate_string(task_id, "task_id", max_length=50)
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["user_id"] = validate_string(user_id, "user_id", max_length=50)
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["hours"] = validate_float(
+            hours, "hours", min_val=0.01, max_val=24.0, required=True
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["work_date"] = validate_date(work_date, "work_date", required=True)
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["notes"] = validate_string(
+            notes, "notes", max_length=2000, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    result.raise_if_invalid()
+    return cleaned
+
+
+def validate_comment_create(
+    body,
+    author=None,
+) -> dict:
+    """Validate all fields for comment creation. Returns cleaned data dict."""
+    result = ValidationResult()
+
+    cleaned = {}
+
+    try:
+        cleaned["body"] = validate_string(body, "body", max_length=5000)
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["author"] = validate_string(
+            author, "author", max_length=200, required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    result.raise_if_invalid()
+    return cleaned
+
+
+def validate_assignment_create(
+    project_id,
+    user_id,
+    project_role,
+    allocation_pct,
+    start_date=None,
+    end_date=None,
+) -> dict:
+    """Validate all fields for project_team assignment creation. Returns cleaned data dict."""
+    result = ValidationResult()
+    cleaned = {}
+
+    try:
+        cleaned["project_id"] = validate_uuid(project_id, "project_id")
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["user_id"] = validate_uuid(user_id, "user_id")
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["project_role"] = validate_enum(
+            project_role, PROJECT_ROLES, "project_role"
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["allocation_pct"] = validate_integer(
+            allocation_pct, "allocation_pct", min_val=0, max_val=100
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["start_date"] = validate_date(
+            start_date, "start_date", required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    try:
+        cleaned["end_date"] = validate_date(
+            end_date, "end_date", required=False
+        )
+    except ValidationError as exc:
+        result.add_error(exc.field, exc.message)
+
+    # If both dates present, ensure end >= start
+    if cleaned.get("start_date") and cleaned.get("end_date"):
+        if cleaned["end_date"] < cleaned["start_date"]:
+            result.add_error(
+                "end_date",
+                f"must be on or after start_date ({cleaned['start_date'].isoformat()})",
+            )
+
+    result.raise_if_invalid()
+    return cleaned
+
+
 def validate_portfolio_create(
     name,
     owner,
