@@ -1,7 +1,7 @@
 """
 Portfolio Dashboard — Home Page
 ================================
-Top-level KPIs, portfolio health cards, project rollup.
+Top-level KPIs, department overview, portfolio health cards, project rollup.
 """
 
 import dash
@@ -9,20 +9,65 @@ from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 from services.auth_service import get_user_token
 from services.portfolio_service import get_dashboard_data
+from services.department_service import get_department_hierarchy
 from components.kpi_card import kpi_card
 from components.portfolio_card import portfolio_card
 from components.auto_refresh import auto_refresh
 from charts.theme import COLORS
 from charts.portfolio_charts import portfolio_health_donut
+from utils.url_state import set_params
 
 dash.register_page(__name__, path="/", name="Portfolio Dashboard")
 
 
-def _build_content():
+def _dept_card(dept):
+    """Render a department overview card with drill-down link."""
+    return dbc.Col([
+        dcc.Link(
+            dbc.Card([
+                dbc.CardBody([
+                    html.Div([
+                        html.I(className="bi bi-building me-2"),
+                        html.Span(dept.get("name", "Department"), className="fw-bold"),
+                    ], className="mb-2"),
+                    dbc.Row([
+                        dbc.Col([
+                            html.Div(str(int(dept.get("portfolio_count", 0))),
+                                     className="fs-5 fw-bold"),
+                            html.Small("Portfolios", className="text-muted"),
+                        ], className="text-center"),
+                        dbc.Col([
+                            html.Div(str(int(dept.get("member_count", 0))),
+                                     className="fs-5 fw-bold"),
+                            html.Small("Members", className="text-muted"),
+                        ], className="text-center"),
+                    ]),
+                ]),
+            ], className="h-100"),
+            href=set_params("/portfolios", department_id=dept.get("department_id")),
+            style={"textDecoration": "none", "color": "inherit"},
+        ),
+    ], width=3, className="mb-3")
+
+
+def _build_content(department_id=None):
     """Build the actual page content."""
     token = get_user_token()
-    data = get_dashboard_data(user_token=token)
+    data = get_dashboard_data(department_id=department_id, user_token=token)
     portfolios = data["portfolios"]
+
+    # Department overview row
+    dept_section = html.Div()
+    if not department_id:
+        depts = get_department_hierarchy(user_token=token)
+        if not depts.empty:
+            dept_section = html.Div([
+                html.H6("Departments", className="text-muted mb-2"),
+                dbc.Row([
+                    _dept_card(row.to_dict())
+                    for _, row in depts.iterrows()
+                ]),
+            ], className="mb-4")
 
     return html.Div([
         # KPI Strip
@@ -41,6 +86,9 @@ def _build_content():
                              COLORS["yellow"] if data["total_spent"]/max(data["total_budget"],1) > 0.7 else COLORS["green"]),
                     width=3),
         ], className="kpi-strip mb-4"),
+
+        # Department cards
+        dept_section,
 
         # Portfolio health donut + portfolio cards
         dbc.Row([
@@ -80,6 +128,7 @@ def layout():
 @callback(
     Output("dashboard-content", "children"),
     Input("dashboard-refresh-interval", "n_intervals"),
+    Input("active-department-store", "data"),
 )
-def refresh_dashboard(n):
-    return _build_content()
+def refresh_dashboard(n, department_id):
+    return _build_content(department_id=department_id)

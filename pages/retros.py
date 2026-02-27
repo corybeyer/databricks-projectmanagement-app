@@ -160,10 +160,11 @@ def _retro_column(category, items_df):
     ], width=4)
 
 
-def _build_content(sprint_id=None):
+def _build_content(sprint_id=None, project_id=None):
     """Build the actual page content."""
     token = get_user_token()
-    sprints = get_sprints("prj-001", user_token=token)
+    pid = project_id or "prj-001"
+    sprints = get_sprints(pid, user_token=token)
 
     # Determine which sprint to show
     if sprint_id and not sprints.empty:
@@ -281,11 +282,13 @@ def layout():
     Output("retros-sprint-selector", "options"),
     Output("retros-sprint-selector", "value"),
     Input("retros-refresh-interval", "n_intervals"),
+    Input("active-project-store", "data"),
 )
-def populate_sprint_selector(n):
+def populate_sprint_selector(n, active_project):
     """Populate the sprint selector dropdown."""
     token = get_user_token()
-    sprints = get_sprints("prj-001", user_token=token)
+    pid = active_project or "prj-001"
+    sprints = get_sprints(pid, user_token=token)
 
     if sprints.empty:
         return [], None
@@ -310,10 +313,11 @@ def populate_sprint_selector(n):
     Input("retros-refresh-interval", "n_intervals"),
     Input("retros-mutation-counter", "data"),
     Input("retros-sprint-selector", "value"),
+    Input("active-project-store", "data"),
 )
-def refresh_retros(n, mutation_count, sprint_id):
+def refresh_retros(n, mutation_count, sprint_id, active_project):
     """Refresh retro content on interval, mutation, or sprint change."""
-    return _build_content(sprint_id=sprint_id)
+    return _build_content(sprint_id=sprint_id, project_id=active_project)
 
 
 @callback(

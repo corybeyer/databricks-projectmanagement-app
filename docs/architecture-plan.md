@@ -6,6 +6,9 @@
 > Phase 2 (all CRUD) is fully complete: Task, Sprint, Charter, Risk, Retro,
 > Project, and Portfolio CRUD all operational with validation, optimistic locking,
 > and defense-in-depth patterns. 8 of 13 pages have full CRUD interactivity.
+> Phase 3 (Navigation & Multi-Dept) is complete: department/project selectors
+> in topbar, drill-down hierarchy (Dept → Portfolio → Project), filter bars
+> and sort toggles on data-heavy pages, context-aware breadcrumbs.
 > See [PLAN.md](architecture/PLAN.md) for the production roadmap.
 
 ## Context

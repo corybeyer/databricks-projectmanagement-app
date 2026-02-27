@@ -169,10 +169,11 @@ def _kanban_column(status, tasks_df):
     ], width=3)
 
 
-def _build_content(sprint_id=None):
+def _build_content(sprint_id=None, project_id=None):
     """Build the sprint board content for a given sprint."""
     token = get_user_token()
-    sprints = sprint_service.get_sprints("prj-001", user_token=token)
+    pid = project_id or "prj-001"
+    sprints = sprint_service.get_sprints(pid, user_token=token)
 
     # Determine which sprint to show
     if sprint_id and not sprints.empty:
@@ -196,7 +197,7 @@ def _build_content(sprint_id=None):
         tasks = sprint_service.get_sprint_tasks(sid, user_token=token)
         total_pts = done_pts = capacity = 0
 
-    velocity_df = get_velocity("prj-001", user_token=token)
+    velocity_df = get_velocity(pid, user_token=token)
     burndown_df = get_burndown(sid, user_token=token)
 
     return html.Div([
@@ -308,11 +309,13 @@ def layout():
     Output("sprint-selector", "options"),
     Output("sprint-selector", "value"),
     Input("sprint-refresh-interval", "n_intervals"),
+    Input("active-project-store", "data"),
 )
-def populate_sprint_selector(n):
+def populate_sprint_selector(n, active_project):
     """Load sprint options on page visit."""
     token = get_user_token()
-    sprints = sprint_service.get_sprints("prj-001", user_token=token)
+    pid = active_project or "prj-001"
+    sprints = sprint_service.get_sprints(pid, user_token=token)
     if sprints.empty:
         return [], None
 
@@ -330,10 +333,11 @@ def populate_sprint_selector(n):
     Input("sprint-refresh-interval", "n_intervals"),
     Input("sprint-mutation-counter", "data"),
     Input("sprint-selector", "value"),
+    Input("active-project-store", "data"),
 )
-def refresh_sprint(n, mutation_count, selected_sprint):
+def refresh_sprint(n, mutation_count, selected_sprint, active_project):
     """Refresh sprint content on interval, mutation, or sprint selection."""
-    return _build_content(sprint_id=selected_sprint)
+    return _build_content(sprint_id=selected_sprint, project_id=active_project)
 
 
 @callback(
@@ -388,14 +392,15 @@ def toggle_task_modal(add_clicks, edit_clicks, selected_sprint):
     State("sprint-selected-task-store", "data"),
     State("sprint-selector", "value"),
     State("sprint-mutation-counter", "data"),
+    State("active-project-store", "data"),
     *modal_field_states("sprint-task", TASK_FIELDS),
     prevent_initial_call=True,
 )
-def save_task(n_clicks, stored_task, selected_sprint, counter, *field_values):
+def save_task(n_clicks, stored_task, selected_sprint, counter, active_project, *field_values):
     """Save (create or update) a task."""
     form_data = get_modal_values("sprint-task", TASK_FIELDS, *field_values)
     form_data["sprint_id"] = selected_sprint
-    form_data["project_id"] = "prj-001"
+    form_data["project_id"] = active_project or "prj-001"
 
     token = get_user_token()
     email = get_user_email()
@@ -540,13 +545,14 @@ def toggle_sprint_modal(new_clicks, cancel_clicks):
     *modal_error_outputs("sprint-sprint", SPRINT_FIELDS),
     Input("sprint-sprint-save-btn", "n_clicks"),
     State("sprint-mutation-counter", "data"),
+    State("active-project-store", "data"),
     *modal_field_states("sprint-sprint", SPRINT_FIELDS),
     prevent_initial_call=True,
 )
-def save_sprint(n_clicks, counter, *field_values):
+def save_sprint(n_clicks, counter, active_project, *field_values):
     """Create a new sprint."""
     form_data = get_modal_values("sprint-sprint", SPRINT_FIELDS, *field_values)
-    form_data["project_id"] = "prj-001"
+    form_data["project_id"] = active_project or "prj-001"
 
     token = get_user_token()
     email = get_user_email()

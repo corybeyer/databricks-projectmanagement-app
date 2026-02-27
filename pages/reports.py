@@ -58,12 +58,13 @@ def _gate_row(gate):
     ])
 
 
-def _build_content():
+def _build_content(project_id=None):
     """Build the actual page content."""
     token = get_user_token()
-    velocity_df = get_velocity("prj-001", user_token=token)
-    cycle_df = get_cycle_times("prj-001", user_token=token)
-    gates_df = get_gate_status("prj-001", user_token=token)
+    pid = project_id or "prj-001"
+    velocity_df = get_velocity(pid, user_token=token)
+    cycle_df = get_cycle_times(pid, user_token=token)
+    gates_df = get_gate_status(pid, user_token=token)
 
     # Velocity stats
     if not velocity_df.empty:
@@ -158,6 +159,7 @@ def layout():
 @callback(
     Output("reports-content", "children"),
     Input("reports-refresh-interval", "n_intervals"),
+    Input("active-project-store", "data"),
 )
-def refresh_reports(n):
-    return _build_content()
+def refresh_reports(n, active_project):
+    return _build_content(project_id=active_project)

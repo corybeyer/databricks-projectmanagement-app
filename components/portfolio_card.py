@@ -1,8 +1,9 @@
 """Portfolio Card — portfolio summary with health badge and stats."""
 
-from dash import html
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 from charts.theme import COLORS
+from utils.url_state import set_params
 
 
 def portfolio_card(portfolio):
@@ -10,7 +11,7 @@ def portfolio_card(portfolio):
     health_labels = {"green": "ON TRACK", "yellow": "AT RISK", "red": "OFF TRACK"}
     h = portfolio.get("health", "green")
 
-    return dbc.Card([
+    card = dbc.Card([
         dbc.CardHeader([
             html.Div([
                 html.Div(portfolio["name"], className="portfolio-name"),
@@ -42,3 +43,7 @@ def portfolio_card(portfolio):
             html.Div(id=f"projects-{portfolio['portfolio_id']}", className="project-list"),
         ]),
     ], className="portfolio-card")
+
+    # Wrap in dcc.Link for drill-down navigation
+    href = set_params("/projects", portfolio_id=portfolio["portfolio_id"])
+    return dcc.Link(card, href=href, style={"textDecoration": "none", "color": "inherit"})

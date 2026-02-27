@@ -12,16 +12,29 @@ from services.analytics_service import get_resource_allocations
 from components.kpi_card import kpi_card
 from components.empty_state import empty_state
 from components.auto_refresh import auto_refresh
+from components.filter_bar import filter_bar
 from charts.theme import COLORS
 from charts.analytics_charts import resource_utilization_chart
 
 dash.register_page(__name__, path="/resources", name="Resource Allocation")
 
+RESOURCES_FILTERS = [
+    {"id": "role", "label": "Role", "type": "select", "multi": True,
+     "options": [{"label": "Lead", "value": "lead"},
+                 {"label": "Senior", "value": "senior"},
+                 {"label": "Member", "value": "member"},
+                 {"label": "Junior", "value": "junior"}]},
+]
 
-def _build_content():
+
+def _build_content(role_filter=None):
     """Build the actual page content."""
     token = get_user_token()
     resources = get_resource_allocations(user_token=token)
+
+    # Apply filters
+    if not resources.empty and role_filter and "role" in resources.columns:
+        resources = resources[resources["role"].isin(role_filter)]
 
     if not resources.empty:
         team_count = resources["display_name"].nunique()
@@ -110,6 +123,9 @@ def _build_content():
 
 def layout():
     return html.Div([
+        # Filters
+        filter_bar("resources", RESOURCES_FILTERS),
+
         html.Div(id="resources-content"),
         auto_refresh(interval_id="resources-refresh-interval"),
     ])
@@ -118,6 +134,7 @@ def layout():
 @callback(
     Output("resources-content", "children"),
     Input("resources-refresh-interval", "n_intervals"),
+    Input("resources-role-filter", "value"),
 )
-def refresh_resources(n):
-    return _build_content()
+def refresh_resources(n, role_filter):
+    return _build_content(role_filter=role_filter)
