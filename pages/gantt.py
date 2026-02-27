@@ -18,11 +18,12 @@ from charts.project_charts import gantt_chart
 dash.register_page(__name__, path="/gantt", name="Gantt Timeline")
 
 
-def _build_content():
+def _build_content(project_id=None):
     """Build the actual page content."""
     token = get_user_token()
-    phases = get_project_phases("prj-001", user_token=token)
-    project = get_project_detail("prj-001", user_token=token)
+    pid = project_id or "prj-001"
+    phases = get_project_phases(pid, user_token=token)
+    project = get_project_detail(pid, user_token=token)
 
     project_name = project.iloc[0]["name"] if not project.empty else "Project"
 
@@ -129,6 +130,7 @@ def layout():
 @callback(
     Output("gantt-content", "children"),
     Input("gantt-refresh-interval", "n_intervals"),
+    Input("active-project-store", "data"),
 )
-def refresh_gantt(n):
-    return _build_content()
+def refresh_gantt(n, active_project):
+    return _build_content(project_id=active_project)

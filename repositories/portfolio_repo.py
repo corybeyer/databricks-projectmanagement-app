@@ -5,7 +5,22 @@ from repositories.base import query, write, safe_update, soft_delete
 from models import sample_data
 
 
-def get_portfolios(user_token: str = None) -> pd.DataFrame:
+def get_portfolios(department_id: str = None, user_token: str = None) -> pd.DataFrame:
+    if department_id:
+        return query("""
+            SELECT p.*,
+                   COUNT(DISTINCT pr.project_id) as project_count,
+                   AVG(pr.pct_complete) as avg_completion,
+                   SUM(pr.budget_spent) as total_spent,
+                   SUM(pr.budget_total) as total_budget
+            FROM portfolios p
+            LEFT JOIN projects pr ON p.portfolio_id = pr.portfolio_id AND pr.is_deleted = false
+            WHERE p.is_deleted = false
+              AND p.department_id = :department_id
+            GROUP BY ALL
+            ORDER BY p.name
+        """, params={"department_id": department_id},
+            user_token=user_token, sample_fallback=sample_data.get_portfolios)
     return query("""
         SELECT p.*,
                COUNT(DISTINCT pr.project_id) as project_count,

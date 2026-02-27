@@ -20,6 +20,7 @@ from components.crud_modal import (
 from components.toast import make_toast_output
 from charts.theme import COLORS
 from utils.labels import STATUS_LABELS
+from components.filter_bar import filter_bar
 
 dash.register_page(__name__, path="/backlog", name="Backlog")
 
@@ -137,15 +138,27 @@ def _backlog_row(task, sprint_options):
     ], className="bg-transparent border-secondary")
 
 
-def _build_content():
+def _build_content(project_id=None, status_filter=None, priority_filter=None,
+                   assignee_filter=None, type_filter=None):
     """Build the actual page content."""
     token = get_user_token()
-    backlog = task_service.get_backlog("prj-001", user_token=token)
+    pid = project_id or "prj-001"
+    backlog = task_service.get_backlog(pid, user_token=token)
     sprint_options = _get_sprint_options()
 
     # Filter to backlog items (sprint_id is null)
     if not backlog.empty and "sprint_id" in backlog.columns:
         backlog = backlog[backlog["sprint_id"].isna() | (backlog["sprint_id"] == "")]
+
+    # Apply filters
+    if not backlog.empty and status_filter:
+        backlog = backlog[backlog["status"].isin(status_filter)]
+    if not backlog.empty and priority_filter:
+        backlog = backlog[backlog["priority"].isin(priority_filter)]
+    if not backlog.empty and assignee_filter and "assignee" in backlog.columns:
+        backlog = backlog[backlog["assignee"].isin(assignee_filter)]
+    if not backlog.empty and type_filter and "task_type" in backlog.columns:
+        backlog = backlog[backlog["task_type"].isin(type_filter)]
 
     if not backlog.empty:
         total = len(backlog)
@@ -188,6 +201,28 @@ def _build_content():
     ])
 
 
+BACKLOG_FILTERS = [
+    {"id": "status", "label": "Status", "type": "select", "multi": True,
+     "options": [{"label": "Backlog", "value": "backlog"},
+                 {"label": "To Do", "value": "todo"},
+                 {"label": "In Progress", "value": "in_progress"},
+                 {"label": "Done", "value": "done"}]},
+    {"id": "priority", "label": "Priority", "type": "select", "multi": True,
+     "options": [{"label": "Critical", "value": "critical"},
+                 {"label": "High", "value": "high"},
+                 {"label": "Medium", "value": "medium"},
+                 {"label": "Low", "value": "low"}]},
+    {"id": "assignee", "label": "Assignee", "type": "select", "multi": True,
+     "options": TEAM_MEMBER_OPTIONS},
+    {"id": "type", "label": "Type", "type": "select", "multi": True,
+     "options": [{"label": "Epic", "value": "epic"},
+                 {"label": "Story", "value": "story"},
+                 {"label": "Task", "value": "task"},
+                 {"label": "Bug", "value": "bug"},
+                 {"label": "Subtask", "value": "subtask"}]},
+]
+
+
 def layout():
     return html.Div([
         # Stores
@@ -203,6 +238,9 @@ def layout():
                 ),
             ], className="d-flex justify-content-end mb-3"),
         ]),
+
+        # Filters
+        filter_bar("backlog", BACKLOG_FILTERS),
 
         # Content
         html.Div(id="backlog-content"),
@@ -221,9 +259,21 @@ def layout():
     Output("backlog-content", "children"),
     Input("backlog-refresh-interval", "n_intervals"),
     Input("backlog-mutation-counter", "data"),
+    Input("active-project-store", "data"),
+    Input("backlog-status-filter", "value"),
+    Input("backlog-priority-filter", "value"),
+    Input("backlog-assignee-filter", "value"),
+    Input("backlog-type-filter", "value"),
 )
-def refresh_backlog(n, mutation_count):
-    return _build_content()
+def refresh_backlog(n, mutation_count, active_project, status_filter,
+                    priority_filter, assignee_filter, type_filter):
+    return _build_content(
+        project_id=active_project,
+        status_filter=status_filter,
+        priority_filter=priority_filter,
+        assignee_filter=assignee_filter,
+        type_filter=type_filter,
+    )
 
 
 @callback(
@@ -275,15 +325,16 @@ def toggle_task_modal(add_clicks, edit_clicks):
     Input("backlog-task-save-btn", "n_clicks"),
     State("backlog-selected-task-store", "data"),
     State("backlog-mutation-counter", "data"),
+    State("active-project-store", "data"),
     *modal_field_states("backlog-task", TASK_FIELDS),
     prevent_initial_call=True,
 )
-def save_task(n_clicks, stored_task, counter, *field_values):
+def save_task(n_clicks, stored_task, counter, active_project, *field_values):
     """Save (create or update) a backlog task."""
     form_data = get_modal_values("backlog-task", TASK_FIELDS, *field_values)
     form_data["status"] = "backlog"
     form_data["sprint_id"] = None
-    form_data["project_id"] = "prj-001"
+    form_data["project_id"] = active_project or "prj-001"
 
     token = get_user_token()
     email = get_user_email()

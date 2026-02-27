@@ -21,6 +21,7 @@ from components.crud_modal import (
 )
 from charts.theme import COLORS
 from charts.analytics_charts import risk_heatmap, risk_heatmap_residual
+from components.filter_bar import filter_bar, sort_toggle
 
 dash.register_page(__name__, path="/risks", name="Risk Register")
 
@@ -108,10 +109,28 @@ def _risk_score_display(score):
     return html.Span(str(score), style={"color": color, "fontWeight": "bold"})
 
 
-def _build_content(show_residual=False):
+def _build_content(show_residual=False, status_filter=None, category_filter=None,
+                   owner_search=None, sort_by=None):
     """Build the actual page content."""
     token = get_user_token()
     risks = risk_service.get_risks(user_token=token)
+
+    # Apply filters
+    if not risks.empty and status_filter:
+        risks = risks[risks["status"].isin(status_filter)]
+    if not risks.empty and category_filter and "category" in risks.columns:
+        risks = risks[risks["category"].isin(category_filter)]
+    if not risks.empty and owner_search and "owner" in risks.columns:
+        risks = risks[risks["owner"].str.contains(owner_search, case=False, na=False)]
+
+    # Apply sort
+    if not risks.empty and sort_by:
+        if sort_by == "risk_score":
+            risks = risks.sort_values("risk_score", ascending=False)
+        elif sort_by == "created_at" and "created_at" in risks.columns:
+            risks = risks.sort_values("created_at", ascending=False)
+        elif sort_by == "last_review_date" and "last_review_date" in risks.columns:
+            risks = risks.sort_values("last_review_date", ascending=False)
 
     if not risks.empty:
         total = len(risks)
@@ -267,6 +286,23 @@ def _build_content(show_residual=False):
 # ── Layout ──────────────────────────────────────────────────────────
 
 
+RISKS_FILTERS = [
+    {"id": "status", "label": "Status", "type": "select", "multi": True,
+     "options": RISK_STATUS_OPTIONS},
+    {"id": "category", "label": "Category", "type": "select", "multi": True,
+     "options": [{"label": c.replace("_", " ").title(), "value": c}
+                 for c in sorted(["technical", "resource", "schedule", "scope",
+                                   "budget", "external", "organizational"])]},
+    {"id": "owner", "label": "Owner", "type": "text"},
+]
+
+RISKS_SORT_OPTIONS = [
+    {"label": "Risk Score", "value": "risk_score"},
+    {"label": "Created Date", "value": "created_at"},
+    {"label": "Last Review", "value": "last_review_date"},
+]
+
+
 def layout():
     return html.Div([
         # Stores
@@ -290,6 +326,10 @@ def layout():
             ], className="d-flex align-items-start justify-content-end"),
         ], className="mb-3"),
 
+        # Filters
+        filter_bar("risks", RISKS_FILTERS),
+        sort_toggle("risks", RISKS_SORT_OPTIONS),
+
         # Content area
         html.Div(id="risks-content"),
         auto_refresh(interval_id="risks-refresh-interval"),
@@ -308,10 +348,21 @@ def layout():
     Input("risks-refresh-interval", "n_intervals"),
     Input("risks-mutation-counter", "data"),
     Input("risks-show-residual-store", "data"),
+    Input("risks-status-filter", "value"),
+    Input("risks-category-filter", "value"),
+    Input("risks-owner-filter", "value"),
+    Input("risks-sort-toggle", "value"),
 )
-def refresh_risks(n, mutation_count, show_residual):
-    """Refresh risk content on interval or mutation."""
-    return _build_content(show_residual=bool(show_residual))
+def refresh_risks(n, mutation_count, show_residual, status_filter,
+                  category_filter, owner_search, sort_by):
+    """Refresh risk content on interval, mutation, or filter change."""
+    return _build_content(
+        show_residual=bool(show_residual),
+        status_filter=status_filter,
+        category_filter=category_filter,
+        owner_search=owner_search,
+        sort_by=sort_by,
+    )
 
 
 @callback(

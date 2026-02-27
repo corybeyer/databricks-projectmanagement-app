@@ -19,6 +19,8 @@ from components.crud_modal import (
     set_field_errors, modal_field_states, modal_error_outputs,
 )
 from charts.theme import COLORS
+from utils.url_state import get_param, set_params
+from components.filter_bar import filter_bar, sort_toggle
 
 dash.register_page(__name__, path="/projects", name="All Projects")
 
@@ -137,14 +139,37 @@ def _project_card(project):
     ], width=4, className="mb-3")
 
 
-def _build_content():
+def _build_content(portfolio_id=None, status_filter=None, health_filter=None,
+                   method_filter=None, sort_by=None):
     """Build the actual page content."""
     token = get_user_token()
-    projects = project_service.get_projects(user_token=token)
+    projects = project_service.get_projects(
+        portfolio_id=portfolio_id, user_token=token,
+    )
 
     # Filter out deleted
     if not projects.empty and "is_deleted" in projects.columns:
         projects = projects[projects["is_deleted"] == False]  # noqa: E712
+
+    # Apply filters
+    if not projects.empty and status_filter:
+        projects = projects[projects["status"].isin(status_filter)]
+    if not projects.empty and health_filter:
+        projects = projects[projects["health"].isin(health_filter)]
+    if not projects.empty and method_filter and "delivery_method" in projects.columns:
+        projects = projects[projects["delivery_method"].isin(method_filter)]
+
+    # Apply sort
+    if not projects.empty and sort_by:
+        if sort_by == "name":
+            projects = projects.sort_values("name")
+        elif sort_by == "health":
+            health_order = {"red": 0, "yellow": 1, "green": 2}
+            projects = projects.assign(
+                _health_ord=projects["health"].map(health_order)
+            ).sort_values("_health_ord").drop(columns=["_health_ord"])
+        elif sort_by == "completion":
+            projects = projects.sort_values("pct_complete", ascending=False)
 
     total = len(projects)
     if not projects.empty:
@@ -204,6 +229,29 @@ def _build_content():
 # -- Layout ----------------------------------------------------------
 
 
+PROJECTS_FILTERS = [
+    {"id": "status", "label": "Status", "type": "select", "multi": True,
+     "options": [{"label": "Planning", "value": "planning"},
+                 {"label": "Active", "value": "active"},
+                 {"label": "On Hold", "value": "on_hold"},
+                 {"label": "Completed", "value": "completed"}]},
+    {"id": "health", "label": "Health", "type": "select", "multi": True,
+     "options": [{"label": "On Track", "value": "green"},
+                 {"label": "At Risk", "value": "yellow"},
+                 {"label": "Off Track", "value": "red"}]},
+    {"id": "method", "label": "Method", "type": "select", "multi": True,
+     "options": [{"label": "Waterfall", "value": "waterfall"},
+                 {"label": "Agile", "value": "agile"},
+                 {"label": "Hybrid", "value": "hybrid"}]},
+]
+
+PROJECTS_SORT_OPTIONS = [
+    {"label": "Name", "value": "name"},
+    {"label": "Health", "value": "health"},
+    {"label": "Completion %", "value": "completion"},
+]
+
+
 def layout():
     return html.Div([
         # Stores
@@ -220,6 +268,10 @@ def layout():
                 ),
             ], width=4, className="d-flex align-items-start justify-content-end"),
         ], className="mb-3"),
+
+        # Filters
+        filter_bar("projects", PROJECTS_FILTERS),
+        sort_toggle("projects", PROJECTS_SORT_OPTIONS),
 
         # Content area
         html.Div(id="projects-content"),
@@ -238,10 +290,23 @@ def layout():
     Output("projects-content", "children"),
     Input("projects-refresh-interval", "n_intervals"),
     Input("projects-mutation-counter", "data"),
+    Input("url", "search"),
+    Input("projects-status-filter", "value"),
+    Input("projects-health-filter", "value"),
+    Input("projects-method-filter", "value"),
+    Input("projects-sort-toggle", "value"),
 )
-def refresh_projects(n, mutation_count):
-    """Refresh project content on interval or mutation."""
-    return _build_content()
+def refresh_projects(n, mutation_count, search, status_filter,
+                     health_filter, method_filter, sort_by):
+    """Refresh project content on interval, mutation, or filter change."""
+    portfolio_id = get_param(search, "portfolio_id") if search else None
+    return _build_content(
+        portfolio_id=portfolio_id,
+        status_filter=status_filter,
+        health_filter=health_filter,
+        method_filter=method_filter,
+        sort_by=sort_by,
+    )
 
 
 @callback(

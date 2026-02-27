@@ -24,6 +24,7 @@ from components.crud_modal import (
 )
 from charts.theme import COLORS
 from charts.portfolio_charts import budget_burn_chart, strategic_bubble_chart
+from utils.url_state import get_param
 
 dash.register_page(__name__, path="/portfolios", name="Portfolios")
 
@@ -72,10 +73,10 @@ def _project_row(project):
     ], className="bg-transparent border-secondary")
 
 
-def _build_content():
+def _build_content(department_id=None):
     """Build the actual page content."""
     token = get_user_token()
-    data = get_dashboard_data(user_token=token)
+    data = get_dashboard_data(department_id=department_id, user_token=token)
     portfolios = data["portfolios"]
 
     # Filter out deleted
@@ -225,10 +226,16 @@ def layout():
     Output("portfolios-content", "children"),
     Input("portfolios-refresh-interval", "n_intervals"),
     Input("portfolios-mutation-counter", "data"),
+    Input("active-department-store", "data"),
+    Input("url", "search"),
 )
-def refresh_portfolios(n, mutation_count):
-    """Refresh portfolio content on interval or mutation."""
-    return _build_content()
+def refresh_portfolios(n, mutation_count, dept_store, search):
+    """Refresh portfolio content on interval, mutation, or department change."""
+    # URL param takes priority, then store
+    dept_id = get_param(search, "department_id") if search else None
+    if not dept_id:
+        dept_id = dept_store
+    return _build_content(department_id=dept_id)
 
 
 @callback(
