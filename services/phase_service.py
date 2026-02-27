@@ -25,6 +25,10 @@ def get_phase(phase_id: str, user_token: str = None):
 def create_phase_from_form(form_data: dict, user_email: str = None,
                            user_token: str = None) -> dict:
     """Validate and create a phase. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "phase"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_phase_create(
             name=form_data.get("name"),
@@ -67,6 +71,10 @@ def update_phase_from_form(phase_id: str, form_data: dict,
                            user_email: str = None,
                            user_token: str = None) -> dict:
     """Validate and update a phase. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "phase"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_phase_create(
             name=form_data.get("name"),
@@ -110,6 +118,10 @@ def update_phase_from_form(phase_id: str, form_data: dict,
 def delete_phase(phase_id: str, user_email: str = None,
                  user_token: str = None) -> bool:
     """Soft-delete a phase."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "delete", "phase"):
+        return False
     return phase_repo.delete_phase(
         phase_id, user_email=user_email, user_token=user_token,
     )
@@ -131,6 +143,10 @@ def get_gate(gate_id: str, user_token: str = None):
 def create_gate_from_form(form_data: dict, user_email: str = None,
                           user_token: str = None) -> dict:
     """Validate and create a gate. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "phase"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_gate_create(
             name=form_data.get("name"),
@@ -160,6 +176,10 @@ def create_gate_from_form(form_data: dict, user_email: str = None,
 def approve_gate(gate_id: str, decision: str, user_email: str = None,
                  user_token: str = None) -> dict:
     """Approve a gate with decision notes."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "approve", "phase"):
+        return {"success": False, "message": "Permission denied — gate approval requires lead/pm role"}
     success = gate_repo.update_gate_decision(
         gate_id, status="approved", decision=decision or "Approved",
         decided_by=user_email or "Unknown",
@@ -173,6 +193,10 @@ def approve_gate(gate_id: str, decision: str, user_email: str = None,
 def reject_gate(gate_id: str, decision: str, user_email: str = None,
                 user_token: str = None) -> dict:
     """Reject a gate with decision notes."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "approve", "phase"):
+        return {"success": False, "message": "Permission denied — gate rejection requires lead/pm role"}
     success = gate_repo.update_gate_decision(
         gate_id, status="rejected", decision=decision or "Rejected",
         decided_by=user_email or "Unknown",
@@ -186,6 +210,10 @@ def reject_gate(gate_id: str, decision: str, user_email: str = None,
 def defer_gate(gate_id: str, decision: str, user_email: str = None,
                user_token: str = None) -> dict:
     """Defer a gate with decision notes."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "approve", "phase"):
+        return {"success": False, "message": "Permission denied — gate deferral requires lead/pm role"}
     success = gate_repo.update_gate_decision(
         gate_id, status="deferred", decision=decision or "Deferred",
         decided_by=user_email or "Unknown",

@@ -9,7 +9,9 @@ import json
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import (
+    get_user_token, get_user_email, get_current_user, has_permission,
+)
 from services import project_service
 from components.health_badge import health_badge
 from components.empty_state import empty_state
@@ -21,6 +23,7 @@ from components.crud_modal import (
 from charts.theme import COLORS
 from utils.url_state import get_param, set_params
 from components.filter_bar import filter_bar, sort_toggle
+from components.export_button import export_button
 
 dash.register_page(__name__, path="/projects", name="All Projects")
 
@@ -253,6 +256,8 @@ PROJECTS_SORT_OPTIONS = [
 
 
 def layout():
+    user = get_current_user()
+    can_write = has_permission(user, "create", "project")
     return html.Div([
         # Stores
         dcc.Store(id="projects-mutation-counter", data=0),
@@ -265,7 +270,10 @@ def layout():
                 dbc.Button(
                     [html.I(className="bi bi-plus-circle me-1"), "New Project"],
                     id="projects-add-project-btn", color="primary", size="sm",
+                    style={"display": "inline-block" if can_write else "none"},
+                    className="me-2",
                 ),
+                export_button("projects-export-btn", "Export"),
             ], width=4, className="d-flex align-items-start justify-content-end"),
         ], className="mb-3"),
 
@@ -461,3 +469,20 @@ def confirm_delete_project(n_clicks, project_id, counter):
 def cancel_project_modal(n):
     """Close project modal on cancel."""
     return False
+
+
+@callback(
+    Output("projects-export-btn-download", "data"),
+    Input("projects-export-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def export_projects(n_clicks):
+    """Export project data to Excel."""
+    if not n_clicks:
+        return no_update
+    from datetime import datetime
+    from services import export_service
+    token = get_user_token()
+    df = project_service.get_projects(user_token=token)
+    excel_bytes = export_service.to_excel(df, "projects")
+    return dcc.send_bytes(excel_bytes, f"projects_{datetime.now().strftime('%Y%m%d')}.xlsx")

@@ -485,3 +485,25 @@ CREATE TABLE IF NOT EXISTS audit_log (
     CONSTRAINT pk_audit_log PRIMARY KEY (audit_id)
 )
 COMMENT 'Centralized audit trail — all entity mutations logged here';
+
+
+-- ─── NOTIFICATIONS ──────────────────────────────────────
+-- User notifications for events across the system
+CREATE TABLE IF NOT EXISTS workspace.project_management.notifications (
+    notification_id     STRING      NOT NULL    COMMENT 'PK — UUID',
+    user_email          STRING      NOT NULL    COMMENT 'Recipient email',
+    notification_type   STRING      NOT NULL    COMMENT 'task_assignment | charter_approved | gate_decision | risk_escalation | sprint_closed | comment_added',
+    title               STRING      NOT NULL    COMMENT 'Short notification title',
+    message             STRING                  COMMENT 'Full notification message',
+    entity_type         STRING                  COMMENT 'Related entity type (task, charter, risk, etc.)',
+    entity_id           STRING                  COMMENT 'Related entity ID',
+    is_read             BOOLEAN     NOT NULL    DEFAULT false,
+    created_at          TIMESTAMP   NOT NULL    DEFAULT current_timestamp(),
+    updated_at          TIMESTAMP,
+    is_deleted          BOOLEAN     NOT NULL    DEFAULT false,
+    deleted_at          TIMESTAMP,
+
+    CONSTRAINT pk_notifications PRIMARY KEY (notification_id)
+)
+COMMENT 'User notifications for system events'
+TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true');

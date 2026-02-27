@@ -20,6 +20,10 @@ def get_sprint(sprint_id: str, user_token: str = None):
 def create_sprint_from_form(form_data: dict, user_email: str = None,
                             user_token: str = None) -> dict:
     """Validate and create a sprint. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "sprint"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_sprint_create(
             name=form_data.get("name"),
@@ -54,6 +58,10 @@ def create_sprint_from_form(form_data: dict, user_email: str = None,
 def close_sprint(sprint_id: str, user_email: str = None,
                  user_token: str = None) -> dict:
     """Close the active sprint. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "sprint"):
+        return {"success": False, "message": "Permission denied"}
     success = sprint_repo.close_sprint(sprint_id, user_email=user_email,
                                        user_token=user_token)
     if success:

@@ -8,7 +8,9 @@ import json
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import (
+    get_user_token, get_user_email, get_current_user, has_permission,
+)
 from services import task_service, sprint_service
 from components.kpi_card import kpi_card
 from components.empty_state import empty_state
@@ -21,6 +23,7 @@ from components.toast import make_toast_output
 from charts.theme import COLORS
 from utils.labels import STATUS_LABELS
 from components.filter_bar import filter_bar
+from components.export_button import export_button
 
 dash.register_page(__name__, path="/backlog", name="Backlog")
 
@@ -224,6 +227,8 @@ BACKLOG_FILTERS = [
 
 
 def layout():
+    user = get_current_user()
+    can_write = has_permission(user, "create", "task")
     return html.Div([
         # Stores
         dcc.Store(id="backlog-mutation-counter", data=0),
@@ -235,7 +240,10 @@ def layout():
                 dbc.Button(
                     [html.I(className="bi bi-plus-circle me-1"), "Add Task"],
                     id="backlog-add-task-btn", color="primary", size="sm",
+                    style={"display": "inline-block" if can_write else "none"},
+                    className="me-2",
                 ),
+                export_button("backlog-export-btn", "Export"),
             ], className="d-flex justify-content-end mb-3"),
         ]),
 
@@ -448,3 +456,20 @@ def confirm_delete(n_clicks, task_id, counter):
 def cancel_task_modal(n):
     """Close task modal on cancel."""
     return False
+
+
+@callback(
+    Output("backlog-export-btn-download", "data"),
+    Input("backlog-export-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def export_backlog(n_clicks):
+    """Export backlog data to Excel."""
+    if not n_clicks:
+        return no_update
+    from datetime import datetime
+    from services import export_service
+    token = get_user_token()
+    df = task_service.get_backlog(user_token=token)
+    excel_bytes = export_service.to_excel(df, "backlog")
+    return dcc.send_bytes(excel_bytes, f"backlog_{datetime.now().strftime('%Y%m%d')}.xlsx")

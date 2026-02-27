@@ -9,7 +9,9 @@ import json
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import (
+    get_user_token, get_user_email, get_current_user, has_permission,
+)
 from services.project_service import get_project_detail
 from services import phase_service
 from components.kpi_card import kpi_card
@@ -293,6 +295,8 @@ def _build_content(project_id=None):
 
 
 def layout():
+    user = get_current_user()
+    can_write = has_permission(user, "create", "phase")
     return html.Div([
         # Stores
         dcc.Store(id="gantt-mutation-counter", data=0),
@@ -306,11 +310,13 @@ def layout():
                     [html.I(className="bi bi-plus-circle me-1"), "Add Phase"],
                     id="gantt-add-phase-btn", color="primary", size="sm",
                     className="me-2",
+                    style={"display": "inline-block" if can_write else "none"},
                 ),
                 dbc.Button(
                     [html.I(className="bi bi-shield-check me-1"), "Add Gate"],
                     id="gantt-add-gate-btn", color="secondary", size="sm",
                     outline=True,
+                    style={"display": "inline-block" if can_write else "none"},
                 ),
             ], className="d-flex align-items-start justify-content-end"),
         ], className="mb-3"),

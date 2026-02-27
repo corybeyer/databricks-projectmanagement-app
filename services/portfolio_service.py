@@ -43,6 +43,10 @@ def get_portfolio(portfolio_id: str, user_token: str = None):
 def create_portfolio_from_form(form_data: dict, user_email: str = None,
                                user_token: str = None) -> dict:
     """Validate and create a portfolio. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "portfolio"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_portfolio_create(
             name=form_data.get("name"),
@@ -83,6 +87,10 @@ def update_portfolio_from_form(portfolio_id: str, form_data: dict,
                                user_email: str = None,
                                user_token: str = None) -> dict:
     """Validate and update a portfolio. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "portfolio"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_portfolio_create(
             name=form_data.get("name"),
@@ -116,6 +124,10 @@ def update_portfolio_from_form(portfolio_id: str, form_data: dict,
 def delete_portfolio(portfolio_id: str, user_email: str = None,
                      user_token: str = None) -> bool:
     """Soft-delete a portfolio."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "delete", "portfolio"):
+        return False
     return portfolio_repo.delete_portfolio(
         portfolio_id, user_email=user_email, user_token=user_token,
     )

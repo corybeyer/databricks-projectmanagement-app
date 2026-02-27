@@ -19,6 +19,10 @@ def get_charter(charter_id: str, user_token: str = None):
 def create_charter_from_form(form_data: dict, user_email: str = None,
                               user_token: str = None) -> dict:
     """Validate and create a charter. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "charter"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_charter_create(
             project_name=form_data.get("project_name"),
@@ -68,6 +72,10 @@ def update_charter_from_form(charter_id: str, form_data: dict,
                               user_email: str = None,
                               user_token: str = None) -> dict:
     """Validate and update a charter. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "charter"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_charter_create(
             project_name=form_data.get("project_name"),
@@ -112,6 +120,10 @@ def update_charter_from_form(charter_id: str, form_data: dict,
 def submit_charter(charter_id: str, user_email: str = None,
                     user_token: str = None) -> dict:
     """Change charter status from draft to submitted."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "charter"):
+        return {"success": False, "message": "Permission denied"}
     charter_df = charter_repo.get_charter_by_id(charter_id, user_token=user_token)
     if charter_df.empty:
         return {"success": False, "message": "Charter not found"}
@@ -132,6 +144,10 @@ def submit_charter(charter_id: str, user_email: str = None,
 def approve_charter(charter_id: str, user_email: str = None,
                      user_token: str = None) -> dict:
     """Approve a submitted charter."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "approve", "charter"):
+        return {"success": False, "message": "Permission denied — approval requires lead/pm role"}
     charter_df = charter_repo.get_charter_by_id(charter_id, user_token=user_token)
     if charter_df.empty:
         return {"success": False, "message": "Charter not found"}
@@ -159,6 +175,10 @@ def approve_charter(charter_id: str, user_email: str = None,
 def reject_charter(charter_id: str, user_email: str = None,
                     user_token: str = None) -> dict:
     """Reject a submitted charter."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "approve", "charter"):
+        return {"success": False, "message": "Permission denied — rejection requires lead/pm role"}
     charter_df = charter_repo.get_charter_by_id(charter_id, user_token=user_token)
     if charter_df.empty:
         return {"success": False, "message": "Charter not found"}
@@ -179,6 +199,10 @@ def reject_charter(charter_id: str, user_email: str = None,
 def delete_charter(charter_id: str, user_email: str = None,
                     user_token: str = None) -> bool:
     """Soft-delete a charter."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "delete", "charter"):
+        return False
     return charter_repo.delete_charter(
         charter_id, user_email=user_email, user_token=user_token,
     )

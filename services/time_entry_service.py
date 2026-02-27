@@ -24,6 +24,10 @@ def get_time_entry(entry_id: str, user_token: str = None):
 def create_time_entry_from_form(form_data: dict, user_email: str = None,
                                 user_token: str = None) -> dict:
     """Validate and create a time entry. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "time_entry"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_time_entry_create(
             task_id=form_data.get("task_id"),
@@ -57,6 +61,10 @@ def update_time_entry_from_form(entry_id: str, form_data: dict,
                                 expected_updated_at: str, user_email: str = None,
                                 user_token: str = None) -> dict:
     """Validate and update a time entry. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "time_entry"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_time_entry_create(
             task_id=form_data.get("task_id"),
@@ -91,6 +99,10 @@ def update_time_entry_from_form(entry_id: str, form_data: dict,
 def delete_time_entry(entry_id: str, user_email: str = None,
                       user_token: str = None) -> bool:
     """Soft-delete a time entry."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "delete", "time_entry"):
+        return False
     return time_entry_repo.delete_time_entry(
         entry_id, user_email=user_email, user_token=user_token,
     )

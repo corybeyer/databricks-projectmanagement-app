@@ -10,7 +10,9 @@ import json
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import (
+    get_user_token, get_user_email, get_current_user, has_permission,
+)
 from services.portfolio_service import get_portfolio_projects
 from services import dependency_service
 from components.kpi_card import kpi_card
@@ -317,6 +319,8 @@ DEP_SORT_OPTIONS = [
 
 
 def layout():
+    user = get_current_user()
+    can_write = has_permission(user, "create", "dependency")
     return html.Div([
         # Stores
         dcc.Store(id="roadmap-mutation-counter", data=0),
@@ -329,6 +333,7 @@ def layout():
                     [html.I(className="bi bi-plus-circle me-1"), "Add Dependency"],
                     id="roadmap-add-dep-btn", color="primary", size="sm",
                     className="me-2",
+                    style={"display": "inline-block" if can_write else "none"},
                 ),
             ], className="d-flex align-items-start justify-content-end"),
         ], className="mb-3"),

@@ -18,14 +18,14 @@ ALLOWED_TABLES = {
     "departments", "portfolios", "projects", "project_charters", "phases",
     "gates", "deliverables", "sprints", "tasks", "status_transitions",
     "comments", "time_entries", "team_members", "risks", "retro_items",
-    "project_team", "dependencies", "audit_log",
+    "project_team", "dependencies", "audit_log", "notifications",
 }
 
 ALLOWED_ID_COLUMNS = {
     "department_id", "portfolio_id", "project_id", "charter_id", "phase_id",
     "gate_id", "deliverable_id", "sprint_id", "task_id", "transition_id",
     "comment_id", "entry_id", "user_id", "risk_id", "retro_id",
-    "dependency_id", "audit_id",
+    "dependency_id", "audit_id", "notification_id",
 }
 
 

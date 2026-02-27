@@ -18,6 +18,10 @@ def get_comment(comment_id: str, user_token: str = None):
 def create_comment_from_form(task_id: str, body: str, user_email: str = None,
                               user_token: str = None) -> dict:
     """Validate and create a comment. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "comment"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_comment_create(body=body, author=user_email)
     except ValidationError as exc:
@@ -41,6 +45,10 @@ def create_comment_from_form(task_id: str, body: str, user_email: str = None,
 def update_comment_from_form(comment_id: str, body: str, expected_updated_at: str,
                               user_email: str = None, user_token: str = None) -> dict:
     """Validate and update a comment. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "comment"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_comment_create(body=body, author=user_email)
     except ValidationError as exc:
@@ -61,6 +69,10 @@ def update_comment_from_form(comment_id: str, body: str, expected_updated_at: st
 def delete_comment(comment_id: str, user_email: str = None,
                    user_token: str = None) -> bool:
     """Soft-delete a comment."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "delete", "comment"):
+        return False
     return comment_repo.delete_comment(comment_id, user_email=user_email,
                                         user_token=user_token)
 

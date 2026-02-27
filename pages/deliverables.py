@@ -11,7 +11,9 @@ from datetime import date
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import (
+    get_user_token, get_user_email, get_current_user, has_permission,
+)
 from services import deliverable_service, project_service
 from components.kpi_card import kpi_card
 from components.empty_state import empty_state
@@ -258,6 +260,8 @@ def _build_content(project_id=None, phase_filter=None, status_filter=None,
 
 
 def layout():
+    user = get_current_user()
+    can_write = has_permission(user, "create", "deliverable")
     return html.Div([
         # Stores
         dcc.Store(id="deliv-mutation-counter", data=0),
@@ -325,6 +329,7 @@ def layout():
                     dbc.Button(
                         [html.I(className="bi bi-plus-circle me-1"), "Add Deliverable"],
                         id="deliv-add-btn", color="primary", size="sm",
+                        style={"display": "inline-block" if can_write else "none"},
                     ),
                 ]),
             ], className="d-flex align-items-end justify-content-end", width=3),

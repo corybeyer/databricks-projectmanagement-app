@@ -21,6 +21,10 @@ def get_retro_item(retro_id: str, user_token: str = None):
 def create_retro_item_from_form(form_data: dict, user_email: str = None,
                                  user_token: str = None) -> dict:
     """Validate and create a retro item. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "retro_item"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_retro_item_create(
             category=form_data.get("category"),
@@ -56,6 +60,10 @@ def update_retro_item_from_form(retro_id: str, form_data: dict,
                                  user_email: str = None,
                                  user_token: str = None) -> dict:
     """Validate and update a retro item. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "retro_item"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_retro_item_create(
             category=form_data.get("category"),
@@ -86,6 +94,10 @@ def update_retro_item_from_form(retro_id: str, form_data: dict,
 def delete_retro_item(retro_id: str, user_email: str = None,
                        user_token: str = None) -> bool:
     """Soft-delete a retro item."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "delete", "retro_item"):
+        return False
     return retro_repo.delete_retro_item(
         retro_id, user_email=user_email, user_token=user_token,
     )
@@ -94,6 +106,10 @@ def delete_retro_item(retro_id: str, user_email: str = None,
 def vote_retro_item(retro_id: str, user_email: str = None,
                      user_token: str = None) -> dict:
     """Upvote a retro item. Verify it exists first."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "retro_item"):
+        return {"success": False, "message": "Permission denied"}
     item_df = retro_repo.get_retro_item_by_id(retro_id, user_token=user_token)
     if item_df.empty:
         return {"success": False, "message": "Retro item not found"}
@@ -107,6 +123,10 @@ def vote_retro_item(retro_id: str, user_email: str = None,
 def convert_to_task(retro_id: str, user_email: str = None,
                      user_token: str = None) -> dict:
     """Convert an action item to a task. Must be action or action_item category."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "retro_item"):
+        return {"success": False, "message": "Permission denied"}
     item_df = retro_repo.get_retro_item_by_id(retro_id, user_token=user_token)
     if item_df.empty:
         return {"success": False, "message": "Retro item not found"}
