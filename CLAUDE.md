@@ -1,7 +1,7 @@
 # CLAUDE.md — PM Hub Project Intelligence
 
 > Claude reads this file automatically at the start of every session.
-> Last updated: 2026-02-26 | Current Phase: 3 (Production Roadmap)
+> Last updated: 2026-02-26 | Current Phase: 4 (Production Roadmap)
 
 ## Environment
 
@@ -33,15 +33,15 @@ Unity Catalog Delta tables.
 
 See [docs/architecture-plan.md](docs/architecture-plan.md) for the scaffolding & architecture plan.
 See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production roadmap (Phase 0–5).
-**Current step**: Phase 3 — Navigation & Multi-Dept (Phase 2 fully complete)
+**Current step**: Phase 4 — PMI/PMP Feature Completeness (Phase 3 fully complete)
 **Pattern**: Pragmatic Layered Architecture with Repository Pattern
 **Call direction**: Pages → Services → Repositories → DB (never skip layers)
 
 ## Current State
 
-- **Phase**: 3 — Production Roadmap (Schema → Foundation → CRUD → Navigation → PMI → Polish)
+- **Phase**: 4 — Production Roadmap (Schema → Foundation → CRUD → Navigation → PMI → Polish)
 - **Roadmap**: See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) — 32 tasks across 6 phases
-- **Current Work**: Phase 3 — Navigation, hierarchy, multi-department
+- **Current Work**: Phase 4 — PMI/PMP Feature Completeness
 - **Phase 0 Done**: Departments, user tracking, PMI risks, audit log, schema fixes (PR #19)
 - **Phase 1 Done**: Toast system, auto-refresh (13 pages), validation layer, dcc.Store state, error boundaries, change history (PR #20)
 - **Phase 2 Prereqs Done**: In-memory write mode, CRUD modal component, task_fields (PR #22)
@@ -50,9 +50,10 @@ See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production ro
 - **Phase 2b.4 Done**: PMI Risk Management full lifecycle (PR #24)
 - **Phase 2b.5 Done**: Retrospective CRUD + voting, sprint selector, convert-to-task (PR #26)
 - **Phase 2b.6 Done**: Project & Portfolio CRUD + validate_portfolio_create (PR #26)
-- **Pages**: All 13/13 built; all 8 CRUD pages fully interactive (sprint, backlog, my-work, charters, risks, retros, projects, portfolios)
+- **Phase 3 Done**: Dept/project selectors, drill-down hierarchy, filter bars, sort toggles, context-aware breadcrumbs (PR #27)
+- **Pages**: All 13/13 built; all 8 CRUD pages fully interactive; topbar dept/project context selectors; filter bars on 4 data-heavy pages
 - **Blockers**: None
-- **Next Gate**: Phase 3 Navigation & Multi-Dept
+- **Next Gate**: Phase 4 PMI/PMP Features
 
 ## Architecture Rules
 

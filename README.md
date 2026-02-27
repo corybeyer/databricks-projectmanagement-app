@@ -75,11 +75,21 @@ databricks-pm-app/
 │   ├── crud_modal.py       # CRUD modal factory (6 public functions)
 │   ├── task_fields.py      # Shared TASK_FIELDS, SPRINT_FIELDS definitions
 │   ├── toast.py            # Toast notification system
+│   ├── department_selector.py  # Topbar department dropdown
+│   ├── project_selector.py    # Topbar project context dropdown
+│   ├── filter_bar.py       # Reusable filter bar + sort toggle
 │   └── ...                 # kpi_card, empty_state, auto_refresh, etc.
 │
 ├── charts/                 # Plotly figure builders
 │   ├── theme.py            # COLORS dict, apply_theme()
 │   └── ...                 # sprint, project, portfolio, analytics charts
+│
+├── callbacks/              # Cross-page Dash callbacks
+│   ├── navigation.py       # Context-aware breadcrumbs
+│   ├── department_callbacks.py  # Department selector state
+│   ├── project_callbacks.py     # Project selector state
+│   ├── state_callbacks.py  # URL-driven store updates
+│   └── toast_callbacks.py  # Toast notification handler
 │
 ├── utils/
 │   ├── validators.py       # Input validation layer (11 validators, 7 composites)

@@ -5,9 +5,11 @@ from repositories import portfolio_repo
 from utils.validators import validate_portfolio_create, ValidationError
 
 
-def get_dashboard_data(user_token: str = None) -> dict:
+def get_dashboard_data(department_id: str = None, user_token: str = None) -> dict:
     """Get all data needed for the dashboard page."""
-    portfolios = portfolio_repo.get_portfolios(user_token=user_token)
+    portfolios = portfolio_repo.get_portfolios(
+        department_id=department_id, user_token=user_token,
+    )
 
     if portfolios.empty:
         return {

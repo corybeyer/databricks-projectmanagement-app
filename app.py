@@ -19,6 +19,8 @@ from config import get_settings
 from config.logging import setup_logging
 from components.app_state import app_stores
 from components.toast import toast_container
+from components.department_selector import department_selector
+from components.project_selector import project_selector
 
 # ─── Init ──────────────────────────────────────────────────
 setup_logging()
@@ -103,6 +105,8 @@ app.layout = html.Div(
                         html.Div(id="page-breadcrumb", className="topbar-breadcrumb"),
                         html.Div(
                             [
+                                department_selector(),
+                                project_selector(),
                                 html.Span("FY2026 Q1", className="topbar-period"),
                                 html.Span("●", className="topbar-status-dot"),
                                 html.Span("Live", className="topbar-status"),

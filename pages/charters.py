@@ -159,10 +159,11 @@ def _charter_card(charter_row):
     ], className="mb-3")
 
 
-def _build_content():
+def _build_content(project_id=None):
     """Build the charters page content."""
     token = get_user_token()
-    charters_df = charter_service.get_charters("prj-001", user_token=token)
+    pid = project_id or "prj-001"
+    charters_df = charter_service.get_charters(pid, user_token=token)
 
     if charters_df.empty:
         return empty_state(
@@ -230,10 +231,11 @@ def layout():
     Output("charters-content", "children"),
     Input("charters-refresh-interval", "n_intervals"),
     Input("charters-mutation-counter", "data"),
+    Input("active-project-store", "data"),
 )
-def refresh_charters(n, mutation_count):
-    """Refresh charters content on interval or mutation."""
-    return _build_content()
+def refresh_charters(n, mutation_count, active_project):
+    """Refresh charters content on interval, mutation, or project change."""
+    return _build_content(project_id=active_project)
 
 
 @callback(
@@ -304,13 +306,14 @@ def toggle_charter_modal(add_clicks, edit_clicks):
     Input("charters-charter-save-btn", "n_clicks"),
     State("charters-selected-charter-store", "data"),
     State("charters-mutation-counter", "data"),
+    State("active-project-store", "data"),
     *modal_field_states("charters-charter", CHARTER_FIELDS),
     prevent_initial_call=True,
 )
-def save_charter(n_clicks, stored_charter, counter, *field_values):
+def save_charter(n_clicks, stored_charter, counter, active_project, *field_values):
     """Save (create or update) a charter."""
     form_data = get_modal_values("charters-charter", CHARTER_FIELDS, *field_values)
-    form_data["project_id"] = "prj-001"
+    form_data["project_id"] = active_project or "prj-001"
 
     token = get_user_token()
     email = get_user_email()

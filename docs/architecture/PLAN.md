@@ -1,6 +1,6 @@
 # PM Hub — Road to Production Plan
 
-> Last updated: 2026-02-26 | Status: Phase 2 COMPLETE (all CRUD done), Phase 3 next
+> Last updated: 2026-02-26 | Status: Phase 3 COMPLETE (Navigation & Multi-Dept), Phase 4 next
 
 ## Context
 
@@ -281,35 +281,60 @@ CREATE TABLE audit_log (
 
 ---
 
-## Phase 3: Navigation, Hierarchy & Multi-Department
+## Phase 3: Navigation, Hierarchy & Multi-Department ✅ COMPLETE
 
 *Connect the pages so users flow naturally through the organizational hierarchy.*
-*Note: 3.1 and 3.2 (drill-down navigation, department selector) have no dependency on Phase 2 CRUD and can be developed in parallel with Phase 2b if desired.*
+*Completed: 2026-02-26 | PR #27 to develop*
 
-### 3.1 — Department → Portfolio → Project Drill-Down
-- Dashboard shows department-level rollup (or all departments for admins)
-- Click department → portfolios page filtered by department
-- Click portfolio card → projects page filtered by portfolio
-- Click project card → project detail view (gantt, charters, sprint, risks)
-- URL state: `/portfolios?department_id=xxx`, `/projects?portfolio_id=xxx`
-- **Files:** `pages/dashboard.py`, `pages/portfolios.py`, `pages/projects.py`, `app.py`
+### 3.1 — Department → Portfolio → Project Drill-Down ✅
 
-### 3.2 — Department Selector in Nav
-- Add department dropdown to topbar (for users with access to multiple departments)
-- Sets department context via dcc.Store → filters all downstream pages
-- Admin users see "All Departments" option
-- **Files:** `app.py`, `services/department_service.py`, `services/auth_service.py`
+*Completed: 2026-02-26*
 
-### 3.3 — Project Context Selector
-- Persistent project selector (dropdown) that sets context across sprint, gantt, charters, risks pages
-- When user selects project → all sub-pages show that project's data
-- Store selected project_id in `dcc.Store`
-- **Files:** `app.py`, project-level pages (sprint, gantt, charters, risks, retros, reports)
+- Dashboard shows department cards with drill-down links to `/portfolios?department_id=xxx`
+- Department cards display name, portfolio count, member count
+- Portfolio cards wrapped in `dcc.Link` for drill-down to `/projects?portfolio_id=xxx`
+- Portfolios page filters by `department_id` from URL params or active-department-store
+- Projects page filters by `portfolio_id` from URL params
+- Context-aware breadcrumbs with `dcc.Link` for clickable navigation segments
+- **New components:** `components/department_selector.py`, `components/project_selector.py`
+- **New callbacks:** `callbacks/department_callbacks.py`, `callbacks/project_callbacks.py`
+- **Modified:** `pages/dashboard.py`, `pages/portfolios.py`, `pages/projects.py`, `components/portfolio_card.py`, `callbacks/navigation.py`
+- **Repo/Service:** `repositories/portfolio_repo.py` (department_id filter), `services/portfolio_service.py` (department_id passthrough)
 
-### 3.4 — Filtering and Sorting
-- Add filter controls to data-heavy pages: status, assignee, priority, date range, department
-- Sort toggles on tables (risk register, resource table, backlog)
-- **Files:** `pages/backlog.py`, `pages/risks.py`, `pages/resources.py`, `pages/projects.py`
+### 3.2 — Department Selector in Nav ✅
+
+*Completed: 2026-02-26*
+
+- Department dropdown added to topbar (`topbar-dept-selector`)
+- Options populated via callback from `department_service.get_departments()`
+- Selection updates `active-department-store` → filters downstream pages
+- Clearable (shows "All Departments" when cleared)
+- **Files:** `components/department_selector.py` (new), `callbacks/department_callbacks.py` (new), `app.py`
+
+### 3.3 — Project Context Selector ✅
+
+*Completed: 2026-02-26*
+
+- Project dropdown added to topbar (`topbar-project-selector`)
+- Options filtered by active department when set
+- Selection updates `active-project-store` → all sub-pages show that project's data
+- 7 pages now use `active-project-store`: sprint, gantt, charters, backlog, retros, reports, risks
+- Replaced hardcoded `"prj-001"` with `active_project or "prj-001"` fallback
+- **Files:** `components/project_selector.py` (new), `callbacks/project_callbacks.py` (new), `app.py`, `pages/sprint.py`, `pages/gantt.py`, `pages/charters.py`, `pages/backlog.py`, `pages/retros.py`, `pages/reports.py`
+
+### 3.4 — Filtering and Sorting ✅
+
+*Completed: 2026-02-26*
+
+- Created reusable `components/filter_bar.py` with `filter_bar()` and `sort_toggle()` functions
+- Supports "select" (multi-dropdown), "text" (debounced input), "date_range" (DatePickerRange)
+- Component IDs follow `{page_prefix}-{filter_id}-filter` pattern
+- **Projects page:** status, health, delivery method filters + sort by name/health/completion
+- **Backlog page:** status, priority, assignee, type filters
+- **Risks page:** status, category filters + owner text search + sort by risk_score/created_at/last_review_date
+- **Resources page:** role filter
+- All filtering done Python-side on DataFrame after fetch
+- **Files:** `components/filter_bar.py` (new), `pages/projects.py`, `pages/backlog.py`, `pages/risks.py`, `pages/resources.py`
 
 ---
 
@@ -428,7 +453,7 @@ Work in phase order. Within each phase, tasks can be parallelized.
 - **Phase 2 prereqs** (In-memory writes + shared modal) ✅ → unblocked all CRUD work
 - **Phase 2a** (Task & Sprint CRUD) ✅ → highest daily-use value, completed
 - **Phase 2b** (Charter + Risk + Retro + Project/Portfolio CRUD) ✅ → ALL COMPLETE
-- **Phase 3** (Navigation & Multi-Dept) → organizational hierarchy — NEXT
+- **Phase 3** (Navigation & Multi-Dept) ✅ → organizational hierarchy, drill-down, filtering
 - **Phase 4** (PMI Features) → PMBOK 7 knowledge area coverage
 - **Phase 5** (Polish) → production hardening
 
