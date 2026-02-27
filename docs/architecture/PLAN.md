@@ -1,6 +1,6 @@
 # PM Hub — Road to Production Plan
 
-> Last updated: 2026-02-26 | Status: Phase 3 COMPLETE (Navigation & Multi-Dept), Phase 4 next
+> Last updated: 2026-02-26 | Status: Phase 4 COMPLETE (PMI/PMP Features), Phase 5 next
 
 ## Context
 
@@ -338,50 +338,106 @@ CREATE TABLE audit_log (
 
 ---
 
-## Phase 4: PMI/PMP Feature Completeness
+## Phase 4: PMI/PMP Feature Completeness ✅ COMPLETE
 
 *Fill out remaining PMBOK 7 knowledge areas.*
+*Completed: 2026-02-26 | PR #29 to develop*
 
-### 4.1 — Phase & Gate Management (Waterfall Governance)
-- Create/edit phases with delivery method (waterfall/agile/hybrid)
-- Gate approval workflow: pending → approved → rejected → deferred (with approver + date from OBO)
-- Phase status auto-calculation from task/deliverable completion %
-- Gate criteria checklist
-- Add `phase_service.py` (new), write ops in `project_repo.py`
-- **Files:** `pages/gantt.py`, `services/phase_service.py` (new), `repositories/project_repo.py`
+### 4.1 — Phase & Gate Management (Waterfall Governance) ✅
 
-### 4.2 — Deliverables Tracking
-- Create deliverables linked to phases (name, description, owner, due date, artifact URL)
-- Status: not_started → in_progress → submitted → approved
-- Deliverables table exists in schema but has no repo/service/UI
-- Add sample data
-- **Files:** `pages/gantt.py` (deliverables section), `repositories/deliverable_repo.py` (new), `services/deliverable_service.py` (new), `models/sample_data.py`
+*Completed: 2026-02-26*
 
-### 4.3 — Dependencies View
-- Task-to-task and project-to-project dependency mapping
-- Blocked/blocking indicators on task cards and roadmap
+- Full phase CRUD: create/edit/delete via crud_modal (name, phase_type, delivery_method, start/end dates)
+- Gate approval workflow: pending → approved → rejected → deferred (with approver + date + decision notes from OBO)
+- Gate criteria management: criteria text field, decision comments
+- Enhanced sample data: phases now include `project_id`, `created_by`; gates include `name`, `criteria`, `decision`
+- **New services:** `services/phase_service.py` — `create_phase_from_form()`, `update_phase_from_form()`, `delete_phase()`, `approve_gate()`, `reject_gate()`, `defer_gate()`
+- **New repos:** `repositories/phase_repo.py`, `repositories/gate_repo.py` — full CRUD with parameterized queries
+- **New validators:** `validate_phase_create()`, `validate_gate_create()` in `utils/validators.py`
+- **Pages:** `pages/gantt.py` — complete rewrite with 12 callbacks (phase CRUD, gate approval workflow, refresh)
+- **Files:** `pages/gantt.py`, `services/phase_service.py` (new), `repositories/phase_repo.py` (new), `repositories/gate_repo.py` (new), `utils/validators.py`, `models/sample_data.py`
+
+### 4.2 — Deliverables Tracking ✅
+
+*Completed: 2026-02-26*
+
+- **New page:** `pages/deliverables.py` at `/deliverables` with full CRUD
+- Create deliverables linked to phases (name, description, owner, due date, artifact URL, status)
+- Status lifecycle: not_started → in_progress → submitted → complete → approved
+- Phase filter dropdown, status filter, sort by due_date/status/name
+- 3 KPI cards: Total Deliverables, Complete, Overdue
+- **New services:** `services/deliverable_service.py` — `create_deliverable_from_form()`, `update_deliverable_from_form()`, `delete_deliverable()`
+- **New repos:** `repositories/deliverable_repo.py` — full CRUD with phase JOIN
+- **New validators:** `validate_deliverable_create()` in `utils/validators.py`
+- **Sample data:** 5 deliverables across phases with realistic artifacts
+- **Files:** `pages/deliverables.py` (new), `services/deliverable_service.py` (new), `repositories/deliverable_repo.py` (new), `utils/validators.py`, `models/sample_data.py`
+
+### 4.3 — Dependencies View ✅
+
+*Completed: 2026-02-26*
+
+- **Roadmap page** (`pages/roadmap.py`): complete rewrite with dependency CRUD
+- Cross-project dependency mapping (source/target projects + optional tasks)
 - Dependency types: blocking, dependent, shared_resource, informational
-- Dependencies table exists in schema but unused
-- **Files:** `pages/roadmap.py`, `repositories/dependency_repo.py` (new), `services/dependency_service.py` (new), `models/sample_data.py`
+- Risk levels: low, medium, high, critical
+- Status lifecycle: active → accepted → mitigated → resolved
+- Filter by type, risk_level, status + sort toggles
+- 4 KPI cards: Total Dependencies, Blocking, High Risk, Resolved
+- **New services:** `services/dependency_service.py` — `create_dependency_from_form()`, `update_dependency_from_form()`, `delete_dependency()` with cross-validation (source ≠ target)
+- **New repos:** `repositories/dependency_repo.py` — full CRUD with source/target project filtering
+- **New validators:** `validate_dependency_create()` in `utils/validators.py`
+- **Sample data:** 4 dependencies across projects with realistic descriptions
+- **Files:** `pages/roadmap.py`, `services/dependency_service.py` (new), `repositories/dependency_repo.py` (new), `utils/validators.py`, `models/sample_data.py`
 
-### 4.4 — Comments & Collaboration
-- Task comment threads (add/view per task, inside task detail modal)
-- Comments recorded with author from OBO
-- Comments table exists in schema but unused
-- **Files:** Task detail modal in `pages/sprint.py`, `repositories/comment_repo.py` (new), `services/comment_service.py` (new), `models/sample_data.py`
+### 4.4 — Comments & Collaboration ✅
 
-### 4.5 — Time Tracking
-- Log hours per task (time_entries table exists in schema)
-- Show time spent vs estimated on task cards
-- Resource utilization chart updated with actual hours
-- **Files:** `pages/resources.py`, `repositories/time_entry_repo.py` (new), `services/time_entry_service.py` (new), `models/sample_data.py`
+*Completed: 2026-02-26*
 
-### 4.6 — Resource Management Enhancements
+- **New page:** `pages/comments.py` at `/comments` — task comment management
+- Task selector dropdown to view/add comments per task
+- Comment thread display with author, timestamp, body
+- Add/edit/delete comments with OBO author tracking
+- **New component:** `components/comment_thread.py` — reusable comment thread UI
+- **New services:** `services/comment_service.py` — `create_comment_from_form()`, `update_comment_from_form()`, `delete_comment()`
+- **New repos:** `repositories/comment_repo.py` — full CRUD with task_id filtering
+- **New validators:** `validate_comment_create()` in `utils/validators.py`
+- **Enhanced repos:** `repositories/task_repo.py` — added `get_all_tasks()` for comment task selector
+- **Enhanced services:** `services/task_service.py` — added `get_tasks()` passthrough
+- **Sample data:** 5 comments across 3 tasks
+- **Nav:** Added Comments link to sidebar under EXECUTION
+- **Files:** `pages/comments.py` (new), `components/comment_thread.py` (new), `services/comment_service.py` (new), `repositories/comment_repo.py` (new), `repositories/task_repo.py`, `services/task_service.py`, `utils/validators.py`, `models/sample_data.py`, `app.py`
+
+### 4.5 — Time Tracking ✅
+
+*Completed: 2026-02-26*
+
+- **New page:** `pages/timesheet.py` at `/timesheet` — time entry management
+- Log hours per task with date, notes
+- Hours-by-task summary chart (horizontal bar)
+- Date range filter, task filter
+- 4 KPI cards: Total Hours, Entries This Week, Avg Hours/Entry, Active Contributors
+- **New services:** `services/time_entry_service.py` — `create_time_entry_from_form()`, `update_time_entry_from_form()`, `delete_time_entry()`
+- **New repos:** `repositories/time_entry_repo.py` — full CRUD with task JOIN for titles
+- **New validators:** `validate_time_entry_create()` in `utils/validators.py`
+- **Sample data:** 10 time entries across tasks and users
+- **Nav:** Added Timesheet link to sidebar under EXECUTION
+- **Files:** `pages/timesheet.py` (new), `services/time_entry_service.py` (new), `repositories/time_entry_repo.py` (new), `utils/validators.py`, `models/sample_data.py`, `app.py`
+
+### 4.6 — Resource Management Enhancements ✅
+
+*Completed: 2026-02-26*
+
+- **Resources page** (`pages/resources.py`): complete rewrite with assignment CRUD
 - Team member assignment to projects (project_team CRUD)
-- Allocation % management (over-allocation warnings)
-- Capacity planning view (who's available, who's overloaded)
-- Department-filtered resource views
-- **Files:** `pages/resources.py`, `repositories/resource_repo.py`, `services/resource_service.py` (new)
+- Allocation % management with over-allocation warnings (>100% total)
+- Capacity planning view: who's available, who's overloaded
+- Capacity chart (stacked bar by team member)
+- Assignment create/edit/delete via crud_modal
+- **New services:** `services/resource_service.py` — `get_capacity_overview()`, `get_over_allocated_members()`, `create_assignment_from_form()`, `update_assignment_from_form()`, `delete_assignment()`
+- **Enhanced repos:** `repositories/resource_repo.py` — added `get_team_members()`, `get_project_team()`, `create_assignment()`, `update_assignment()`, `delete_assignment()`, `get_allocation_summary()`
+- **New validators:** `validate_assignment_create()` in `utils/validators.py`
+- **Sample data:** 4 team members, 6 project assignments
+- **Files:** `pages/resources.py`, `services/resource_service.py` (new), `repositories/resource_repo.py`, `utils/validators.py`, `models/sample_data.py`
 
 ---
 
@@ -454,7 +510,7 @@ Work in phase order. Within each phase, tasks can be parallelized.
 - **Phase 2a** (Task & Sprint CRUD) ✅ → highest daily-use value, completed
 - **Phase 2b** (Charter + Risk + Retro + Project/Portfolio CRUD) ✅ → ALL COMPLETE
 - **Phase 3** (Navigation & Multi-Dept) ✅ → organizational hierarchy, drill-down, filtering
-- **Phase 4** (PMI Features) → PMBOK 7 knowledge area coverage
+- **Phase 4** (PMI Features) ✅ → PMBOK 7 knowledge area coverage (6 sub-tasks, 3 new pages, 3 page rewrites)
 - **Phase 5** (Polish) → production hardening
 
 Each phase ends with a `/review-all` cycle.

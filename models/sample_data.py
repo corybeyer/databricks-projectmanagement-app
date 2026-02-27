@@ -350,6 +350,42 @@ def _init_risks() -> pd.DataFrame:
     ])
 
 
+def _init_team_members() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"user_id": "u-001", "display_name": "Cory S.", "email": "cory@example.com",
+         "department_id": "dept-001", "role": "lead", "is_active": True, "capacity_pct": 100},
+        {"user_id": "u-002", "display_name": "Chris J.", "email": "chris@example.com",
+         "department_id": "dept-001", "role": "engineer", "is_active": True, "capacity_pct": 100},
+        {"user_id": "u-003", "display_name": "Anna K.", "email": "anna@example.com",
+         "department_id": "dept-002", "role": "analyst", "is_active": True, "capacity_pct": 100},
+        {"user_id": "u-004", "display_name": "Jordan T.", "email": "jordan@example.com",
+         "department_id": "dept-001", "role": "engineer", "is_active": True, "capacity_pct": 80},
+    ])
+
+
+def _init_project_team() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"project_id": "prj-001", "user_id": "u-001", "project_role": "pm",
+         "allocation_pct": 60, "start_date": "2026-01-06", "end_date": "2026-08-01",
+         "created_by": "cory@example.com"},
+        {"project_id": "prj-002", "user_id": "u-001", "project_role": "lead",
+         "allocation_pct": 30, "start_date": "2026-01-13", "end_date": "2026-06-15",
+         "created_by": "cory@example.com"},
+        {"project_id": "prj-001", "user_id": "u-002", "project_role": "engineer",
+         "allocation_pct": 80, "start_date": "2026-01-06", "end_date": "2026-08-01",
+         "created_by": "cory@example.com"},
+        {"project_id": "prj-002", "user_id": "u-003", "project_role": "analyst",
+         "allocation_pct": 50, "start_date": "2026-01-13", "end_date": "2026-06-15",
+         "created_by": "cory@example.com"},
+        {"project_id": "prj-003", "user_id": "u-003", "project_role": "analyst",
+         "allocation_pct": 40, "start_date": "2025-11-01", "end_date": "2026-03-15",
+         "created_by": "cory@example.com"},
+        {"project_id": "prj-001", "user_id": "u-004", "project_role": "engineer",
+         "allocation_pct": 50, "start_date": "2026-02-01", "end_date": "2026-08-01",
+         "created_by": "cory@example.com"},
+    ])
+
+
 def _init_resource_allocations() -> pd.DataFrame:
     return pd.DataFrame([
         {"user_id": "u-001", "display_name": "Cory S.", "role": "lead",
@@ -390,26 +426,36 @@ def _init_project_detail() -> pd.DataFrame:
 
 def _init_project_phases() -> pd.DataFrame:
     return pd.DataFrame([
-        {"phase_id": "ph-001", "name": "Initiation", "phase_type": "initiation",
-         "delivery_method": "waterfall", "status": "done", "pct_complete": 100,
+        {"phase_id": "ph-001", "project_id": "prj-001", "name": "Initiation",
+         "phase_type": "initiation", "delivery_method": "waterfall",
+         "status": "done", "pct_complete": 100,
          "start_date": "2026-01-06", "end_date": "2026-01-17", "phase_order": 1,
-         "task_count": 4, "done_count": 4},
-        {"phase_id": "ph-002", "name": "Planning", "phase_type": "planning",
-         "delivery_method": "waterfall", "status": "done", "pct_complete": 100,
+         "task_count": 4, "done_count": 4,
+         "created_by": "cory@example.com"},
+        {"phase_id": "ph-002", "project_id": "prj-001", "name": "Planning",
+         "phase_type": "planning", "delivery_method": "waterfall",
+         "status": "done", "pct_complete": 100,
          "start_date": "2026-01-20", "end_date": "2026-02-07", "phase_order": 2,
-         "task_count": 6, "done_count": 6},
-        {"phase_id": "ph-003", "name": "Build", "phase_type": "execution",
-         "delivery_method": "agile", "status": "in_progress", "pct_complete": 55,
+         "task_count": 6, "done_count": 6,
+         "created_by": "cory@example.com"},
+        {"phase_id": "ph-003", "project_id": "prj-001", "name": "Build",
+         "phase_type": "build", "delivery_method": "agile",
+         "status": "in_progress", "pct_complete": 55,
          "start_date": "2026-02-10", "end_date": "2026-05-29", "phase_order": 3,
-         "task_count": 18, "done_count": 10},
-        {"phase_id": "ph-004", "name": "UAT", "phase_type": "testing",
-         "delivery_method": "waterfall", "status": "not_started", "pct_complete": 0,
+         "task_count": 18, "done_count": 10,
+         "created_by": "cory@example.com"},
+        {"phase_id": "ph-004", "project_id": "prj-001", "name": "UAT",
+         "phase_type": "test", "delivery_method": "waterfall",
+         "status": "not_started", "pct_complete": 0,
          "start_date": "2026-06-01", "end_date": "2026-07-10", "phase_order": 4,
-         "task_count": 0, "done_count": 0},
-        {"phase_id": "ph-005", "name": "Deployment", "phase_type": "deployment",
-         "delivery_method": "waterfall", "status": "not_started", "pct_complete": 0,
+         "task_count": 0, "done_count": 0,
+         "created_by": "cory@example.com"},
+        {"phase_id": "ph-005", "project_id": "prj-001", "name": "Deployment",
+         "phase_type": "deploy", "delivery_method": "waterfall",
+         "status": "not_started", "pct_complete": 0,
          "start_date": "2026-07-13", "end_date": "2026-08-01", "phase_order": 5,
-         "task_count": 0, "done_count": 0},
+         "task_count": 0, "done_count": 0,
+         "created_by": "cory@example.com"},
     ])
 
 
@@ -441,18 +487,28 @@ def _init_burndown() -> pd.DataFrame:
 
 def _init_gate_status() -> pd.DataFrame:
     return pd.DataFrame([
-        {"gate_id": "g-001", "phase_id": "ph-001", "phase_name": "Initiation",
-         "status": "approved", "gate_order": 1, "decided_by": "VP Data",
-         "decided_at": "2026-01-17"},
-        {"gate_id": "g-002", "phase_id": "ph-002", "phase_name": "Planning",
-         "status": "approved", "gate_order": 2, "decided_by": "VP Data",
-         "decided_at": "2026-02-07"},
-        {"gate_id": "g-003", "phase_id": "ph-003", "phase_name": "Build",
-         "status": "pending", "gate_order": 3, "decided_by": None,
-         "decided_at": None},
-        {"gate_id": "g-004", "phase_id": "ph-004", "phase_name": "UAT",
-         "status": "pending", "gate_order": 4, "decided_by": None,
-         "decided_at": None},
+        {"gate_id": "g-001", "phase_id": "ph-001", "name": "Initiation Gate",
+         "phase_name": "Initiation", "status": "approved", "gate_order": 1,
+         "criteria": "Charter approved, stakeholders identified, budget allocated",
+         "decision": "All criteria met. Proceed to Planning.",
+         "decided_by": "VP Data", "decided_at": "2026-01-17",
+         "created_by": "cory@example.com"},
+        {"gate_id": "g-002", "phase_id": "ph-002", "name": "Planning Gate",
+         "phase_name": "Planning", "status": "approved", "gate_order": 2,
+         "criteria": "WBS complete, schedule baselined, risk register populated",
+         "decision": "Planning artifacts complete. Proceed to Build.",
+         "decided_by": "VP Data", "decided_at": "2026-02-07",
+         "created_by": "cory@example.com"},
+        {"gate_id": "g-003", "phase_id": "ph-003", "name": "Build Gate",
+         "phase_name": "Build", "status": "pending", "gate_order": 3,
+         "criteria": "All migration tasks complete, integration tests pass, data validation clean",
+         "decision": None, "decided_by": None, "decided_at": None,
+         "created_by": "cory@example.com"},
+        {"gate_id": "g-004", "phase_id": "ph-004", "name": "UAT Gate",
+         "phase_name": "UAT", "status": "pending", "gate_order": 4,
+         "criteria": "UAT sign-off from Finance, zero critical defects, performance benchmarks met",
+         "decision": None, "decided_by": None, "decided_at": None,
+         "created_by": "cory@example.com"},
     ])
 
 
@@ -526,6 +582,152 @@ def _init_audit_log() -> pd.DataFrame:
          "entity_type": "gate", "entity_id": "g-002", "field_changed": "status",
          "old_value": "pending", "new_value": "approved", "details": "Planning phase gate approved",
          "created_at": "2026-02-07 14:00:00"},
+    ])
+
+
+def _init_deliverables() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"deliverable_id": "del-001", "phase_id": "ph-001", "name": "Project Charter Document",
+         "description": "Signed project charter with business case, objectives, and scope",
+         "status": "approved", "owner": "Cory S.", "due_date": "2026-01-17",
+         "completed_date": "2026-01-16", "artifact_url": "https://docs.example.com/charter-v1",
+         "phase_name": "Initiation", "phase_type": "initiation",
+         "created_by": "cory@example.com"},
+        {"deliverable_id": "del-002", "phase_id": "ph-002", "name": "Migration Plan & Runbook",
+         "description": "Detailed migration plan with table inventory, dependencies, and rollback procedures",
+         "status": "complete", "owner": "Chris J.", "due_date": "2026-02-07",
+         "completed_date": "2026-02-06", "artifact_url": "https://docs.example.com/migration-runbook",
+         "phase_name": "Planning", "phase_type": "planning",
+         "created_by": "cory@example.com"},
+        {"deliverable_id": "del-003", "phase_id": "ph-003", "name": "Unity Catalog Schema Design",
+         "description": "Domain-driven catalog/schema/table hierarchy design document",
+         "status": "in_progress", "owner": "Cory S.", "due_date": "2026-03-15",
+         "completed_date": None, "artifact_url": None,
+         "phase_name": "Build", "phase_type": "execution",
+         "created_by": "cory@example.com"},
+        {"deliverable_id": "del-004", "phase_id": "ph-003", "name": "DLT Pipeline Templates",
+         "description": "Reusable DLT pipeline templates for Bronze/Silver/Gold layers",
+         "status": "in_progress", "owner": "Chris J.", "due_date": "2026-04-01",
+         "completed_date": None, "artifact_url": None,
+         "phase_name": "Build", "phase_type": "execution",
+         "created_by": "chris@example.com"},
+        {"deliverable_id": "del-005", "phase_id": "ph-004", "name": "UAT Test Results Report",
+         "description": "Comprehensive UAT results with data validation, access policy testing, and sign-off",
+         "status": "not_started", "owner": "Anna K.", "due_date": "2026-07-01",
+         "completed_date": None, "artifact_url": None,
+         "phase_name": "UAT", "phase_type": "testing",
+         "created_by": "cory@example.com"},
+    ])
+
+
+def _init_dependencies() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"dependency_id": "dep-001", "source_project_id": "prj-001",
+         "source_task_id": "t-003", "target_project_id": "prj-003",
+         "target_task_id": None, "dependency_type": "blocking",
+         "risk_level": "high",
+         "description": "Unity Catalog migration requires secrets vault integration from prj-003 to be complete before production deployment.",
+         "status": "active",
+         "source_project_name": "Unity Catalog Migration",
+         "target_project_name": "Secrets Management Rollout",
+         "created_by": "cory@example.com"},
+        {"dependency_id": "dep-002", "source_project_id": "prj-002",
+         "source_task_id": None, "target_project_id": "prj-001",
+         "target_task_id": "t-002", "dependency_type": "dependent",
+         "risk_level": "medium",
+         "description": "DLT Pipeline Framework depends on UC catalog structure being finalized for pipeline registration.",
+         "status": "active",
+         "source_project_name": "DLT Pipeline Framework",
+         "target_project_name": "Unity Catalog Migration",
+         "created_by": "chris@example.com"},
+        {"dependency_id": "dep-003", "source_project_id": "prj-001",
+         "source_task_id": None, "target_project_id": "prj-002",
+         "target_task_id": None, "dependency_type": "shared_resource",
+         "risk_level": "medium",
+         "description": "Chris J. is allocated to both projects — scheduling conflicts possible during Q2.",
+         "status": "accepted",
+         "source_project_name": "Unity Catalog Migration",
+         "target_project_name": "DLT Pipeline Framework",
+         "created_by": "cory@example.com"},
+        {"dependency_id": "dep-004", "source_project_id": "prj-003",
+         "source_task_id": None, "target_project_id": "prj-001",
+         "target_task_id": None, "dependency_type": "informational",
+         "risk_level": "low",
+         "description": "Secrets Management security audit results will inform UC access policy design.",
+         "status": "resolved",
+         "source_project_name": "Secrets Management Rollout",
+         "target_project_name": "Unity Catalog Migration",
+         "created_by": "cory@example.com"},
+    ])
+
+
+def _init_comments() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"comment_id": "cmt-001", "task_id": "t-001", "author": "cory@example.com",
+         "body": "Bronze ingestion looks good. Verified row counts match source.",
+         "created_by": "cory@example.com", "updated_by": "cory@example.com",
+         "created_at": "2026-02-10 09:15:00", "updated_at": "2026-02-10 09:15:00"},
+        {"comment_id": "cmt-002", "task_id": "t-001", "author": "chris@example.com",
+         "body": "Added data quality checks on the P&L columns. All passing.",
+         "created_by": "chris@example.com", "updated_by": "chris@example.com",
+         "created_at": "2026-02-10 14:30:00", "updated_at": "2026-02-10 14:30:00"},
+        {"comment_id": "cmt-003", "task_id": "t-002", "author": "chris@example.com",
+         "body": "Cost center mapping is more complex than expected. May need an extra day.",
+         "created_by": "chris@example.com", "updated_by": "chris@example.com",
+         "created_at": "2026-02-12 10:00:00", "updated_at": "2026-02-12 10:00:00"},
+        {"comment_id": "cmt-004", "task_id": "t-002", "author": "cory@example.com",
+         "body": "Understood. Let me know if you need help with the SAP mapping table.",
+         "created_by": "cory@example.com", "updated_by": "cory@example.com",
+         "created_at": "2026-02-12 11:45:00", "updated_at": "2026-02-12 11:45:00"},
+        {"comment_id": "cmt-005", "task_id": "t-003", "author": "cory@example.com",
+         "body": "SQL Server sync job is running on schedule. Need to add error handling for timeouts.",
+         "created_by": "cory@example.com", "updated_by": "cory@example.com",
+         "created_at": "2026-02-14 16:20:00", "updated_at": "2026-02-14 16:20:00"},
+    ])
+
+
+def _init_time_entries() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"entry_id": "te-001", "task_id": "t-001", "user_id": "u-002",
+         "hours": 4.0, "work_date": "2026-02-20", "notes": "Bronze ingestion pipeline setup",
+         "task_title": "P&L Bronze ingestion", "project_id": "prj-001",
+         "created_by": "chris@example.com"},
+        {"entry_id": "te-002", "task_id": "t-001", "user_id": "u-002",
+         "hours": 6.0, "work_date": "2026-02-21", "notes": "Completed P&L ingestion testing",
+         "task_title": "P&L Bronze ingestion", "project_id": "prj-001",
+         "created_by": "chris@example.com"},
+        {"entry_id": "te-003", "task_id": "t-002", "user_id": "u-002",
+         "hours": 3.5, "work_date": "2026-02-22", "notes": "DLT pipeline scaffolding for cost centers",
+         "task_title": "DLT pipeline — Cost Centers", "project_id": "prj-001",
+         "created_by": "chris@example.com"},
+        {"entry_id": "te-004", "task_id": "t-003", "user_id": "u-001",
+         "hours": 5.0, "work_date": "2026-02-22", "notes": "SQL Server sync job configuration",
+         "task_title": "SQL Server sync job", "project_id": "prj-001",
+         "created_by": "cory@example.com"},
+        {"entry_id": "te-005", "task_id": "t-003", "user_id": "u-001",
+         "hours": 2.5, "work_date": "2026-02-23", "notes": "Debugging sync failures",
+         "task_title": "SQL Server sync job", "project_id": "prj-001",
+         "created_by": "cory@example.com"},
+        {"entry_id": "te-006", "task_id": "t-004", "user_id": "u-002",
+         "hours": 4.0, "work_date": "2026-02-24", "notes": "UAT comparison notebook draft",
+         "task_title": "UAT comparison notebook", "project_id": "prj-001",
+         "created_by": "chris@example.com"},
+        {"entry_id": "te-007", "task_id": "t-007", "user_id": "u-003",
+         "hours": 6.5, "work_date": "2026-02-24", "notes": "Balance sheet DLT pipeline build",
+         "task_title": "Balance Sheet DLT", "project_id": "prj-001",
+         "created_by": "anna@example.com"},
+        {"entry_id": "te-008", "task_id": "t-008", "user_id": "u-001",
+         "hours": 2.0, "work_date": "2026-02-25", "notes": "Finance access policy configuration",
+         "task_title": "Access policy — Finance", "project_id": "prj-001",
+         "created_by": "cory@example.com"},
+        {"entry_id": "te-009", "task_id": "t-005", "user_id": "u-001",
+         "hours": 3.0, "work_date": "2026-02-25", "notes": "GL mapping research and design",
+         "task_title": "Bronze→Silver GL mapping", "project_id": "prj-001",
+         "created_by": "cory@example.com"},
+        {"entry_id": "te-010", "task_id": "t-002", "user_id": "u-002",
+         "hours": 5.0, "work_date": "2026-02-25", "notes": "Cost center DLT pipeline testing",
+         "task_title": "DLT pipeline — Cost Centers", "project_id": "prj-001",
+         "created_by": "chris@example.com"},
     ])
 
 
@@ -611,6 +813,36 @@ def get_retro_items() -> pd.DataFrame:
 def get_audit_log() -> pd.DataFrame:
     """Return audit log from mutable store."""
     return _get_store("audit_log", _init_audit_log).copy()
+
+
+def get_deliverables() -> pd.DataFrame:
+    """Return deliverables from mutable store."""
+    return _get_store("deliverables", _init_deliverables).copy()
+
+
+def get_dependencies() -> pd.DataFrame:
+    """Return dependencies from mutable store."""
+    return _get_store("dependencies", _init_dependencies).copy()
+
+
+def get_comments() -> pd.DataFrame:
+    """Return comments from mutable store."""
+    return _get_store("comments", _init_comments).copy()
+
+
+def get_time_entries() -> pd.DataFrame:
+    """Return time entries from mutable store."""
+    return _get_store("time_entries", _init_time_entries).copy()
+
+
+def get_team_members() -> pd.DataFrame:
+    """Return team members from mutable store."""
+    return _get_store("team_members", _init_team_members).copy()
+
+
+def get_project_team() -> pd.DataFrame:
+    """Return project team assignments from mutable store."""
+    return _get_store("project_team", _init_project_team).copy()
 
 
 def get_empty() -> pd.DataFrame:

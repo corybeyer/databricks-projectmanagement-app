@@ -1,7 +1,7 @@
 # CLAUDE.md — PM Hub Project Intelligence
 
 > Claude reads this file automatically at the start of every session.
-> Last updated: 2026-02-26 | Current Phase: 4 (Production Roadmap)
+> Last updated: 2026-02-26 | Current Phase: 5 (Production Roadmap)
 
 ## Environment
 
@@ -33,15 +33,15 @@ Unity Catalog Delta tables.
 
 See [docs/architecture-plan.md](docs/architecture-plan.md) for the scaffolding & architecture plan.
 See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production roadmap (Phase 0–5).
-**Current step**: Phase 4 — PMI/PMP Feature Completeness (Phase 3 fully complete)
+**Current step**: Phase 5 — Polish & Production Readiness (Phase 4 fully complete)
 **Pattern**: Pragmatic Layered Architecture with Repository Pattern
 **Call direction**: Pages → Services → Repositories → DB (never skip layers)
 
 ## Current State
 
-- **Phase**: 4 — Production Roadmap (Schema → Foundation → CRUD → Navigation → PMI → Polish)
+- **Phase**: 5 — Production Roadmap (Schema → Foundation → CRUD → Navigation → PMI → Polish)
 - **Roadmap**: See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) — 32 tasks across 6 phases
-- **Current Work**: Phase 4 — PMI/PMP Feature Completeness
+- **Current Work**: Phase 5 — Polish & Production Readiness
 - **Phase 0 Done**: Departments, user tracking, PMI risks, audit log, schema fixes (PR #19)
 - **Phase 1 Done**: Toast system, auto-refresh (13 pages), validation layer, dcc.Store state, error boundaries, change history (PR #20)
 - **Phase 2 Prereqs Done**: In-memory write mode, CRUD modal component, task_fields (PR #22)
@@ -51,9 +51,10 @@ See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production ro
 - **Phase 2b.5 Done**: Retrospective CRUD + voting, sprint selector, convert-to-task (PR #26)
 - **Phase 2b.6 Done**: Project & Portfolio CRUD + validate_portfolio_create (PR #26)
 - **Phase 3 Done**: Dept/project selectors, drill-down hierarchy, filter bars, sort toggles, context-aware breadcrumbs (PR #27)
-- **Pages**: All 13/13 built; all 8 CRUD pages fully interactive; topbar dept/project context selectors; filter bars on 4 data-heavy pages
+- **Phase 4 Done**: Phase/gate management, deliverables tracking, dependencies view, comments, time tracking, resource management enhancements (PR #29)
+- **Pages**: 16/16 built (13 original + 3 new: deliverables, comments, timesheet); all CRUD pages fully interactive
 - **Blockers**: None
-- **Next Gate**: Phase 4 PMI/PMP Features
+- **Next Gate**: Phase 5 Polish & Production Readiness
 
 ## Architecture Rules
 
@@ -97,7 +98,13 @@ databricks-pm-app/
 │   ├── task_repo.py
 │   ├── risk_repo.py
 │   ├── analytics_repo.py
-│   └── resource_repo.py
+│   ├── resource_repo.py
+│   ├── phase_repo.py
+│   ├── gate_repo.py
+│   ├── deliverable_repo.py
+│   ├── dependency_repo.py
+│   ├── comment_repo.py
+│   └── time_entry_repo.py
 ├── services/               # Business logic — NO Dash imports
 │   ├── auth_service.py     # OBO token, user identity, permissions
 │   ├── portfolio_service.py
@@ -105,6 +112,12 @@ databricks-pm-app/
 │   ├── sprint_service.py
 │   ├── task_service.py
 │   ├── analytics_service.py
+│   ├── phase_service.py
+│   ├── deliverable_service.py
+│   ├── dependency_service.py
+│   ├── comment_service.py
+│   ├── time_entry_service.py
+│   ├── resource_service.py
 │   ├── audit_service.py    # Placeholder
 │   ├── notification_service.py  # Placeholder
 │   └── export_service.py   # Placeholder
@@ -125,11 +138,12 @@ databricks-pm-app/
 │   ├── loading_wrapper.py
 │   ├── auto_refresh.py
 │   ├── error_boundary.py
-│   └── export_button.py
+│   ├── export_button.py
+│   └── comment_thread.py
 ├── callbacks/              # Dash callbacks (separate from pages)
 │   ├── __init__.py         # Imports all callback modules
 │   └── navigation.py       # Breadcrumb callback
-├── pages/                  # One file per route (13/13 complete)
+├── pages/                  # One file per route (16/16 complete)
 │   ├── dashboard.py        # /
 │   ├── portfolios.py       # /portfolios
 │   ├── roadmap.py          # /roadmap
@@ -142,7 +156,10 @@ databricks-pm-app/
 │   ├── retros.py           # /retros
 │   ├── reports.py          # /reports
 │   ├── resources.py        # /resources
-│   └── risks.py            # /risks
+│   ├── risks.py            # /risks
+│   ├── deliverables.py     # /deliverables
+│   ├── comments.py         # /comments
+│   └── timesheet.py        # /timesheet
 ├── utils/
 │   ├── url_state.py        # URL query param helpers
 │   └── labels.py           # Centralized user-facing strings
