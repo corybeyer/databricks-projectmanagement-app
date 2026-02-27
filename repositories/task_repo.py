@@ -5,6 +5,18 @@ from repositories.base import query, write, safe_update, soft_delete
 from models import sample_data
 
 
+def get_all_tasks(user_token: str = None) -> pd.DataFrame:
+    """Get all non-deleted tasks across all projects."""
+    return query("""
+        SELECT t.*,
+               tm.display_name as assignee_name
+        FROM tasks t
+        LEFT JOIN team_members tm ON t.assignee = tm.user_id
+        WHERE t.is_deleted = false
+        ORDER BY t.status, t.title
+    """, user_token=user_token, sample_fallback=sample_data.get_tasks)
+
+
 def get_backlog(project_id: str, user_token: str = None) -> pd.DataFrame:
     return query("""
         SELECT t.*,

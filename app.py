@@ -74,6 +74,11 @@ sidebar = html.Div(
         make_nav_link("My Work", "/my-work", "person-check-fill"),
         make_nav_link("Backlog", "/backlog", "list-check"),
         make_nav_link("Retrospectives", "/retros", "arrow-repeat"),
+        make_nav_link("Comments", "/comments", "chat-dots"),
+        make_nav_link("Timesheet", "/timesheet", "clock-history"),
+
+        html.Div("PMI GOVERNANCE", className="sidebar-section-label mt-3"),
+        make_nav_link("Deliverables", "/deliverables", "box-seam-fill"),
 
         html.Div("ANALYTICS", className="sidebar-section-label mt-3"),
         make_nav_link("Reports", "/reports", "graph-up-arrow"),

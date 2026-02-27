@@ -5,6 +5,11 @@ from repositories import task_repo
 from utils.validators import validate_task_create, ValidationError
 
 
+def get_tasks(user_token: str = None):
+    """Get all tasks across all projects."""
+    return task_repo.get_all_tasks(user_token=user_token)
+
+
 def get_backlog(project_id: str, user_token: str = None):
     return task_repo.get_backlog(project_id, user_token=user_token)
 
