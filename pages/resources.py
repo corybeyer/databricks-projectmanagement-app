@@ -9,7 +9,9 @@ import json
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import (
+    get_user_token, get_user_email, get_current_user, has_permission,
+)
 from services.analytics_service import get_resource_allocations
 from services import resource_service
 from components.kpi_card import kpi_card
@@ -20,6 +22,7 @@ from components.crud_modal import (
     set_field_errors, modal_field_states, modal_error_outputs,
 )
 from components.filter_bar import filter_bar
+from components.export_button import export_button
 from charts.theme import COLORS
 from charts.analytics_charts import resource_utilization_chart
 
@@ -272,6 +275,8 @@ def _build_content(role_filter=None, department_id=None):
 
 
 def layout():
+    user = get_current_user()
+    can_write = has_permission(user, "create", "resource")
     return html.Div([
         # Stores
         dcc.Store(id="resources-mutation-counter", data=0),
@@ -284,7 +289,9 @@ def layout():
                     [html.I(className="bi bi-plus-circle me-1"), "Assign Member"],
                     id="resources-add-assignment-btn", color="primary", size="sm",
                     className="me-2",
+                    style={"display": "inline-block" if can_write else "none"},
                 ),
+                export_button("resources-export-btn", "Export"),
             ], className="d-flex align-items-start justify-content-end"),
         ], className="mb-3"),
 
@@ -426,3 +433,19 @@ def save_assignment(n_clicks, stored_assignment, counter, *field_values):
 def cancel_assignment_modal(n):
     """Close assignment modal on cancel."""
     return False
+
+
+@callback(
+    Output("resources-export-btn-download", "data"),
+    Input("resources-export-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def export_resources(n_clicks):
+    """Export resource allocation data to Excel."""
+    if not n_clicks:
+        return no_update
+    from datetime import datetime
+    from services import export_service
+    df = get_resource_allocations()
+    excel_bytes = export_service.to_excel(df, "resources")
+    return dcc.send_bytes(excel_bytes, f"resources_{datetime.now().strftime('%Y%m%d')}.xlsx")

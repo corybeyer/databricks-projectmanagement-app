@@ -21,6 +21,10 @@ def get_task(task_id: str, user_token: str = None):
 def create_task_from_form(form_data: dict, user_email: str = None,
                           user_token: str = None) -> dict:
     """Validate and create a task. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "task"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_task_create(
             title=form_data.get("title"),
@@ -59,6 +63,10 @@ def create_task_from_form(form_data: dict, user_email: str = None,
 def update_task_from_form(task_id: str, form_data: dict, expected_updated_at: str,
                           user_email: str = None, user_token: str = None) -> dict:
     """Validate and update a task. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "task"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_task_create(
             title=form_data.get("title"),
@@ -94,6 +102,10 @@ def update_task_from_form(task_id: str, form_data: dict, expected_updated_at: st
 
 
 def delete_task(task_id: str, user_email: str = None, user_token: str = None) -> bool:
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "delete", "task"):
+        return False
     return task_repo.delete_task(task_id, user_email=user_email, user_token=user_token)
 
 

@@ -30,6 +30,10 @@ def get_project(project_id: str, user_token: str = None):
 def create_project_from_form(form_data: dict, user_email: str = None,
                              user_token: str = None) -> dict:
     """Validate and create a project. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "project"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_project_create(
             name=form_data.get("name"),
@@ -80,6 +84,10 @@ def update_project_from_form(project_id: str, form_data: dict,
                              user_email: str = None,
                              user_token: str = None) -> dict:
     """Validate and update a project. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "project"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_project_create(
             name=form_data.get("name"),
@@ -126,6 +134,10 @@ def update_project_from_form(project_id: str, form_data: dict,
 def delete_project(project_id: str, user_email: str = None,
                    user_token: str = None) -> bool:
     """Soft-delete a project."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "delete", "project"):
+        return False
     return project_repo.delete_project(
         project_id, user_email=user_email, user_token=user_token,
     )

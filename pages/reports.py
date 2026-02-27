@@ -16,6 +16,7 @@ from charts.theme import COLORS
 from charts.sprint_charts import velocity_chart
 from charts.analytics_charts import cycle_time_chart
 from utils.labels import GATE_LABELS
+from components.export_button import export_button
 
 dash.register_page(__name__, path="/reports", name="Reports")
 
@@ -151,6 +152,10 @@ def _build_content(project_id=None):
 
 def layout():
     return html.Div([
+        dbc.Row([
+            dbc.Col(className="flex-grow-1"),
+            dbc.Col(export_button("reports-export-btn", "Export"), width="auto"),
+        ], className="mb-3"),
         html.Div(id="reports-content"),
         auto_refresh(interval_id="reports-refresh-interval"),
     ])
@@ -163,3 +168,21 @@ def layout():
 )
 def refresh_reports(n, active_project):
     return _build_content(project_id=active_project)
+
+
+@callback(
+    Output("reports-export-btn-download", "data"),
+    Input("reports-export-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def export_reports(n_clicks):
+    """Export velocity data to Excel."""
+    if not n_clicks:
+        from dash import no_update
+        return no_update
+    from datetime import datetime
+    from services import export_service
+    token = get_user_token()
+    df = get_velocity(user_token=token)
+    excel_bytes = export_service.to_excel(df, "reports")
+    return dcc.send_bytes(excel_bytes, f"reports_{datetime.now().strftime('%Y%m%d')}.xlsx")

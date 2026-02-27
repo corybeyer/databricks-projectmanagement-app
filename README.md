@@ -36,20 +36,23 @@ databricks-pm-app/
 ├── models/
 │   └── schema_ddl.sql      # Full Unity Catalog DDL (17 tables)
 │
-├── pages/                  # Dash multi-page app — one file per view
+├── pages/                  # Dash multi-page app — one file per view (16 pages)
 │   ├── dashboard.py        # / — Portfolio KPIs, health, rollup
 │   ├── portfolios.py       # /portfolios — Portfolio CRUD + budget burn charts
-│   ├── roadmap.py          # /roadmap — Multi-project Gantt timeline
-│   ├── projects.py         # /projects — Project CRUD + health tracking
+│   ├── roadmap.py          # /roadmap — Dependencies CRUD + cross-project mapping
+│   ├── projects.py         # /projects — Project CRUD + health tracking + export
 │   ├── charters.py         # /charters — Charter CRUD + approval workflow
-│   ├── gantt.py            # /gantt — Single project Gantt + gates
+│   ├── gantt.py            # /gantt — Phase/gate management + waterfall governance
 │   ├── sprint.py           # /sprint — Kanban board + task CRUD
 │   ├── my_work.py          # /my-work — Current user's assignments + edit
-│   ├── backlog.py          # /backlog — Backlog management + task CRUD
+│   ├── backlog.py          # /backlog — Backlog management + task CRUD + export
 │   ├── retros.py           # /retros — Retro CRUD + voting + convert-to-task
-│   ├── reports.py          # /reports — Velocity, burndown, cycle time
-│   ├── resources.py        # /resources — Team allocation heatmap
-│   └── risks.py            # /risks — PMI risk lifecycle + CRUD + heatmap
+│   ├── reports.py          # /reports — Velocity, burndown, cycle time + export
+│   ├── resources.py        # /resources — Team allocation + capacity planning + export
+│   ├── risks.py            # /risks — PMI risk lifecycle + CRUD + heatmap + export
+│   ├── deliverables.py     # /deliverables — Phase deliverables tracking
+│   ├── comments.py         # /comments — Task comment threads
+│   └── timesheet.py        # /timesheet — Time entry management
 │
 ├── repositories/           # Data access — ALL SQL lives here
 │   ├── base.py             # query(), write(), safe_update(), soft_delete()
@@ -68,8 +71,10 @@ databricks-pm-app/
 │   ├── retro_service.py    # Retro CRUD + voting + convert-to-task
 │   ├── portfolio_service.py # Portfolio CRUD + dashboard aggregation
 │   ├── project_service.py  # Project CRUD + detail retrieval
-│   ├── auth_service.py     # OBO token, user identity
-│   └── ...                 # analytics services
+│   ├── auth_service.py     # OBO token, user identity, RBAC
+│   ├── notification_service.py  # Real-time notification system
+│   ├── export_service.py   # Excel export (openpyxl)
+│   └── ...                 # analytics, audit, phase, deliverable, etc.
 │
 ├── components/             # Reusable Dash UI components
 │   ├── crud_modal.py       # CRUD modal factory (6 public functions)
@@ -77,6 +82,7 @@ databricks-pm-app/
 │   ├── toast.py            # Toast notification system
 │   ├── department_selector.py  # Topbar department dropdown
 │   ├── project_selector.py    # Topbar project context dropdown
+│   ├── notification_bell.py   # Topbar notification bell + dropdown
 │   ├── filter_bar.py       # Reusable filter bar + sort toggle
 │   └── ...                 # kpi_card, empty_state, auto_refresh, etc.
 │
@@ -88,6 +94,7 @@ databricks-pm-app/
 │   ├── navigation.py       # Context-aware breadcrumbs
 │   ├── department_callbacks.py  # Department selector state
 │   ├── project_callbacks.py     # Project selector state
+│   ├── notification_callbacks.py  # Notification bell updates
 │   ├── state_callbacks.py  # URL-driven store updates
 │   └── toast_callbacks.py  # Toast notification handler
 │
@@ -100,7 +107,7 @@ databricks-pm-app/
     └── custom.css          # Global dark theme overrides
 ```
 
-## Schema Overview (17 Tables)
+## Schema Overview (18 Tables)
 
 ### Portfolio Layer
 - **portfolios** — Strategic groupings (Data Platform, Financial Reporting, etc.)
@@ -127,6 +134,8 @@ databricks-pm-app/
 - **comments** — Task discussion threads
 - **time_entries** — Hours logged per task
 - **risks** — PMI risk register with probability × impact scoring, residual risk tracking, lifecycle management
+- **notifications** — In-app notification system (task assignments, approvals, gate decisions)
+- **audit_log** — Centralized audit trail for all entity changes
 
 ## Key Design Decisions
 

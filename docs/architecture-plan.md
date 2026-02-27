@@ -1,15 +1,13 @@
 # PM Hub — Architecture & Scaffolding Plan
 
-> **Status (2026-02-26):** This scaffolding plan is **complete**. The layered
-> architecture (Pages → Services → Repositories → DB), repository pattern,
-> sample data fallback, config layer, charts layer, and all 13 pages are built.
-> Phase 2 (all CRUD) is fully complete: Task, Sprint, Charter, Risk, Retro,
-> Project, and Portfolio CRUD all operational with validation, optimistic locking,
-> and defense-in-depth patterns. 8 of 13 pages have full CRUD interactivity.
-> Phase 3 (Navigation & Multi-Dept) is complete: department/project selectors
-> in topbar, drill-down hierarchy (Dept → Portfolio → Project), filter bars
-> and sort toggles on data-heavy pages, context-aware breadcrumbs.
-> See [PLAN.md](architecture/PLAN.md) for the production roadmap.
+> **Status (2026-02-26):** All 6 phases **complete**. The layered architecture
+> (Pages → Services → Repositories → DB), repository pattern, sample data
+> fallback, config layer, charts layer, and all 16 pages are built. All CRUD
+> operations are fully interactive with validation, optimistic locking, and
+> defense-in-depth patterns. Phase 5 (Production Readiness) added: Excel export,
+> RBAC enforcement, Databricks-specific exception handling, 325 unit tests,
+> and a real-time notification system. See [PLAN.md](architecture/PLAN.md)
+> for the full roadmap history.
 
 ## Context
 

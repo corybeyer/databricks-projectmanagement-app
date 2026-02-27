@@ -1,7 +1,20 @@
 """Test fixtures for PM Hub."""
 
+import os
 import pytest
 import pandas as pd
+
+# Force sample data mode for all tests
+os.environ["USE_SAMPLE_DATA"] = "true"
+
+
+@pytest.fixture(autouse=True)
+def reset_sample_data():
+    """Reset in-memory store before each test."""
+    from models.sample_data import reset_store
+    reset_store()
+    yield
+    reset_store()
 
 
 @pytest.fixture
@@ -19,3 +32,8 @@ def sample_tasks():
         {"task_id": "t-001", "title": "Test task", "task_type": "story",
          "status": "todo", "story_points": 5, "priority": "medium"},
     ])
+
+
+@pytest.fixture
+def user_email():
+    return "test@pm-hub.local"

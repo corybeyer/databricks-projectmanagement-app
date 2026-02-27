@@ -33,7 +33,7 @@ def velocity_chart(velocity_df):
 
 def burndown_chart(burndown_df, sprint_name="Sprint"):
     if burndown_df.empty:
-        return go.Figure()
+        return apply_theme(go.Figure())
     total = burndown_df["total_points"].iloc[0]
     days = len(burndown_df)
     ideal_line = [total - (total / (days - 1)) * i for i in range(days)]

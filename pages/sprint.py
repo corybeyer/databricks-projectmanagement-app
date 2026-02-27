@@ -8,7 +8,7 @@ import json
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import get_user_token, get_user_email, get_current_user, has_permission
 from services import task_service, sprint_service
 from services.analytics_service import get_velocity, get_burndown
 from components.kpi_card import kpi_card
@@ -258,6 +258,9 @@ def _build_content(sprint_id=None, project_id=None):
 
 
 def layout():
+    user = get_current_user()
+    can_write_task = has_permission(user, "create", "task")
+    can_write_sprint = has_permission(user, "create", "sprint")
     return html.Div([
         # Stores
         dcc.Store(id="sprint-mutation-counter", data=0),
@@ -277,16 +280,19 @@ def layout():
                     [html.I(className="bi bi-plus-circle me-1"), "Add Task"],
                     id="sprint-add-task-btn", color="primary", size="sm",
                     className="me-2",
+                    style={"display": "inline-block" if can_write_task else "none"},
                 ),
                 dbc.Button(
                     [html.I(className="bi bi-calendar-plus me-1"), "New Sprint"],
                     id="sprint-new-sprint-btn", color="secondary", size="sm",
                     outline=True, className="me-2",
+                    style={"display": "inline-block" if can_write_sprint else "none"},
                 ),
                 dbc.Button(
                     [html.I(className="bi bi-check-circle me-1"), "Close Sprint"],
                     id="sprint-close-sprint-btn", color="warning", size="sm",
                     outline=True,
+                    style={"display": "inline-block" if can_write_sprint else "none"},
                 ),
             ], width=8, className="d-flex align-items-start justify-content-end"),
         ], className="mb-3"),
