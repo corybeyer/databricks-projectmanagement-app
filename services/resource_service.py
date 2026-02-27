@@ -21,6 +21,10 @@ def get_project_assignments(project_id: str, user_token: str = None):
 def assign_member_to_project(form_data: dict, user_email: str = None,
                               user_token: str = None) -> dict:
     """Validate and create a project_team record. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "resource"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_assignment_create(
             project_id=form_data.get("project_id"),
@@ -56,6 +60,10 @@ def update_assignment(project_id: str, user_id: str, form_data: dict,
                       expected_updated_at: str, user_email: str = None,
                       user_token: str = None) -> dict:
     """Validate and update a project_team record. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "resource"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     updates = {}
 
     # Validate optional fields that may be updated
@@ -112,6 +120,10 @@ def update_assignment(project_id: str, user_id: str, form_data: dict,
 def remove_assignment(project_id: str, user_id: str,
                       user_email: str = None, user_token: str = None) -> dict:
     """Soft-delete a project_team record. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "delete", "resource"):
+        return {"success": False, "message": "Permission denied"}
     success = resource_repo.delete_assignment(
         project_id, user_id, user_email=user_email, user_token=user_token,
     )

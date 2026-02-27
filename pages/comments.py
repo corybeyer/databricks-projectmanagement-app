@@ -11,7 +11,9 @@ from datetime import date
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import (
+    get_user_token, get_user_email, get_current_user, has_permission,
+)
 from services import comment_service, task_service
 from components.kpi_card import kpi_card
 from components.empty_state import empty_state
@@ -29,6 +31,8 @@ dash.register_page(__name__, path="/comments", name="Task Comments")
 
 
 def layout():
+    user = get_current_user()
+    _can_write = has_permission(user, "create", "comment")  # noqa: F841
     return html.Div([
         # Stores
         dcc.Store(id="comments-mutation-counter", data=0),

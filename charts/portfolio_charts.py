@@ -28,7 +28,7 @@ def portfolio_health_donut(green_count, yellow_count, red_count, planning_count=
         text=f"<b>{sum(values)}</b><br><span style='font-size:11px;color:{COLORS['text_dim']}'>projects</span>",
         showarrow=False, font=dict(size=22, color=COLORS["text"]),
     )
-    return fig
+    return apply_theme(fig)
 
 
 def budget_burn_chart(projects_df):

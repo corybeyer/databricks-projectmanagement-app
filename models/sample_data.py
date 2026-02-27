@@ -58,6 +58,7 @@ _TABLE_ID_COLUMNS = {
     "comments": "comment_id", "time_entries": "entry_id", "team_members": "user_id",
     "risks": "risk_id", "retro_items": "retro_id", "project_team": "user_id",
     "dependencies": "dependency_id", "audit_log": "audit_id",
+    "notifications": "notification_id",
     "resource_allocations": "user_id", "portfolio_projects": "project_id",
     "velocity": "sprint_name", "burndown": "burn_date", "cycle_times": "task_id",
 }
@@ -105,7 +106,11 @@ def update_record(
     - Returns True if updated, False if not found or conflict.
     """
     if table_name not in _store:
-        return False
+        init_fn = _get_table_initializer(table_name)
+        if init_fn:
+            _get_store(table_name, init_fn)
+        else:
+            return False
     df = _store[table_name]
 
     # Build mask: match ID and not soft-deleted
@@ -140,7 +145,11 @@ def delete_record(
     Returns True if deleted, False if not found.
     """
     if table_name not in _store:
-        return False
+        init_fn = _get_table_initializer(table_name)
+        if init_fn:
+            _get_store(table_name, init_fn)
+        else:
+            return False
     df = _store[table_name]
 
     mask = df[id_column] == id_value
@@ -353,13 +362,13 @@ def _init_risks() -> pd.DataFrame:
 def _init_team_members() -> pd.DataFrame:
     return pd.DataFrame([
         {"user_id": "u-001", "display_name": "Cory S.", "email": "cory@example.com",
-         "department_id": "dept-001", "role": "lead", "is_active": True, "capacity_pct": 100},
+         "department_id": "dept-001", "role": "admin", "is_active": True, "capacity_pct": 100},
         {"user_id": "u-002", "display_name": "Chris J.", "email": "chris@example.com",
-         "department_id": "dept-001", "role": "engineer", "is_active": True, "capacity_pct": 100},
+         "department_id": "dept-001", "role": "lead", "is_active": True, "capacity_pct": 100},
         {"user_id": "u-003", "display_name": "Anna K.", "email": "anna@example.com",
-         "department_id": "dept-002", "role": "analyst", "is_active": True, "capacity_pct": 100},
+         "department_id": "dept-002", "role": "engineer", "is_active": True, "capacity_pct": 100},
         {"user_id": "u-004", "display_name": "Jordan T.", "email": "jordan@example.com",
-         "department_id": "dept-001", "role": "engineer", "is_active": True, "capacity_pct": 80},
+         "department_id": "dept-001", "role": "viewer", "is_active": True, "capacity_pct": 80},
     ])
 
 
@@ -843,6 +852,61 @@ def get_team_members() -> pd.DataFrame:
 def get_project_team() -> pd.DataFrame:
     """Return project team assignments from mutable store."""
     return _get_store("project_team", _init_project_team).copy()
+
+
+def get_notifications() -> pd.DataFrame:
+    """Return notifications from mutable store."""
+    return _get_store("notifications", _seed_notifications).copy()
+
+
+def _get_table_initializer(table_name: str) -> Optional[Callable[[], pd.DataFrame]]:
+    """Return the initializer function for a given table, or None."""
+    _initializers = {
+        "departments": _init_departments, "portfolios": _init_portfolios,
+        "portfolio_projects": _init_portfolio_projects,
+        "project_charters": _init_project_charter, "sprints": _init_sprints,
+        "tasks": _init_tasks, "risks": _init_risks,
+        "resource_allocations": _init_resource_allocations,
+        "projects": _init_project_detail, "phases": _init_project_phases,
+        "velocity": _init_velocity, "burndown": _init_burndown,
+        "gates": _init_gate_status, "cycle_times": _init_cycle_times,
+        "retro_items": _init_retro_items, "audit_log": _init_audit_log,
+        "deliverables": _init_deliverables, "dependencies": _init_dependencies,
+        "comments": _init_comments, "time_entries": _init_time_entries,
+        "team_members": _init_team_members, "project_team": _init_project_team,
+        "notifications": _seed_notifications,
+    }
+    return _initializers.get(table_name)
+
+
+def _seed_notifications():
+    return pd.DataFrame([
+        {"notification_id": "notif-001", "user_email": "alice@company.com",
+         "notification_type": "task_assignment", "title": "Task Assigned",
+         "message": "You've been assigned 'API Integration' task",
+         "entity_type": "task", "entity_id": "t-001",
+         "is_read": False, "created_at": "2026-02-25 10:00:00"},
+        {"notification_id": "notif-002", "user_email": "alice@company.com",
+         "notification_type": "charter_approved", "title": "Charter Approved",
+         "message": "Data Pipeline Modernization charter has been approved",
+         "entity_type": "charter", "entity_id": "ch-001",
+         "is_read": True, "created_at": "2026-02-24 15:00:00"},
+        {"notification_id": "notif-003", "user_email": "bob@company.com",
+         "notification_type": "risk_escalation", "title": "Risk Escalated",
+         "message": "High severity risk 'Data Quality' needs attention",
+         "entity_type": "risk", "entity_id": "risk-001",
+         "is_read": False, "created_at": "2026-02-25 14:00:00"},
+        {"notification_id": "notif-004", "user_email": "alice@company.com",
+         "notification_type": "sprint_closed", "title": "Sprint Closed",
+         "message": "Sprint 'Sprint 4 — Integrations' has been closed",
+         "entity_type": "sprint", "entity_id": "sp-004",
+         "is_read": False, "created_at": "2026-02-26 09:00:00"},
+        {"notification_id": "notif-005", "user_email": "carol@company.com",
+         "notification_type": "gate_decision", "title": "Gate Decision",
+         "message": "Design Review gate has been approved",
+         "entity_type": "gate", "entity_id": "gate-002",
+         "is_read": False, "created_at": "2026-02-26 11:00:00"},
+    ])
 
 
 def get_empty() -> pd.DataFrame:

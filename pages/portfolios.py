@@ -9,7 +9,7 @@ import json
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import get_user_token, get_user_email, get_current_user, has_permission
 from services.portfolio_service import (
     get_dashboard_data, get_portfolio_projects, get_portfolio,
     create_portfolio_from_form, update_portfolio_from_form, delete_portfolio,
@@ -193,6 +193,8 @@ def _build_content(department_id=None):
 
 
 def layout():
+    user = get_current_user()
+    can_write = has_permission(user, "create", "portfolio")
     return html.Div([
         # Stores
         dcc.Store(id="portfolios-mutation-counter", data=0),
@@ -205,6 +207,7 @@ def layout():
                 dbc.Button(
                     [html.I(className="bi bi-plus-circle me-1"), "New Portfolio"],
                     id="portfolios-add-portfolio-btn", color="primary", size="sm",
+                    style={"display": "inline-block" if can_write else "none"},
                 ),
             ], width=4, className="d-flex align-items-start justify-content-end"),
         ], className="mb-3"),

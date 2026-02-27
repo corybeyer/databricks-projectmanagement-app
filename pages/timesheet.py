@@ -12,7 +12,9 @@ import dash
 import plotly.graph_objects as go
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import (
+    get_user_token, get_user_email, get_current_user, has_permission,
+)
 from services import time_entry_service
 from services.task_service import get_backlog as get_project_tasks
 from components.kpi_card import kpi_card
@@ -257,6 +259,8 @@ TS_SORT_OPTIONS = [
 
 
 def layout():
+    user = get_current_user()
+    can_write = has_permission(user, "create", "time_entry")
     return html.Div([
         # Stores
         dcc.Store(id="ts-mutation-counter", data=0),
@@ -268,6 +272,7 @@ def layout():
                 dbc.Button(
                     [html.I(className="bi bi-plus-circle me-1"), "Log Time"],
                     id="ts-add-entry-btn", color="primary", size="sm",
+                    style={"display": "inline-block" if can_write else "none"},
                 ),
             ], className="d-flex align-items-start justify-content-end"),
         ], className="mb-3"),

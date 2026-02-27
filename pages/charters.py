@@ -9,7 +9,7 @@ import pandas as pd
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import get_user_token, get_user_email, get_current_user, has_permission
 from services import charter_service
 from components.charter_display import charter_display
 from components.empty_state import empty_state
@@ -190,6 +190,8 @@ def _build_content(project_id=None):
 
 
 def layout():
+    user = get_current_user()
+    can_write = has_permission(user, "create", "charter")
     return html.Div([
         # Stores
         dcc.Store(id="charters-mutation-counter", data=0),
@@ -210,6 +212,7 @@ def layout():
                 dbc.Button(
                     [html.I(className="bi bi-plus-circle me-1"), "New Charter"],
                     id="charters-add-charter-btn", color="primary", size="sm",
+                    style={"display": "inline-block" if can_write else "none"},
                 ),
             ], width=4, className="d-flex align-items-start justify-content-end"),
         ], className="mb-3"),

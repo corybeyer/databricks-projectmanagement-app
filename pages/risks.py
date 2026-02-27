@@ -9,7 +9,9 @@ import json
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
-from services.auth_service import get_user_token, get_user_email
+from services.auth_service import (
+    get_user_token, get_user_email, get_current_user, has_permission,
+)
 from services import risk_service
 from services.analytics_service import get_risks_overdue_review
 from components.kpi_card import kpi_card
@@ -22,6 +24,7 @@ from components.crud_modal import (
 from charts.theme import COLORS
 from charts.analytics_charts import risk_heatmap, risk_heatmap_residual
 from components.filter_bar import filter_bar, sort_toggle
+from components.export_button import export_button
 
 dash.register_page(__name__, path="/risks", name="Risk Register")
 
@@ -304,6 +307,8 @@ RISKS_SORT_OPTIONS = [
 
 
 def layout():
+    user = get_current_user()
+    can_write = has_permission(user, "create", "risk")
     return html.Div([
         # Stores
         dcc.Store(id="risks-mutation-counter", data=0),
@@ -317,12 +322,14 @@ def layout():
                     [html.I(className="bi bi-plus-circle me-1"), "Add Risk"],
                     id="risks-add-risk-btn", color="primary", size="sm",
                     className="me-2",
+                    style={"display": "inline-block" if can_write else "none"},
                 ),
                 dbc.Button(
                     [html.I(className="bi bi-arrow-repeat me-1"), "Toggle Residual"],
                     id="risks-toggle-heatmap-btn", color="secondary", size="sm",
-                    outline=True,
+                    outline=True, className="me-2",
                 ),
+                export_button("risks-export-btn", "Export"),
             ], className="d-flex align-items-start justify-content-end"),
         ], className="mb-3"),
 
@@ -596,3 +603,20 @@ def review_risk_action(n_clicks_list, counter):
     if result["success"]:
         return (counter or 0) + 1, result["message"], "Reviewed", "success", True
     return no_update, result["message"], "Error", "danger", True
+
+
+@callback(
+    Output("risks-export-btn-download", "data"),
+    Input("risks-export-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def export_risks(n_clicks):
+    """Export risk data to Excel."""
+    if not n_clicks:
+        return no_update
+    from datetime import datetime
+    from services import export_service
+    token = get_user_token()
+    df = risk_service.get_risks(user_token=token)
+    excel_bytes = export_service.to_excel(df, "risks")
+    return dcc.send_bytes(excel_bytes, f"risks_{datetime.now().strftime('%Y%m%d')}.xlsx")

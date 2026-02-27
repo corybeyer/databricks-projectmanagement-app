@@ -21,6 +21,10 @@ def get_risks_by_project(project_id: str, user_token: str = None):
 def create_risk_from_form(form_data: dict, user_email: str = None,
                           user_token: str = None) -> dict:
     """Validate and create a risk. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "create", "risk"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_risk_create(
             title=form_data.get("title"),
@@ -88,6 +92,10 @@ def create_risk_from_form(form_data: dict, user_email: str = None,
 def update_risk_from_form(risk_id: str, form_data: dict, expected_updated_at: str,
                           user_email: str = None, user_token: str = None) -> dict:
     """Validate and update a risk. Returns result dict."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "risk"):
+        return {"success": False, "message": "Permission denied", "errors": {}}
     try:
         cleaned = validate_risk_create(
             title=form_data.get("title"),
@@ -139,12 +147,20 @@ def update_risk_from_form(risk_id: str, form_data: dict, expected_updated_at: st
 
 
 def delete_risk(risk_id: str, user_email: str = None, user_token: str = None) -> bool:
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "delete", "risk"):
+        return False
     return risk_repo.delete_risk(risk_id, user_email=user_email, user_token=user_token)
 
 
 def update_risk_status(risk_id: str, new_status: str, user_email: str = None,
                        user_token: str = None) -> dict:
     """Update risk status following PMI lifecycle transitions."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "risk"):
+        return {"success": False, "message": "Permission denied"}
     try:
         validated_status = validate_enum(new_status, RISK_STATUSES, "status")
     except ValidationError as exc:
@@ -161,6 +177,10 @@ def update_risk_status(risk_id: str, new_status: str, user_email: str = None,
 
 def review_risk(risk_id: str, user_email: str = None, user_token: str = None) -> dict:
     """Mark a risk as reviewed today."""
+    from services.auth_service import get_current_user, has_permission
+    user = get_current_user()
+    if not has_permission(user, "update", "risk"):
+        return {"success": False, "message": "Permission denied"}
     risk_df = risk_repo.get_risk_detail(risk_id, user_token=user_token)
     if risk_df.empty:
         return {"success": False, "message": "Risk not found"}
