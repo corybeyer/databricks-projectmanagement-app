@@ -40,61 +40,124 @@ server = app.server  # Required for Databricks Apps deployment
 # Register callbacks
 import callbacks  # noqa: F401, E402
 
-# ─── Sidebar Navigation ────────────────────────────────────
-def make_nav_link(label, href, icon):
-    return dbc.NavLink(
+
+# ─── Navbar Helpers ────────────────────────────────────────
+def make_dropdown_item(label, href, icon):
+    return dbc.DropdownMenuItem(
         [html.I(className=f"bi bi-{icon} me-2"), label],
         href=href,
-        active="exact",
-        className="sidebar-link",
+        className="navbar-dropdown-item",
     )
 
-sidebar = html.Div(
-    [
-        html.Div(
-            [
-                html.Div("PM", className="sidebar-logo"),
-                html.Div("PM Hub", className="sidebar-brand"),
-            ],
-            className="sidebar-header",
-        ),
-        html.Hr(className="sidebar-divider"),
 
-        html.Div("PORTFOLIO", className="sidebar-section-label"),
-        make_nav_link("Dashboard", "/", "grid-1x2-fill"),
-        make_nav_link("Portfolios", "/portfolios", "collection-fill"),
-        make_nav_link("Roadmap", "/roadmap", "calendar-range-fill"),
-
-        html.Div("PROJECTS", className="sidebar-section-label mt-3"),
-        make_nav_link("All Projects", "/projects", "kanban-fill"),
-        make_nav_link("Project Charters", "/charters", "file-earmark-text-fill"),
-        make_nav_link("Gantt Timeline", "/gantt", "bar-chart-steps"),
-        make_nav_link("Sprint Board", "/sprint", "view-stacked"),
-
-        html.Div("EXECUTION", className="sidebar-section-label mt-3"),
-        make_nav_link("My Work", "/my-work", "person-check-fill"),
-        make_nav_link("Backlog", "/backlog", "list-check"),
-        make_nav_link("Retrospectives", "/retros", "arrow-repeat"),
-        make_nav_link("Comments", "/comments", "chat-dots"),
-        make_nav_link("Timesheet", "/timesheet", "clock-history"),
-
-        html.Div("PMI GOVERNANCE", className="sidebar-section-label mt-3"),
-        make_nav_link("Deliverables", "/deliverables", "box-seam-fill"),
-
-        html.Div("ANALYTICS", className="sidebar-section-label mt-3"),
-        make_nav_link("Reports", "/reports", "graph-up-arrow"),
-        make_nav_link("Resource Allocation", "/resources", "people-fill"),
-        make_nav_link("Risk Register", "/risks", "shield-exclamation"),
-
-        html.Div(
-            [
-                html.Div("Unity Catalog", className="sidebar-footer-item"),
-                html.Div(f"{settings.uc_catalog}.{settings.uc_schema}", className="sidebar-footer-schema"),
-            ],
-            className="sidebar-footer",
-        ),
-    ],
-    className="sidebar",
+# ─── Horizontal Navbar ────────────────────────────────────
+navbar = dbc.Navbar(
+    dbc.Container(
+        [
+            # Brand
+            html.A(
+                html.Div(
+                    [
+                        html.Div("PM", className="navbar-logo"),
+                        html.Span("PM Hub", className="navbar-brand-text"),
+                    ],
+                    className="d-flex align-items-center",
+                ),
+                href="/",
+                className="text-decoration-none",
+            ),
+            # Mobile toggler
+            dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
+            # Collapsible content
+            dbc.Collapse(
+                dbc.Nav(
+                    [
+                        # ── Portfolio dropdown ──
+                        dbc.DropdownMenu(
+                            [
+                                make_dropdown_item("Dashboard", "/", "grid-1x2-fill"),
+                                make_dropdown_item("Portfolios", "/portfolios", "collection-fill"),
+                                make_dropdown_item("Roadmap", "/roadmap", "calendar-range-fill"),
+                            ],
+                            label="Portfolio",
+                            nav=True,
+                            in_navbar=True,
+                            className="navbar-section-dropdown",
+                        ),
+                        # ── Projects dropdown ──
+                        dbc.DropdownMenu(
+                            [
+                                make_dropdown_item("All Projects", "/projects", "kanban-fill"),
+                                make_dropdown_item("Project Charters", "/charters", "file-earmark-text-fill"),
+                                make_dropdown_item("Gantt Timeline", "/gantt", "bar-chart-steps"),
+                                make_dropdown_item("Sprint Board", "/sprint", "view-stacked"),
+                            ],
+                            label="Projects",
+                            nav=True,
+                            in_navbar=True,
+                            className="navbar-section-dropdown",
+                        ),
+                        # ── Execution dropdown ──
+                        dbc.DropdownMenu(
+                            [
+                                make_dropdown_item("My Work", "/my-work", "person-check-fill"),
+                                make_dropdown_item("Backlog", "/backlog", "list-check"),
+                                make_dropdown_item("Retrospectives", "/retros", "arrow-repeat"),
+                                make_dropdown_item("Comments", "/comments", "chat-dots"),
+                                make_dropdown_item("Timesheet", "/timesheet", "clock-history"),
+                            ],
+                            label="Execution",
+                            nav=True,
+                            in_navbar=True,
+                            className="navbar-section-dropdown",
+                        ),
+                        # ── Governance direct link ──
+                        dbc.NavItem(
+                            dbc.NavLink(
+                                [html.I(className="bi bi-box-seam-fill me-1"), "Governance"],
+                                href="/deliverables",
+                                className="navbar-direct-link",
+                            ),
+                        ),
+                        # ── Analytics dropdown ──
+                        dbc.DropdownMenu(
+                            [
+                                make_dropdown_item("Reports", "/reports", "graph-up-arrow"),
+                                make_dropdown_item("Resource Allocation", "/resources", "people-fill"),
+                                make_dropdown_item("Risk Register", "/risks", "shield-exclamation"),
+                            ],
+                            label="Analytics",
+                            nav=True,
+                            in_navbar=True,
+                            className="navbar-section-dropdown",
+                        ),
+                    ],
+                    className="me-auto",
+                    navbar=True,
+                ),
+                id="navbar-collapse",
+                is_open=False,
+                navbar=True,
+            ),
+            # ── Right-side controls ──
+            html.Div(
+                [
+                    html.Div(id="page-breadcrumb", className="navbar-breadcrumb"),
+                    department_selector(),
+                    project_selector(),
+                    notification_bell(),
+                    html.Span("FY2026 Q1", className="navbar-period"),
+                    html.Span("●", className="navbar-status-dot"),
+                    html.Span("Live", className="navbar-status"),
+                ],
+                className="navbar-right-controls",
+            ),
+        ],
+        fluid=True,
+    ),
+    className="navbar-glass",
+    dark=True,
+    expand="lg",
 )
 
 # ─── Main Layout ────────────────────────────────────────────
@@ -103,32 +166,10 @@ app.layout = html.Div(
         dcc.Location(id="url"),
         *app_stores(),
         toast_container(),
-        sidebar,
+        navbar,
         html.Div(
-            [
-                html.Div(
-                    [
-                        html.Div(id="page-breadcrumb", className="topbar-breadcrumb"),
-                        html.Div(
-                            [
-                                department_selector(),
-                                project_selector(),
-                                notification_bell(),
-                                html.Span("FY2026 Q1", className="topbar-period"),
-                                html.Span("●", className="topbar-status-dot"),
-                                html.Span("Live", className="topbar-status"),
-                            ],
-                            className="topbar-right",
-                        ),
-                    ],
-                    className="topbar",
-                ),
-                html.Div(
-                    dash.page_container,
-                    className="page-content",
-                ),
-            ],
-            className="main-content",
+            dash.page_container,
+            className="page-content",
         ),
     ],
     className="app-container",
