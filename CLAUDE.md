@@ -19,7 +19,7 @@ Unity Catalog Delta tables.
 - **Repo**: `corybeyer/databricks-projectmanagement-app`
 - **Framework**: Dash (Plotly) with Dash Bootstrap Components
 - **Deployment**: Databricks Apps (app.yaml config)
-- **Data Layer**: Unity Catalog — `workspace.project_management` schema
+- **Data Layer**: Unity Catalog — catalog/schema configurable via `UC_CATALOG`/`UC_SCHEMA` env vars (defaults: `workspace.project_management`)
 - **CI/CD**: GitHub Actions → Databricks CLI deploy on push to main
 
 ## Team & Roles
@@ -62,7 +62,7 @@ Pages (UI) → Services (logic) → Repositories (data) → DB (connection)
 - **Pages** import from services, components, and charts. Never from repositories or db.
 - **Services** import from repositories. Never import Dash. Accept/return pure Python types.
 - **Repositories** import from db. Return `pd.DataFrame`. All SQL lives here.
-- **DB** manages connections (Unity Catalog via OBO auth). No business logic.
+- **DB** manages connections (Unity Catalog via OBO auth). Sets catalog/schema context from settings. No business logic.
 
 ### File Structure
 
@@ -78,7 +78,7 @@ databricks-pm-app/
 │   └── logging.py          # Structured logging setup
 ├── db/
 │   ├── __init__.py
-│   ├── unity_catalog.py    # OBO auth connection, execute_query/write
+│   ├── unity_catalog.py    # OBO auth connection, catalog/schema context, execute_query/write
 │   └── postgres.py         # Placeholder (future)
 ├── models/
 │   ├── schema_ddl.sql      # Single source of truth for table definitions
@@ -282,6 +282,7 @@ mid-session.
 - **Never** skip layers (pages must not call repositories directly)
 - **Never** build Plotly figures inside page files
 - **Never** use Streamlit patterns (st.write, st.columns) — this is Dash
+- **Never** hardcode catalog or schema names in SQL — use bare table names; connection sets context from settings
 - **Never** commit secrets, tokens, or warehouse IDs
 - **Never** modify `schema_ddl.sql` without creating a migration script
 - **Never** push directly to `main` — always PR through `develop`
@@ -300,6 +301,7 @@ mid-session.
 | 2026-02-25 | Layered architecture | Scalable to 13 pages, testable, secure (no SQL injection) |
 | 2026-02-25 | Skip Postgres for now | Unity Catalog only — Postgres deferred to future sprint |
 | 2026-02-25 | Pydantic BaseSettings | Type-safe config, env var loading, validation |
+| 2026-02-27 | Parameterize catalog/schema | Bare table names + connection context from settings; no hardcoded catalog.schema in code |
 
 ## Planning Convention
 

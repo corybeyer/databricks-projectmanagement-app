@@ -1,6 +1,6 @@
 # PM Hub — Architecture & Scaffolding Plan
 
-> **Status (2026-02-26):** All 6 phases **complete**. The layered architecture
+> **Status (2026-02-27):** All 6 phases **complete**. The layered architecture
 > (Pages → Services → Repositories → DB), repository pattern, sample data
 > fallback, config layer, charts layer, and all 16 pages are built. All CRUD
 > operations are fully interactive with validation, optimistic locking, and
@@ -308,8 +308,8 @@ Built into `repositories/base.py` as a reusable `safe_update()` method.
 - `.env.example` committed, `.env` gitignored
 
 ### Connection Management
-- **Postgres**: SQLAlchemy engine with pool (pool_size=5, max_overflow=10)
-- **Unity Catalog**: Databricks SDK `WorkspaceClient` (existing pattern, refined)
+- **Postgres**: SQLAlchemy engine with pool (pool_size=5, max_overflow=10) — deferred (Lakebase not yet GA)
+- **Unity Catalog**: `databricks-sql-connector` with `catalog` and `schema` params set from `config/settings.py` (`UC_CATALOG` / `UC_SCHEMA` env vars). All repos use bare table names — the connection resolves them to the correct catalog.schema.
 - **Local dev**: `USE_SAMPLE_DATA=true` flag returns mock data from `models/sample_data.py`
 
 ### Caching

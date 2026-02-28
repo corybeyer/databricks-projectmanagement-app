@@ -1,6 +1,6 @@
 # PM Hub — Road to Production Plan
 
-> Last updated: 2026-02-26 | Status: Phase 5 COMPLETE (Production Readiness) — All phases done
+> Last updated: 2026-02-27 | Status: Phase 5 COMPLETE + Post-Production Improvements
 
 ## Context
 
@@ -539,6 +539,25 @@ Work in phase order. Within each phase, tasks can be parallelized.
 - **Phase 5** (Polish) ✅ → production hardening (export, RBAC, error handling, tests, notifications)
 
 Each phase ends with a `/review-all` cycle.
+
+---
+
+## Post-Production: Configuration Parameterization
+
+*Completed: 2026-02-27*
+
+### Parameterize Unity Catalog Catalog/Schema References
+
+Removed all hardcoded `workspace.project_management` references from runtime code. Catalog and schema are now configurable via `UC_CATALOG` and `UC_SCHEMA` environment variables (defaults: `workspace` / `project_management`).
+
+**Changes:**
+- **`db/unity_catalog.py`** — `get_connection()` now passes `catalog=settings.uc_catalog` and `schema=settings.uc_schema` to `sql.connect()`, ensuring bare table names resolve to the correct Unity Catalog location. Also reads `warehouse_id` from settings for consistency.
+- **`repositories/notification_repo.py`** — Removed hardcoded `workspace.project_management.notifications` prefix; now uses bare `notifications` table name like all other repos.
+- **`app.py`** — Sidebar footer now reads catalog/schema from settings instead of hardcoded string.
+- **`app.yaml`** — Added `UC_CATALOG` and `UC_SCHEMA` env vars for deployment configuration.
+- **Documentation** — Updated CLAUDE.md, architecture-plan.md, README.md with new configuration convention.
+
+**Pattern established:** All SQL uses bare table names (e.g., `FROM portfolios`). The connection layer sets the default catalog/schema from settings. No runtime code references a specific catalog or schema name.
 
 ---
 
