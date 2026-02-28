@@ -25,6 +25,7 @@ from components.filter_bar import filter_bar
 from components.export_button import export_button
 from charts.theme import COLORS
 from charts.analytics_charts import resource_utilization_chart
+from charts.resource_charts import capacity_chart
 
 dash.register_page(__name__, path="/resources", name="Resource Allocation")
 
@@ -75,45 +76,6 @@ RESOURCES_FILTERS = [
 # ── Helper functions ────────────────────────────────────────────────
 
 
-def _allocation_bar_color(pct):
-    """Return bar color based on allocation percentage."""
-    if pct > 100:
-        return COLORS["red"]
-    elif pct >= 80:
-        return COLORS["yellow"]
-    return COLORS["green"]
-
-
-def _build_capacity_chart(capacity_df):
-    """Build a horizontal bar chart showing total allocation per member."""
-    import plotly.graph_objects as go
-    from charts.theme import apply_theme
-
-    if capacity_df.empty or "total_allocation" not in capacity_df.columns:
-        return None
-
-    names = capacity_df["display_name"].tolist()
-    allocations = capacity_df["total_allocation"].tolist()
-    colors = [_allocation_bar_color(a) for a in allocations]
-
-    fig = go.Figure(go.Bar(
-        y=names,
-        x=allocations,
-        orientation="h",
-        marker=dict(color=colors),
-        hovertemplate="<b>%{y}</b><br>%{x}% allocated<extra></extra>",
-    ))
-    fig.update_layout(
-        xaxis=dict(title="Total Allocation %", range=[0, max(max(allocations, default=0) + 20, 130)], dtick=25),
-        height=max(200, len(names) * 50),
-    )
-    fig.add_vline(
-        x=100, line=dict(color=COLORS["red"], width=1, dash="dash"),
-        annotation_text="100%", annotation_font=dict(size=10, color=COLORS["red"]),
-    )
-    return apply_theme(fig)
-
-
 def _build_content(role_filter=None, department_id=None):
     """Build the actual page content."""
     token = get_user_token()
@@ -146,7 +108,7 @@ def _build_content(role_filter=None, department_id=None):
         available = 0
 
     # Build capacity chart
-    capacity_fig = _build_capacity_chart(capacity) if not capacity.empty else None
+    capacity_fig = capacity_chart(capacity) if not capacity.empty else None
 
     # Build project assignment table rows
     assignment_rows = []

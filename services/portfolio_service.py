@@ -6,9 +6,18 @@ from utils.validators import validate_portfolio_create, ValidationError
 
 
 def get_dashboard_data(department_id: str = None, user_token: str = None) -> dict:
-    """Get all data needed for the dashboard page."""
+    """Get all data needed for the dashboard page.
+
+    Enforces RBAC department filtering: non-admin users only see
+    portfolios from their own department.
+    """
+    from services.auth_service import get_current_user, get_department_filter
+    user = get_current_user()
+    dept = get_department_filter(user)
+    effective_dept = dept if dept is not None else department_id
+
     portfolios = portfolio_repo.get_portfolios(
-        department_id=department_id, user_token=user_token,
+        department_id=effective_dept, user_token=user_token,
     )
 
     if portfolios.empty:

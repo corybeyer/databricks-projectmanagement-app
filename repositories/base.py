@@ -28,6 +28,83 @@ ALLOWED_ID_COLUMNS = {
     "dependency_id", "audit_id", "notification_id",
 }
 
+# Per-table allowlists for mutable columns (used by safe_update).
+# Excludes PKs, created_at, created_by, is_deleted, deleted_at, deleted_by.
+ALLOWED_UPDATE_COLUMNS = {
+    "departments": {
+        "name", "description", "parent_dept_id", "head", "updated_by",
+    },
+    "portfolios": {
+        "name", "description", "owner", "status", "health", "department_id",
+        "budget_total", "strategic_priority", "updated_by",
+    },
+    "projects": {
+        "name", "description", "owner", "sponsor", "status", "health",
+        "delivery_method", "current_phase_id", "priority_rank", "pct_complete",
+        "budget_total", "budget_spent", "start_date", "target_date",
+        "actual_end_date", "portfolio_id", "updated_by",
+    },
+    "project_charters": {
+        "project_name", "version", "business_case", "objectives",
+        "scope_in", "scope_out", "assumptions", "constraints",
+        "stakeholders", "success_criteria", "risks", "budget", "timeline",
+        "delivery_method", "description", "approved_by", "approved_date",
+        "updated_by",
+    },
+    "phases": {
+        "name", "phase_type", "phase_order", "delivery_method", "status",
+        "start_date", "end_date", "actual_start", "actual_end",
+        "pct_complete", "updated_by",
+    },
+    "gates": {
+        "gate_order", "name", "status", "criteria", "decision",
+        "decided_by", "decided_at", "updated_by",
+    },
+    "deliverables": {
+        "name", "description", "status", "owner", "due_date",
+        "completed_date", "artifact_url", "updated_by",
+    },
+    "sprints": {
+        "name", "goal", "start_date", "end_date", "status",
+        "capacity_points", "phase_id", "updated_by",
+    },
+    "tasks": {
+        "title", "description", "task_type", "status", "priority",
+        "assignee", "story_points", "due_date", "backlog_rank",
+        "sprint_id", "phase_id", "parent_task_id", "updated_by",
+    },
+    "comments": {
+        "body", "updated_by",
+    },
+    "time_entries": {
+        "task_id", "user_id", "hours", "work_date", "notes", "updated_by",
+    },
+    "team_members": {
+        "display_name", "email", "department_id", "role", "is_active",
+        "capacity_pct", "updated_by",
+    },
+    "project_team": {
+        "project_role", "allocation_pct", "start_date", "end_date", "updated_by",
+    },
+    "risks": {
+        "title", "description", "category", "probability", "impact",
+        "risk_score", "status", "mitigation_plan", "response_strategy",
+        "contingency_plan", "trigger_conditions", "risk_proximity",
+        "risk_urgency", "residual_probability", "residual_impact",
+        "residual_score", "secondary_risks", "identified_date",
+        "last_review_date", "response_owner", "owner", "updated_by",
+    },
+    "retro_items": {
+        "category", "body", "votes", "action_task_id", "updated_by",
+    },
+    "dependencies": {
+        "dependency_type", "risk_level", "description", "status", "updated_by",
+    },
+    "notifications": {
+        "is_read", "updated_by",
+    },
+}
+
 
 def _use_sample_data() -> bool:
     """Check if we're in sample data mode."""
@@ -71,9 +148,14 @@ def safe_update(table: str, id_column: str, id_value: str,
     """Optimistic locking update — fails if record was modified since last read."""
     _validate_identifier(table, ALLOWED_TABLES, "table")
     _validate_identifier(id_column, ALLOWED_ID_COLUMNS, "id_column")
-    for col in updates:
-        if not col.isidentifier():
-            raise ValueError(f"Invalid column name: {col!r}")
+    if table in ALLOWED_UPDATE_COLUMNS:
+        for col in updates:
+            if col not in ALLOWED_UPDATE_COLUMNS[table]:
+                raise ValueError(f"Column {col!r} not allowed for update on table {table!r}")
+    else:
+        for col in updates:
+            if not col.isidentifier():
+                raise ValueError(f"Invalid column name: {col!r}")
 
     if _use_sample_data():
         from models import sample_data

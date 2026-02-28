@@ -131,10 +131,11 @@ def update_assignment(project_id: str, user_id: str, updates: dict,
         return True
 
     # UC path: build a composite WHERE clause
+    from repositories.base import ALLOWED_UPDATE_COLUMNS
     _validate_identifier("project_team", ALLOWED_TABLES, "table")
     for col in updates:
-        if not col.isidentifier():
-            raise ValueError(f"Invalid column name: {col!r}")
+        if col not in ALLOWED_UPDATE_COLUMNS.get("project_team", set()):
+            raise ValueError(f"Column {col!r} not allowed for update on table 'project_team'")
 
     if user_email:
         updates = {**updates, "updated_by": user_email}

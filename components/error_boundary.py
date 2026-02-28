@@ -61,14 +61,20 @@ def safe_callback(fallback_message="An error occurred."):
 
 
 def _error_card(message, detail=None):
-    """Render a user-friendly error card."""
+    """Render a user-friendly error card.
+
+    In production, technical details are suppressed to prevent
+    leaking SQL errors, file paths, or connection strings.
+    """
+    from config import get_settings
+
     children = [
         html.Div([
             html.I(className="bi bi-exclamation-triangle-fill me-2"),
             html.Span(message, className="fw-bold"),
         ], className="d-flex align-items-center mb-2"),
     ]
-    if detail:
+    if detail and not get_settings().is_production:
         children.append(
             html.Details([
                 html.Summary("Technical Details", className="text-muted small"),

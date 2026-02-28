@@ -7,7 +7,7 @@ Roles: admin (100), lead/pm (80), engineer (50), viewer (20).
 
 import logging
 from typing import Optional
-from db.unity_catalog import get_user_token as _get_token, get_user_email as _get_email
+from repositories.auth_repo import get_current_user_token as _get_token, get_current_user_email as _get_email
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +116,16 @@ def has_permission(user: dict, operation: str = "read", entity_type: str = None)
             return False
 
     return True
+
+
+def get_department_filter(user: dict) -> Optional[str]:
+    """Return department_id to filter by, or None if user sees all.
+
+    Admins see all departments. Other roles see only their own.
+    """
+    if user.get("role") == "admin":
+        return None
+    return user.get("department_id")
 
 
 def can_access_department(user: dict, department_id: str) -> bool:
