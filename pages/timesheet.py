@@ -161,7 +161,10 @@ def _build_content(project_id=None, date_start=None, date_end=None, sort_by=None
             ]))
 
     return html.Div([
-        html.H4("Time Tracking", className="page-title mb-3"),
+        html.Div([
+            html.Div(html.I(className="bi bi-clock-history"), className="page-header-icon"),
+            html.H4("Time Tracking", className="page-title"),
+        ], className="page-header mb-3"),
         html.P(
             "Log time against tasks, track hours by team member, "
             "and review time allocation across the project.",
@@ -170,12 +173,12 @@ def _build_content(project_id=None, date_start=None, date_end=None, sort_by=None
 
         # KPI strip
         dbc.Row([
-            dbc.Col(kpi_card("Total Hours", f"{total_hours:.1f}", "all time"), width=True),
+            dbc.Col(kpi_card("Total Hours", f"{total_hours:.1f}", "all time", icon="clock-fill", icon_color="blue"), width=True),
             dbc.Col(kpi_card("This Week", f"{week_hours:.1f}", "hours logged",
-                             COLORS["green"] if week_hours > 0 else None), width=True),
-            dbc.Col(kpi_card("Avg Hours/Day", f"{avg_per_day:.1f}", "per work day"), width=True),
+                             COLORS["green"] if week_hours > 0 else None, icon="calendar-week-fill", icon_color="green"), width=True),
+            dbc.Col(kpi_card("Avg Hours/Day", f"{avg_per_day:.1f}", "per work day", icon="graph-up", icon_color="purple"), width=True),
             dbc.Col(kpi_card("Contributors", contributors, "team members",
-                             COLORS["blue"] if contributors > 0 else None), width=True),
+                             COLORS["blue"] if contributors > 0 else None, icon="people-fill", icon_color="cyan"), width=True),
         ], className="kpi-strip mb-4"),
 
         # Chart + table

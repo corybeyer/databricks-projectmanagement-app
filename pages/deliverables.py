@@ -217,7 +217,10 @@ def _build_content(project_id=None, phase_filter=None, status_filter=None,
             ]))
 
     return html.Div([
-        html.H4("Deliverables", className="page-title mb-3"),
+        html.Div([
+            html.Div(html.I(className="bi bi-box-seam-fill"), className="page-header-icon"),
+            html.H4("Deliverables", className="page-title"),
+        ], className="page-header mb-3"),
         html.P(
             "Track project deliverables across phases with status, ownership, "
             "due dates, and artifact links.",
@@ -226,13 +229,13 @@ def _build_content(project_id=None, phase_filter=None, status_filter=None,
 
         # KPI strip
         dbc.Row([
-            dbc.Col(kpi_card("Total", total, "deliverables"), width=True),
+            dbc.Col(kpi_card("Total", total, "deliverables", icon="box-seam-fill", icon_color="blue"), width=True),
             dbc.Col(kpi_card("In Progress", in_progress, "active work",
-                             COLORS.get("blue") if in_progress > 0 else None), width=True),
+                             COLORS.get("blue") if in_progress > 0 else None, icon="play-circle-fill", icon_color="yellow"), width=True),
             dbc.Col(kpi_card("Completed", completed, "complete + approved",
-                             COLORS["green"] if completed > 0 else None), width=True),
+                             COLORS["green"] if completed > 0 else None, icon="check-circle-fill", icon_color="green"), width=True),
             dbc.Col(kpi_card("Overdue", overdue_count, "past due date",
-                             COLORS["red"] if overdue_count > 0 else None), width=True),
+                             COLORS["red"] if overdue_count > 0 else None, icon="exclamation-triangle-fill", icon_color="red"), width=True),
         ], className="kpi-strip mb-4"),
 
         # Deliverables table

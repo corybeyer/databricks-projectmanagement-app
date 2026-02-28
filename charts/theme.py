@@ -5,7 +5,7 @@ Single source of truth for all color values and chart styling.
 """
 
 COLORS = {
-    "bg": "#0f1218",
+    "bg": "#0a0d12",
     "surface": "#161b24",
     "border": "#1e293b",
     "text": "#e2e8f0",
@@ -19,6 +19,16 @@ COLORS = {
     "purple": "#a855f7",
     "cyan": "#06b6d4",
     "orange": "#f97316",
+}
+
+ICON_COLORS = {
+    "blue": "icon-blue",
+    "green": "icon-green",
+    "red": "icon-red",
+    "yellow": "icon-yellow",
+    "purple": "icon-purple",
+    "cyan": "icon-cyan",
+    "orange": "icon-orange",
 }
 
 LAYOUT_DEFAULTS = dict(

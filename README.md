@@ -104,7 +104,12 @@ databricks-pm-app/
 │   └── labels.py           # Centralized user-facing strings
 │
 └── assets/                 # Dash auto-loads CSS/JS from here
-    └── custom.css          # Global dark theme overrides
+    ├── custom.css          # Glassmorphism design system (~280 lines)
+    ├── bootstrap-icons/    # Locally bundled Bootstrap Icons v1.11.3
+    │   ├── bootstrap-icons.min.css
+    │   └── fonts/          # WOFF2 + WOFF font files
+    └── slate/              # Locally bundled Bootswatch SLATE theme
+        └── bootstrap.min.css
 ```
 
 ## Schema Overview (18 Tables)

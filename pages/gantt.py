@@ -210,24 +210,32 @@ def _build_content(project_id=None):
             ]))
 
     return html.Div([
-        html.H4("Gantt Timeline", className="page-title mb-1"),
+        html.Div([
+            html.Div(html.I(className="bi bi-bar-chart-steps"), className="page-header-icon"),
+            html.H4("Gantt Timeline", className="page-title"),
+        ], className="page-header mb-1"),
         html.P(project_name, className="page-subtitle mb-3",
                style={"color": COLORS["accent"]}),
 
         # Phase KPIs
         dbc.Row([
-            dbc.Col(kpi_card("Total Phases", total_phases, "in project"), width=True),
+            dbc.Col(kpi_card("Total Phases", total_phases, "in project",
+                             icon="layers-fill", icon_color="blue"), width=True),
             dbc.Col(kpi_card("Completed", done_phases,
                              f"{(done_phases / max(total_phases, 1) * 100):.0f}% done",
-                             COLORS["green"]), width=True),
+                             COLORS["green"],
+                             icon="check-circle-fill", icon_color="green"), width=True),
             dbc.Col(kpi_card("In Progress", in_progress, "active now",
-                             COLORS["accent"]), width=True),
+                             COLORS["accent"],
+                             icon="play-circle-fill", icon_color="yellow"), width=True),
             dbc.Col(kpi_card("Gates Approved", f"{approved_gates}/{total_gates}",
                              "gate reviews",
                              COLORS["green"] if approved_gates == total_gates and total_gates > 0
-                             else None), width=True),
+                             else None,
+                             icon="shield-check", icon_color="green"), width=True),
             dbc.Col(kpi_card("Gates Pending", pending_gates, "awaiting decision",
-                             COLORS["yellow"] if pending_gates > 0 else None), width=True),
+                             COLORS["yellow"] if pending_gates > 0 else None,
+                             icon="hourglass-split", icon_color="orange"), width=True),
         ], className="kpi-strip mb-4"),
 
         # Gantt chart

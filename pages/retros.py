@@ -213,18 +213,21 @@ def _build_content(sprint_id=None, project_id=None):
         total = total_votes = action_count = converted_count = 0
 
     return html.Div([
-        html.H4("Retrospectives", className="page-title mb-1"),
+        html.Div([
+            html.Div(html.I(className="bi bi-arrow-repeat"), className="page-header-icon"),
+            html.H4("Retrospectives", className="page-title"),
+        ], className="page-header mb-1"),
         html.P(f"{sprint_name} Retrospective", className="page-subtitle mb-3",
                style={"color": COLORS["accent"]}),
 
         # KPI strip
         dbc.Row([
-            dbc.Col(kpi_card("Total Items", total, "feedback items"), width=3),
-            dbc.Col(kpi_card("Total Votes", total_votes, "team engagement"), width=3),
+            dbc.Col(kpi_card("Total Items", total, "feedback items", icon="chat-square-text-fill", icon_color="blue"), width=3),
+            dbc.Col(kpi_card("Total Votes", total_votes, "team engagement", icon="hand-thumbs-up-fill", icon_color="purple"), width=3),
             dbc.Col(kpi_card("Action Items", action_count, "to follow up",
-                             COLORS["accent"]), width=3),
+                             COLORS["accent"], icon="flag-fill", icon_color="orange"), width=3),
             dbc.Col(kpi_card("Converted", converted_count, "to tasks",
-                             COLORS["green"] if converted_count > 0 else None), width=3),
+                             COLORS["green"] if converted_count > 0 else None, icon="arrow-right-circle-fill", icon_color="green"), width=3),
         ], className="kpi-strip mb-4"),
 
         # Three-column retro board

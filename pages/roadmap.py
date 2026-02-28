@@ -188,13 +188,17 @@ def _build_content(type_filter=None, risk_filter=None, status_filter=None,
 
     # KPI strip
     kpi_strip = dbc.Row([
-        dbc.Col(kpi_card("Total Dependencies", total_deps, "registered"), width=True),
+        dbc.Col(kpi_card("Total Dependencies", total_deps, "registered",
+                         icon="diagram-3-fill", icon_color="blue"), width=True),
         dbc.Col(kpi_card("High Risk", high_risk, "dependencies",
-                         COLORS["red"] if high_risk > 0 else None), width=True),
+                         COLORS["red"] if high_risk > 0 else None,
+                         icon="exclamation-triangle-fill", icon_color="red"), width=True),
         dbc.Col(kpi_card("Active Blocking", active_blocking, "need attention",
-                         COLORS["yellow"] if active_blocking > 0 else None), width=True),
+                         COLORS["yellow"] if active_blocking > 0 else None,
+                         icon="x-octagon-fill", icon_color="yellow"), width=True),
         dbc.Col(kpi_card("Resolved", resolved, "completed",
-                         COLORS["green"] if resolved > 0 else None), width=True),
+                         COLORS["green"] if resolved > 0 else None,
+                         icon="check-circle-fill", icon_color="green"), width=True),
     ], className="kpi-strip mb-4")
 
     # Build dependency table rows
@@ -282,7 +286,10 @@ def _build_content(type_filter=None, risk_filter=None, status_filter=None,
     ], className="chart-card")
 
     return html.Div([
-        html.H4("Roadmap Timeline", className="page-title mb-3"),
+        html.Div([
+            html.Div(html.I(className="bi bi-calendar-range-fill"), className="page-header-icon"),
+            html.H4("Roadmap Timeline", className="page-title"),
+        ], className="page-header mb-3"),
         html.P(
             "Cross-portfolio project timeline and dependency management. "
             "Track blocking relationships, shared resources, and risk levels.",

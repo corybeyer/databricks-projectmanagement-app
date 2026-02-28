@@ -201,22 +201,29 @@ def _build_content(sprint_id=None, project_id=None):
     burndown_df = get_burndown(sid, user_token=token)
 
     return html.Div([
-        html.H4("Sprint Board", className="page-title mb-1"),
+        html.Div([
+            html.Div(html.I(className="bi bi-view-stacked"), className="page-header-icon"),
+            html.H4("Sprint Board", className="page-title"),
+        ], className="page-header mb-1"),
         html.P(sprint_name, className="page-subtitle mb-3",
                style={"color": COLORS["accent"]}),
 
         # Sprint KPIs
         dbc.Row([
             dbc.Col(kpi_card("Total Points", total_pts,
-                             f"of {capacity} capacity"), width=3),
+                             f"of {capacity} capacity",
+                             icon="lightning-fill", icon_color="blue"), width=3),
             dbc.Col(kpi_card("Completed", done_pts,
                              f"{(done_pts / max(total_pts, 1) * 100):.0f}% done",
-                             COLORS["green"]), width=3),
+                             COLORS["green"],
+                             icon="check-circle-fill", icon_color="green"), width=3),
             dbc.Col(kpi_card("Remaining", total_pts - done_pts,
-                             "points left"), width=3),
+                             "points left",
+                             icon="hourglass-split", icon_color="yellow"), width=3),
             dbc.Col(kpi_card("Team Load",
                              f"{(total_pts / max(capacity, 1) * 100):.0f}%",
-                             "of capacity"), width=3),
+                             "of capacity",
+                             icon="people-fill", icon_color="purple"), width=3),
         ], className="kpi-strip mb-4"),
 
         # Kanban board

@@ -174,7 +174,10 @@ def _build_content(project_id=None, status_filter=None, priority_filter=None,
         total = total_points = unassigned = high_priority = 0
 
     return html.Div([
-        html.H4("Backlog", className="page-title mb-3"),
+        html.Div([
+            html.Div(html.I(className="bi bi-list-check"), className="page-header-icon"),
+            html.H4("Backlog", className="page-title"),
+        ], className="page-header mb-3"),
         html.P(
             "Unscheduled work items awaiting sprint assignment. "
             "Sorted by priority and backlog rank.",
@@ -183,12 +186,12 @@ def _build_content(project_id=None, status_filter=None, priority_filter=None,
 
         # KPI strip
         dbc.Row([
-            dbc.Col(kpi_card("Backlog Items", total, "unscheduled"), width=3),
-            dbc.Col(kpi_card("Total Points", total_points, "estimated"), width=3),
+            dbc.Col(kpi_card("Backlog Items", total, "unscheduled", icon="inbox-fill", icon_color="blue"), width=3),
+            dbc.Col(kpi_card("Total Points", total_points, "estimated", icon="lightning-fill", icon_color="purple"), width=3),
             dbc.Col(kpi_card("High Priority", high_priority, "critical + high",
-                             COLORS["orange"] if high_priority > 0 else None), width=3),
+                             COLORS["orange"] if high_priority > 0 else None, icon="exclamation-triangle-fill", icon_color="red"), width=3),
             dbc.Col(kpi_card("Unassigned", unassigned, "need owner",
-                             COLORS["yellow"] if unassigned > 0 else None), width=3),
+                             COLORS["yellow"] if unassigned > 0 else None, icon="person-dash-fill", icon_color="yellow"), width=3),
         ], className="kpi-strip mb-4"),
 
         # Backlog list

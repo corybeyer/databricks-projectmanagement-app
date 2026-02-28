@@ -88,7 +88,10 @@ def _build_content(department_id=None):
     projects = get_portfolio_projects(first_portfolio_id, user_token=token)
 
     return html.Div([
-        html.H4("Portfolios", className="page-title mb-3"),
+        html.Div([
+            html.Div(html.I(className="bi bi-collection-fill"), className="page-header-icon"),
+            html.H4("Portfolios", className="page-title"),
+        ], className="page-header mb-3"),
         html.P(
             "Strategic portfolio overview with project health, budget burn, "
             "and value alignment.",
@@ -97,13 +100,17 @@ def _build_content(department_id=None):
 
         # KPI strip
         dbc.Row([
-            dbc.Col(kpi_card("Portfolios", len(portfolios), "active portfolios"), width=3),
+            dbc.Col(kpi_card("Portfolios", len(portfolios), "active portfolios",
+                             icon="collection-fill", icon_color="blue"), width=3),
             dbc.Col(kpi_card("Total Projects", int(data["total_projects"]),
-                             "across all portfolios"), width=3),
+                             "across all portfolios",
+                             icon="folder-fill", icon_color="purple"), width=3),
             dbc.Col(kpi_card("Total Budget", f"${data['total_budget']:,.0f}",
-                             f"${data['total_spent']:,.0f} spent"), width=3),
+                             f"${data['total_spent']:,.0f} spent",
+                             icon="currency-dollar", icon_color="cyan"), width=3),
             dbc.Col(kpi_card("Avg Completion", f"{data['avg_completion']:.0f}%",
-                             "portfolio average"), width=3),
+                             "portfolio average",
+                             icon="percent", icon_color="green"), width=3),
         ], className="kpi-strip mb-4"),
 
         # Charts row
