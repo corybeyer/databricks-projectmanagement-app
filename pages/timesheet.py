@@ -9,7 +9,6 @@ import json
 from datetime import date, timedelta
 
 import dash
-import plotly.graph_objects as go
 from dash import html, dcc, callback, Input, Output, State, ctx, ALL, no_update
 import dash_bootstrap_components as dbc
 from services.auth_service import (
@@ -24,7 +23,8 @@ from components.crud_modal import (
     crud_modal, confirm_delete_modal, get_modal_values,
     set_field_errors, modal_field_states, modal_error_outputs,
 )
-from charts.theme import COLORS, apply_theme
+from charts.theme import COLORS
+from charts.timesheet_charts import hours_by_task_chart
 from components.filter_bar import filter_bar
 
 dash.register_page(__name__, path="/timesheet", name="Time Tracking")
@@ -69,34 +69,6 @@ TIME_ENTRY_FIELDS = [
     {"id": "notes", "label": "Notes", "type": "textarea", "required": False,
      "rows": 2, "placeholder": "What did you work on?"},
 ]
-
-
-# ── Chart builder ────────────────────────────────────────────────────
-
-def _build_hours_by_task_chart(entries_df):
-    """Build a horizontal bar chart of hours per task."""
-    if entries_df.empty or "task_title" not in entries_df.columns:
-        fig = go.Figure()
-        fig.add_annotation(text="No time data available", showarrow=False,
-                           font=dict(color=COLORS["text_muted"], size=14))
-        return apply_theme(fig)
-
-    summary = entries_df.groupby("task_title", as_index=False)["hours"].sum()
-    summary = summary.sort_values("hours", ascending=True)
-
-    fig = go.Figure(go.Bar(
-        x=summary["hours"],
-        y=summary["task_title"],
-        orientation="h",
-        marker_color=COLORS["accent"],
-        hovertemplate="%{y}<br>%{x:.1f} hours<extra></extra>",
-    ))
-    fig.update_layout(
-        xaxis=dict(title="Hours Logged"),
-        yaxis=dict(title=""),
-        height=max(250, len(summary) * 35 + 80),
-    )
-    return apply_theme(fig)
 
 
 # ── Helper functions ─────────────────────────────────────────────────
@@ -145,7 +117,7 @@ def _build_content(project_id=None, date_start=None, date_end=None, sort_by=None
         contributors = 0
 
     # Build chart
-    chart_fig = _build_hours_by_task_chart(entries)
+    chart_fig = hours_by_task_chart(entries)
 
     # Build table rows
     table_rows = []

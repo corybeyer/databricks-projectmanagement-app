@@ -17,9 +17,22 @@ def get_project_phases(project_id: str, user_token: str = None):
     return project_repo.get_project_phases(project_id, user_token=user_token)
 
 
-def get_projects(portfolio_id: str = None, user_token: str = None):
-    """Get all non-deleted projects, optionally filtered by portfolio."""
-    return project_repo.get_projects(portfolio_id=portfolio_id, user_token=user_token)
+def get_projects(portfolio_id: str = None, department_id: str = None,
+                  user_token: str = None):
+    """Get all non-deleted projects, optionally filtered by portfolio or department.
+
+    Enforces RBAC department filtering: non-admin users only see
+    projects from portfolios in their own department.
+    """
+    from services.auth_service import get_current_user, get_department_filter
+    user = get_current_user()
+    dept = get_department_filter(user)
+    effective_dept = dept if dept is not None else department_id
+
+    return project_repo.get_projects(
+        portfolio_id=portfolio_id, department_id=effective_dept,
+        user_token=user_token,
+    )
 
 
 def get_project(project_id: str, user_token: str = None):
