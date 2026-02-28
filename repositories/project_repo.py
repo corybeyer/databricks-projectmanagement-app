@@ -5,8 +5,9 @@ from repositories.base import query, write, safe_update, soft_delete
 from models import sample_data
 
 
-def get_projects(portfolio_id: str = None, user_token: str = None) -> pd.DataFrame:
-    """Get all non-deleted projects, optionally filtered by portfolio."""
+def get_projects(portfolio_id: str = None, department_id: str = None,
+                  user_token: str = None) -> pd.DataFrame:
+    """Get all non-deleted projects, optionally filtered by portfolio or department."""
     if portfolio_id:
         return query("""
             SELECT pr.*,
@@ -23,6 +24,23 @@ def get_projects(portfolio_id: str = None, user_token: str = None) -> pd.DataFra
               AND pr.is_deleted = false
             ORDER BY pr.priority_rank
         """, params={"portfolio_id": portfolio_id}, user_token=user_token,
+            sample_fallback=sample_data.get_portfolio_projects)
+    if department_id:
+        return query("""
+            SELECT pr.*,
+                   pf.name as portfolio_name,
+                   ph.name as current_phase_name,
+                   ph.phase_type,
+                   s.name as active_sprint_name,
+                   s.sprint_id as active_sprint_id
+            FROM projects pr
+            JOIN portfolios pf ON pr.portfolio_id = pf.portfolio_id
+            LEFT JOIN phases ph ON pr.current_phase_id = ph.phase_id
+            LEFT JOIN sprints s ON pr.project_id = s.project_id AND s.status = 'active'
+            WHERE pf.department_id = :department_id
+              AND pr.is_deleted = false
+            ORDER BY pr.priority_rank
+        """, params={"department_id": department_id}, user_token=user_token,
             sample_fallback=sample_data.get_portfolio_projects)
     return query("""
         SELECT pr.*,
