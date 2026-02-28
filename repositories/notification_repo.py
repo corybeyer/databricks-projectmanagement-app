@@ -14,7 +14,7 @@ def get_notifications(user_email: str = None) -> pd.DataFrame:
         return _get()
 
     sql_str = """
-        SELECT * FROM workspace.project_management.notifications
+        SELECT * FROM notifications
         WHERE is_deleted = false
     """
     params = {}
@@ -45,7 +45,7 @@ def get_unread_count(user_email: str) -> int:
 def create_notification(record: dict) -> bool:
     """Create a new notification."""
     sql_str = """
-        INSERT INTO workspace.project_management.notifications
+        INSERT INTO notifications
         (notification_id, user_email, notification_type, title, message,
          entity_type, entity_id, is_read, created_at)
         VALUES (:notification_id, :user_email, :notification_type, :title,

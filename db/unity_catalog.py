@@ -32,12 +32,19 @@ def get_user_email() -> Optional[str]:
 
 
 def get_connection(user_token: str):
-    """Create a SQL connection using the user's OAuth token."""
+    """Create a SQL connection using the user's OAuth token.
+
+    Sets the default catalog and schema from settings so bare table
+    names (e.g. ``FROM portfolios``) resolve to the correct Unity
+    Catalog location without requiring fully-qualified names.
+    """
     from databricks import sql
     from databricks.sdk.core import Config
+    from config import get_settings
 
     cfg = Config()
-    warehouse_id = os.getenv("DATABRICKS_SQL_WAREHOUSE_ID")
+    settings = get_settings()
+    warehouse_id = settings.databricks_sql_warehouse_id or os.getenv("DATABRICKS_SQL_WAREHOUSE_ID")
 
     if not warehouse_id:
         raise ConnectionError("DATABRICKS_SQL_WAREHOUSE_ID not configured")
@@ -46,6 +53,8 @@ def get_connection(user_token: str):
         server_hostname=cfg.host,
         http_path=f"/sql/1.0/warehouses/{warehouse_id}",
         access_token=user_token,
+        catalog=settings.uc_catalog,
+        schema=settings.uc_schema,
     )
 
 
