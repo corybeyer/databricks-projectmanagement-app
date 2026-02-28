@@ -83,7 +83,10 @@ def _build_content(project_id=None):
         total_gates = approved_gates = 0
 
     return html.Div([
-        html.H4("Reports", className="page-title mb-3"),
+        html.Div([
+            html.Div(html.I(className="bi bi-graph-up-arrow"), className="page-header-icon"),
+            html.H4("Reports", className="page-title"),
+        ], className="page-header mb-3"),
         html.P(
             "Analytics and reporting: velocity trends, cycle time analysis, "
             "and governance gate tracking.",
@@ -93,12 +96,12 @@ def _build_content(project_id=None):
         # KPI strip
         dbc.Row([
             dbc.Col(kpi_card("Avg Velocity", f"{avg_velocity:.0f} pts",
-                             "per sprint"), width=3),
+                             "per sprint", icon="speedometer2", icon_color="blue"), width=3),
             dbc.Col(kpi_card("Last Sprint", f"{last_velocity:.0f} pts",
-                             "delivered", COLORS["green"]), width=3),
-            dbc.Col(kpi_card("Total Delivered", total_delivered, "story points"), width=3),
+                             "delivered", COLORS["green"], icon="lightning-fill", icon_color="purple"), width=3),
+            dbc.Col(kpi_card("Total Delivered", total_delivered, "story points", icon="trophy-fill", icon_color="green"), width=3),
             dbc.Col(kpi_card("Gates Passed", f"{approved_gates}/{total_gates}",
-                             "approved"), width=3),
+                             "approved", icon="shield-check", icon_color="purple"), width=3),
         ], className="kpi-strip mb-4"),
 
         # Charts row

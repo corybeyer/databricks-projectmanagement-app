@@ -39,7 +39,10 @@ def layout():
         dcc.Store(id="comments-edit-store", data=None),
 
         # Page header
-        html.H4("Task Comments", className="page-title mb-1"),
+        html.Div([
+            html.Div(html.I(className="bi bi-chat-dots"), className="page-header-icon"),
+            html.H4("Task Comments", className="page-title"),
+        ], className="page-header mb-1"),
         html.P(
             "Collaborate on tasks with threaded comments. "
             "Select a task to view and add discussion.",
@@ -149,10 +152,10 @@ def update_kpi_strip(task_id, mutation_count, n_intervals):
     """Update KPI cards based on selected task."""
     if not task_id:
         kpis = dbc.Row([
-            dbc.Col(kpi_card("Total Comments", 0, "select a task"), width=True),
-            dbc.Col(kpi_card("Today's Comments", 0, "select a task"), width=True),
-            dbc.Col(kpi_card("Active Discussions", 0, "tasks with comments"), width=True),
-            dbc.Col(kpi_card("Contributors", 0, "unique authors"), width=True),
+            dbc.Col(kpi_card("Total Comments", 0, "select a task", icon="chat-fill", icon_color="blue"), width=True),
+            dbc.Col(kpi_card("Today's Comments", 0, "select a task", icon="calendar-event-fill", icon_color="purple"), width=True),
+            dbc.Col(kpi_card("Active Discussions", 0, "tasks with comments", icon="chat-dots-fill", icon_color="green"), width=True),
+            dbc.Col(kpi_card("Contributors", 0, "unique authors", icon="people-fill", icon_color="purple"), width=True),
         ], className="kpi-strip")
         return kpis, dbc.Badge("0", color="secondary", pill=True)
 
@@ -197,10 +200,10 @@ def update_kpi_strip(task_id, mutation_count, n_intervals):
         active_discussions = all_tasks_comments["task_id"].nunique()
 
     kpis = dbc.Row([
-        dbc.Col(kpi_card("Total Comments", total, "on this task"), width=True),
-        dbc.Col(kpi_card("Today's Comments", today_count, str(date.today())), width=True),
-        dbc.Col(kpi_card("Active Discussions", active_discussions, "tasks with comments"), width=True),
-        dbc.Col(kpi_card("Contributors", contributors, "unique authors"), width=True),
+        dbc.Col(kpi_card("Total Comments", total, "on this task", icon="chat-fill", icon_color="blue"), width=True),
+        dbc.Col(kpi_card("Today's Comments", today_count, str(date.today()), icon="calendar-event-fill", icon_color="purple"), width=True),
+        dbc.Col(kpi_card("Active Discussions", active_discussions, "tasks with comments", icon="chat-dots-fill", icon_color="green"), width=True),
+        dbc.Col(kpi_card("Contributors", contributors, "unique authors", icon="people-fill", icon_color="purple"), width=True),
     ], className="kpi-strip")
 
     badge = dbc.Badge(str(total), color="primary", pill=True)

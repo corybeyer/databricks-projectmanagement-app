@@ -70,20 +70,31 @@ def _build_content(department_id=None):
             ], className="mb-4")
 
     return html.Div([
+        # Page header
+        html.Div([
+            html.Div(html.I(className="bi bi-grid-1x2-fill"), className="page-header-icon"),
+            html.H4("Portfolio Dashboard", className="page-title"),
+        ], className="page-header mb-3"),
+
         # KPI Strip
         dbc.Row([
             dbc.Col(kpi_card("Active Projects", int(data["total_projects"]),
-                             f"across {len(portfolios)} portfolios"), width=2),
+                             f"across {len(portfolios)} portfolios",
+                             icon="folder-fill", icon_color="blue"), width=2),
             dbc.Col(kpi_card("On Track", f"{data['green_count']}/{len(portfolios)}",
-                             "portfolios healthy", COLORS["green"]), width=2),
+                             "portfolios healthy", COLORS["green"],
+                             icon="check-circle-fill", icon_color="green"), width=2),
             dbc.Col(kpi_card("Avg Completion", f"{data['avg_completion']:.0f}%",
-                             "across all projects"), width=2),
+                             "across all projects",
+                             icon="pie-chart-fill", icon_color="purple"), width=2),
             dbc.Col(kpi_card("Total Budget", f"${data['total_budget']:,.0f}",
-                             f"${data['total_spent']:,.0f} spent"), width=3),
+                             f"${data['total_spent']:,.0f} spent",
+                             icon="currency-dollar", icon_color="cyan"), width=3),
             dbc.Col(kpi_card("Budget Burned",
                              f"{(data['total_spent']/max(data['total_budget'],1)*100):.0f}%",
                              "of total allocation",
-                             COLORS["yellow"] if data["total_spent"]/max(data["total_budget"],1) > 0.7 else COLORS["green"]),
+                             COLORS["yellow"] if data["total_spent"]/max(data["total_budget"],1) > 0.7 else COLORS["green"],
+                             icon="fire", icon_color="yellow"),
                     width=3),
         ], className="kpi-strip mb-4"),
 

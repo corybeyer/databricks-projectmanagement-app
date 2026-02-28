@@ -164,7 +164,10 @@ def _build_content(role_filter=None, department_id=None):
             )
 
     return html.Div([
-        html.H4("Resource Allocation", className="page-title mb-3"),
+        html.Div([
+            html.Div(html.I(className="bi bi-people-fill"), className="page-header-icon"),
+            html.H4("Resource Allocation", className="page-title"),
+        ], className="page-header mb-3"),
         html.P(
             "Team workload distribution, project assignments, capacity planning, "
             "and over-allocation warnings.",
@@ -173,13 +176,13 @@ def _build_content(role_filter=None, department_id=None):
 
         # KPI strip
         dbc.Row([
-            dbc.Col(kpi_card("Team Size", team_size, "active members"), width=3),
+            dbc.Col(kpi_card("Team Size", team_size, "active members", icon="people-fill", icon_color="blue"), width=3),
             dbc.Col(kpi_card("Avg Allocation", f"{avg_alloc:.0f}%",
-                             "across all members"), width=3),
+                             "across all members", icon="pie-chart-fill", icon_color="purple"), width=3),
             dbc.Col(kpi_card("Over-Allocated", over_allocated, "> 100%",
-                             COLORS["red"] if over_allocated > 0 else None), width=3),
+                             COLORS["red"] if over_allocated > 0 else None, icon="exclamation-triangle-fill", icon_color="red"), width=3),
             dbc.Col(kpi_card("Available Capacity", available, "< 80% allocated",
-                             COLORS["green"] if available > 0 else None), width=3),
+                             COLORS["green"] if available > 0 else None, icon="check-circle-fill", icon_color="green"), width=3),
         ], className="kpi-strip mb-4"),
 
         # Over-allocation warnings

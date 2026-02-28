@@ -198,7 +198,10 @@ def layout():
         dcc.Store(id="charters-selected-charter-store", data=None),
 
         # Page header
-        html.H4("Project Charters", className="page-title mb-1"),
+        html.Div([
+            html.Div(html.I(className="bi bi-file-earmark-text-fill"), className="page-header-icon"),
+            html.H4("Project Charters", className="page-title"),
+        ], className="page-header mb-1"),
         html.P(
             "Formal project authorization documents. Each charter defines the business case, "
             "scope, objectives, delivery method, and governance structure.",
