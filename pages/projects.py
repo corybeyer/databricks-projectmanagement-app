@@ -183,7 +183,10 @@ def _build_content(portfolio_id=None, status_filter=None, health_filter=None,
         green_count = yellow_count = red_count = 0
 
     return html.Div([
-        html.H4("All Projects", className="page-title mb-3"),
+        html.Div([
+            html.Div(html.I(className="bi bi-kanban-fill"), className="page-header-icon"),
+            html.H4("All Projects", className="page-title"),
+        ], className="page-header mb-3"),
         html.P(
             "Overview of all active projects across portfolios with status, "
             "health, and budget tracking.",

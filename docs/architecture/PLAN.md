@@ -561,6 +561,58 @@ Removed all hardcoded `workspace.project_management` references from runtime cod
 
 ---
 
+## Phase 6: UI Modernization — Glassmorphism Design + Icons ✅ COMPLETE
+
+*Modern Linear/Vercel-inspired glassmorphism aesthetic with locally bundled Bootstrap Icons.*
+*Completed: 2026-02-27*
+
+### 6.1 — Bundle Bootstrap Icons + SLATE Theme Locally ✅
+
+*Completed: 2026-02-27*
+
+- Downloaded Bootstrap Icons v1.11.3 CSS + WOFF2/WOFF font files to `assets/bootstrap-icons/`
+- Downloaded Bootswatch SLATE theme to `assets/slate/bootstrap.min.css`
+- Removed CDN dependency (`external_stylesheets=[]` in `app.py`) — fully offline-capable
+- Dash auto-loads all CSS from `assets/` — no code changes needed
+- **Files:** `assets/bootstrap-icons/bootstrap-icons.min.css`, `assets/bootstrap-icons/fonts/*.woff*`, `assets/slate/bootstrap.min.css`, `app.py`
+
+### 6.2 — Glassmorphism Design System (custom.css) ✅
+
+*Completed: 2026-02-27*
+
+- Created `assets/custom.css` (~280 lines) with CSS custom properties (design tokens)
+- **Header fix:** `.page-title` left-aligned, `.page-header` flex container with icon box
+- **Glass cards:** `backdrop-filter: blur(12px)`, `rgba()` backgrounds, subtle borders, hover lift
+- **KPI cards:** Icon wrapper with 7 color variants, hover animation
+- **Sidebar:** Glass background, accent left-border on active state
+- **Tables:** Transparent backgrounds, hover tint, uppercase headers
+- **Modals:** Glass background with deeper blur
+- **Inputs:** Dark background, accent focus glow
+- **Scrollbar:** Thin, translucent custom scrollbar
+- **Files:** `assets/custom.css`
+
+### 6.3 — Component Updates (Backward Compatible) ✅
+
+*Completed: 2026-02-27*
+
+- **`charts/theme.py`:** Background color darkened (`#0f1218` → `#0a0d12`), added `ICON_COLORS` dict
+- **`components/kpi_card.py`:** Added optional `icon` and `icon_color` params — renders Bootstrap Icon in styled wrapper
+- **`components/empty_state.py`:** Added optional `icon` param — renders large dim icon above message
+- **`components/export_button.py`:** Added `bi-download` icon before label text
+- All changes backward compatible — existing calls without new params unchanged
+- **Files:** `charts/theme.py`, `components/kpi_card.py`, `components/empty_state.py`, `components/export_button.py`
+
+### 6.4 — Page Header Icons + KPI Card Icons (16 Pages) ✅
+
+*Completed: 2026-02-27*
+
+- All 16 pages updated with `.page-header` div wrapping title + icon
+- All KPI cards updated with contextual Bootstrap Icons and color-coded wrappers
+- Icon mapping: dashboard (grid-1x2-fill), portfolios (collection-fill), roadmap (calendar-range-fill), projects (kanban-fill), charters (file-earmark-text-fill), gantt (bar-chart-steps), sprint (view-stacked), my_work (person-check-fill), backlog (list-check), retros (arrow-repeat), reports (graph-up-arrow), resources (people-fill), risks (shield-exclamation), deliverables (box-seam-fill), comments (chat-dots), timesheet (clock-history)
+- **Files:** All 16 `pages/*.py`
+
+---
+
 ## Verification
 
 After each phase:

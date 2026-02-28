@@ -139,20 +139,27 @@ def _build_content():
     display_name = user_email or "Team Member"
 
     return html.Div([
-        html.H4("My Work", className="page-title mb-1"),
+        html.Div([
+            html.Div(html.I(className="bi bi-person-check-fill"), className="page-header-icon"),
+            html.H4("My Work", className="page-title"),
+        ], className="page-header mb-1"),
         html.P(display_name, className="page-subtitle mb-3",
                style={"color": COLORS["accent"]}),
 
         # KPI strip
         dbc.Row([
-            dbc.Col(kpi_card("My Tasks", total, f"{total_points} points"), width=3),
+            dbc.Col(kpi_card("My Tasks", total, f"{total_points} points",
+                             icon="list-task", icon_color="blue"), width=3),
             dbc.Col(kpi_card("In Progress", in_progress, "active",
-                             COLORS["accent"]), width=3),
+                             COLORS["accent"],
+                             icon="play-circle-fill", icon_color="yellow"), width=3),
             dbc.Col(kpi_card("In Review", in_review, "awaiting review",
-                             COLORS["yellow"]), width=3),
+                             COLORS["yellow"],
+                             icon="eye-fill", icon_color="purple"), width=3),
             dbc.Col(kpi_card("Done", done,
                              f"{(done / max(total, 1) * 100):.0f}% complete",
-                             COLORS["green"]), width=3),
+                             COLORS["green"],
+                             icon="check-circle-fill", icon_color="green"), width=3),
         ], className="kpi-strip mb-4"),
 
         # Active tasks (not done)

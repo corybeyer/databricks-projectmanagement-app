@@ -229,7 +229,10 @@ def _build_content(show_residual=False, status_filter=None, category_filter=None
             ]))
 
     return html.Div([
-        html.H4("Risk Register", className="page-title mb-3"),
+        html.Div([
+            html.Div(html.I(className="bi bi-shield-exclamation"), className="page-header-icon"),
+            html.H4("Risk Register", className="page-title"),
+        ], className="page-header mb-3"),
         html.P(
             "Track and manage project and portfolio risks with PMI lifecycle, "
             "probability/impact assessment, and mitigation planning.",
@@ -238,14 +241,14 @@ def _build_content(show_residual=False, status_filter=None, category_filter=None
 
         # KPI strip
         dbc.Row([
-            dbc.Col(kpi_card("Total Risks", total, "registered"), width=True),
+            dbc.Col(kpi_card("Total Risks", total, "registered", icon="shield-fill", icon_color="blue"), width=True),
             dbc.Col(kpi_card("High Severity", high_risks, "score >= 15",
-                             COLORS["red"] if high_risks > 0 else None), width=True),
-            dbc.Col(kpi_card("Avg Score", f"{avg_score:.1f}", "across all risks"), width=True),
+                             COLORS["red"] if high_risks > 0 else None, icon="fire", icon_color="red"), width=True),
+            dbc.Col(kpi_card("Avg Score", f"{avg_score:.1f}", "across all risks", icon="speedometer2", icon_color="yellow"), width=True),
             dbc.Col(kpi_card("Open / Active", open_risks, "need attention",
-                             COLORS["yellow"] if open_risks > 0 else None), width=True),
+                             COLORS["yellow"] if open_risks > 0 else None, icon="exclamation-circle-fill", icon_color="orange"), width=True),
             dbc.Col(kpi_card("Overdue Review", overdue_count, "> 14 days",
-                             COLORS["red"] if overdue_count > 0 else None), width=True),
+                             COLORS["red"] if overdue_count > 0 else None, icon="clock-history", icon_color="red"), width=True),
         ], className="kpi-strip mb-4"),
 
         # Heatmap + table

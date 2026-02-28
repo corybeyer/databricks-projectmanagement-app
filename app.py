@@ -31,7 +31,7 @@ app = Dash(
     __name__,
     use_pages=True,
     suppress_callback_exceptions=True,
-    external_stylesheets=[dbc.themes.SLATE],
+    external_stylesheets=[],
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
     title="PM Hub — Portfolio & Project Management",
 )

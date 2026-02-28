@@ -1,7 +1,7 @@
 # CLAUDE.md — PM Hub Project Intelligence
 
 > Claude reads this file automatically at the start of every session.
-> Last updated: 2026-02-26 | All 6 Phases Complete (Production Ready)
+> Last updated: 2026-02-27 | All 7 Phases Complete (Production Ready)
 
 ## Environment
 
@@ -40,13 +40,14 @@ See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production ro
 ## Current State
 
 - **Phase**: ALL COMPLETE — Production Ready
-- **Roadmap**: See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) — 32 tasks across 6 phases, all done
+- **Roadmap**: See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) — 36 tasks across 7 phases, all done
 - **Phase 0**: Schema & data model (PR #19)
 - **Phase 1**: Foundation for interactivity (PR #20)
 - **Phase 2**: Full CRUD across all entities (PRs #22-#26)
 - **Phase 3**: Navigation & multi-department hierarchy (PR #27)
 - **Phase 4**: PMI/PMP feature completeness (PR #29)
 - **Phase 5**: Production readiness — Excel export, RBAC, error handling, 325 tests, notifications (PR #30)
+- **Phase 6**: UI modernization — glassmorphism design, bundled icons/CSS, page headers, KPI icons
 - **Pages**: 16/16 built; all CRUD pages fully interactive
 - **Tests**: 325 passing (services, repos, validators, syntax)
 - **Blockers**: None
@@ -213,11 +214,17 @@ databricks-pm-app/
 
 ### Styling
 
-- Dark theme. Always. The app uses a dark color palette.
+- Dark theme. Always. The app uses a dark color palette with glassmorphism effects.
 - COLORS dict in `charts/theme.py` is the single source for all color values.
-- Use Dash Bootstrap SLATE theme as the base.
+- ICON_COLORS dict in `charts/theme.py` maps color names to CSS class suffixes.
+- Use Dash Bootstrap SLATE theme as the base (bundled locally in `assets/slate/`).
+- Bootstrap Icons v1.11.3 bundled locally in `assets/bootstrap-icons/` — no CDN dependency.
+- `app.py` uses `external_stylesheets=[]` — all CSS auto-loaded from `assets/`.
 - Custom CSS goes in `assets/custom.css` — never inline styles in Python
   unless it's dynamic (e.g., conditional coloring based on data).
+- Page headers use `.page-header` div with `.page-header-icon` wrapper for Bootstrap Icons.
+- KPI cards accept optional `icon` and `icon_color` params for contextual icons.
+- Icon color classes: `icon-blue`, `icon-green`, `icon-red`, `icon-yellow`, `icon-purple`, `icon-cyan`, `icon-orange`.
 
 ## Commit Message Standards
 
@@ -302,6 +309,7 @@ mid-session.
 | 2026-02-25 | Skip Postgres for now | Unity Catalog only — Postgres deferred to future sprint |
 | 2026-02-25 | Pydantic BaseSettings | Type-safe config, env var loading, validation |
 | 2026-02-27 | Parameterize catalog/schema | Bare table names + connection context from settings; no hardcoded catalog.schema in code |
+| 2026-02-27 | Glassmorphism UI + bundled assets | Offline-capable (no CDN), modern glass-effect design, Bootstrap Icons locally bundled |
 
 ## Planning Convention
 
