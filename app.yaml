@@ -11,3 +11,7 @@ env:
     value: "your-warehouse-id-here"
   - name: APP_ENV
     value: "production"
+  - name: UC_CATALOG
+    value: "workspace"
+  - name: UC_SCHEMA
+    value: "project_management"

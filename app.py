@@ -89,7 +89,7 @@ sidebar = html.Div(
         html.Div(
             [
                 html.Div("Unity Catalog", className="sidebar-footer-item"),
-                html.Div("workspace.project_management", className="sidebar-footer-schema"),
+                html.Div(f"{settings.uc_catalog}.{settings.uc_schema}", className="sidebar-footer-schema"),
             ],
             className="sidebar-footer",
         ),

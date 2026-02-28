@@ -6,7 +6,7 @@
 Framework:    Dash (Plotly) — Python-native, rich visualization
 Deployment:   Databricks Apps — OBO auth, serverless SQL
 Data Layer:   Unity Catalog Delta tables — time travel, CDF
-Schema:       workspace.project_management
+Schema:       Configurable via UC_CATALOG / UC_SCHEMA env vars (default: workspace.project_management)
 ```
 
 ## Why Dash (Not Streamlit, Not Flask)
@@ -170,7 +170,10 @@ Run `models/schema_ddl.sql` in a Databricks notebook or SQL editor.
 (Optional) Run seed scripts to populate sample portfolios, projects, tasks.
 
 ### 3. Configure
-Edit `app.yaml` with your SQL warehouse ID.
+Edit `app.yaml` with your SQL warehouse ID, catalog name, and schema name:
+- `DATABRICKS_SQL_WAREHOUSE_ID` — your SQL warehouse ID
+- `UC_CATALOG` — Unity Catalog catalog name (default: `workspace`)
+- `UC_SCHEMA` — Unity Catalog schema name (default: `project_management`)
 
 ### 4. Deploy
 ```bash
