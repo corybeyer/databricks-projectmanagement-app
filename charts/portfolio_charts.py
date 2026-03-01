@@ -97,7 +97,7 @@ def roadmap_chart(projects_df):
     for _, row in projects_df.iterrows():
         color = color_map.get(row.get("health", "green"), COLORS["blue"])
         fig.add_trace(go.Bar(
-            x=[pd.to_datetime(row["target_date"]) - pd.to_datetime(row["start_date"])],
+            x=[(pd.to_datetime(row["target_date"]) - pd.to_datetime(row["start_date"])).total_seconds() * 1000],
             y=[f"{row['name']}<br><sub>{row.get('portfolio_name', '')}</sub>"],
             base=[pd.to_datetime(row["start_date"])],
             orientation="h",
@@ -108,8 +108,10 @@ def roadmap_chart(projects_df):
             ),
             showlegend=False,
         ))
-    fig.add_vline(x=datetime.now(), line=dict(color=COLORS["accent"], width=2, dash="dot"),
-                  annotation_text="Today", annotation_font=dict(size=10, color=COLORS["accent"]))
+    fig.add_shape(type="line", x0=datetime.now(), x1=datetime.now(), y0=0, y1=1, yref="paper",
+                  line=dict(color=COLORS["accent"], width=2, dash="dot"))
+    fig.add_annotation(x=datetime.now(), y=1, yref="paper", text="Today", showarrow=False,
+                       font=dict(size=10, color=COLORS["accent"]), yshift=10)
     fig.update_layout(
         barmode="overlay", yaxis=dict(autorange="reversed"),
         xaxis=dict(type="date"), height=max(300, len(projects_df) * 55),

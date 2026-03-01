@@ -16,7 +16,7 @@ def gantt_chart(phases_df):
         color = color_map.get(row.get("delivery_method", "waterfall"), COLORS["blue"])
         opacity = 1.0 if row.get("status") != "not_started" else 0.4
         fig.add_trace(go.Bar(
-            x=[pd.to_datetime(row["end_date"]) - pd.to_datetime(row["start_date"])],
+            x=[(pd.to_datetime(row["end_date"]) - pd.to_datetime(row["start_date"])).total_seconds() * 1000],
             y=[row["name"]], base=[pd.to_datetime(row["start_date"])],
             orientation="h",
             marker=dict(color=color, opacity=opacity, line=dict(width=0)),
