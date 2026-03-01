@@ -1,14 +1,27 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git status*)",
-      "Bash(git log*)",
-      "Bash(git diff*)",
-      "Bash(git branch*)",
-      "Bash(git rev-parse*)",
-      "Bash(git remote*)",
-      "Bash(gh pr view*)",
-      "Bash(gh pr list*)"
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(ls *)",
+      "Bash(ls)",
+      "Bash(which *)",
+      "Bash(where *)",
+      "Bash(where.exe *)",
+      "Bash(pip show *)",
+      "Bash(pip --version*)",
+      "Bash(ruff check*)",
+      "Bash(find *)",
+      "Skill(start-feature)",
+      "Skill(merge-pr)",
+      "Skill(review-architecture)",
+      "Skill(review-security)",
+      "Skill(review-databricks)",
+      "Skill(review-all)",
+      "Skill(commit)",
+      "Skill(pr)",
+      "Skill(sync)",
+      "Skill(git-status)"
     ]
   },
   "hooks": {
