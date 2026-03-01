@@ -9,6 +9,10 @@ This project runs on Windows with Git Bash. Avoid shell commands that depend
 on Linux-only tools (e.g., jq). Use Python for JSON parsing instead of jq.
 Test all hook scripts for Git Bash compatibility before committing.
 
+- **Python**: `/c/Users/coryb/anaconda3/python.exe` (Anaconda base env)
+- Always use this path for `python` and `pytest` commands — the Windows Store
+  `python` alias does not work in this environment.
+
 ## Project Identity
 
 **PM Hub** is a portfolio and project management application built on Databricks.
