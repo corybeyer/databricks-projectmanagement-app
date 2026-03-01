@@ -32,7 +32,10 @@ app = Dash(
     use_pages=True,
     suppress_callback_exceptions=True,
     external_stylesheets=[],
-    meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
+    meta_tags=[
+        {"name": "viewport", "content": "width=device-width, initial-scale=1, shrink-to-fit=no"},
+        {"http-equiv": "X-UA-Compatible", "content": "IE=edge"},
+    ],
     title="PM Hub — Portfolio & Project Management",
 )
 server = app.server  # Required for Databricks Apps deployment
