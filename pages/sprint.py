@@ -370,13 +370,19 @@ def refresh_sprint(n, mutation_count, selected_sprint, active_project):
 )
 def toggle_task_modal(add_clicks, edit_clicks, selected_sprint):
     """Open task modal for create (blank) or edit (populated)."""
-    triggered = ctx.triggered_id
+    # Guard: only proceed if an actual click triggered this callback
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0
+                           for t in triggered):
+        return (no_update,) * 9
 
-    if triggered == "sprint-add-task-btn":
+    triggered_id = ctx.triggered_id
+
+    if triggered_id == "sprint-add-task-btn" and add_clicks:
         return True, "Create Task", None, "", None, None, None, None, ""
 
     # Edit mode — pattern-match button
-    if isinstance(triggered, dict) and triggered.get("type") == "sprint-task-edit-btn":
+    if isinstance(triggered_id, dict) and triggered_id.get("type") == "sprint-task-edit-btn":
         task_id = triggered["index"]
         token = get_user_token()
         task_df = task_service.get_task(task_id, user_token=token)
@@ -411,6 +417,8 @@ def toggle_task_modal(add_clicks, edit_clicks, selected_sprint):
 )
 def save_task(n_clicks, stored_task, selected_sprint, counter, active_project, *field_values):
     """Save (create or update) a task."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(TASK_FIELDS) * 2)
     form_data = get_modal_values("sprint-task", TASK_FIELDS, *field_values)
     form_data["sprint_id"] = selected_sprint
     form_data["project_id"] = active_project or "prj-001"
@@ -492,6 +500,8 @@ def change_task_status(status_values):
 )
 def open_delete_modal(n_clicks_list):
     """Open delete confirmation with the task ID."""
+    if not any(n_clicks_list or []):
+        return no_update, no_update
     triggered = ctx.triggered_id
     if not isinstance(triggered, dict):
         return no_update, no_update
@@ -543,7 +553,10 @@ def cancel_task_modal(n):
 )
 def toggle_sprint_modal(new_clicks, cancel_clicks):
     """Open/close sprint creation modal."""
-    if ctx.triggered_id == "sprint-new-sprint-btn":
+    triggered = ctx.triggered
+    if not triggered or triggered[0].get("value") is None:
+        return no_update
+    if ctx.triggered_id == "sprint-new-sprint-btn" and new_clicks:
         return True
     return False
 
@@ -564,6 +577,8 @@ def toggle_sprint_modal(new_clicks, cancel_clicks):
 )
 def save_sprint(n_clicks, counter, active_project, *field_values):
     """Create a new sprint."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(SPRINT_FIELDS) * 2)
     form_data = get_modal_values("sprint-sprint", SPRINT_FIELDS, *field_values)
     form_data["project_id"] = active_project or "prj-001"
 

@@ -338,15 +338,20 @@ def refresh_retros(n, mutation_count, sprint_id, active_project):
 )
 def toggle_retro_modal(add_clicks, edit_clicks):
     """Open retro modal for create (blank) or edit (populated)."""
-    triggered = ctx.triggered_id
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 5
+
+    triggered_id = ctx.triggered_id
 
     # Create mode
-    if triggered == "retros-add-retro-btn":
+    if triggered_id == "retros-add-retro-btn" and add_clicks:
         return True, "Create Retro Item", None, None, ""
 
     # Edit mode -- pattern-match button
-    if isinstance(triggered, dict) and triggered.get("type") == "retros-retro-edit-btn":
-        retro_id = triggered["index"]
+    if isinstance(triggered_id, dict) and triggered_id.get("type") == "retros-retro-edit-btn":
+        retro_id = triggered_id["index"]
         token = get_user_token()
         item_df = retro_service.get_retro_item(retro_id, user_token=token)
 
@@ -385,6 +390,8 @@ def toggle_retro_modal(add_clicks, edit_clicks):
 )
 def save_retro_item(n_clicks, stored_retro, counter, sprint_id, *field_values):
     """Save (create or update) a retro item."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(RETRO_FIELDS) * 2)
     form_data = get_modal_values("retros-retro", RETRO_FIELDS, *field_values)
     form_data["sprint_id"] = sprint_id or "sp-003"
 
@@ -433,11 +440,14 @@ def save_retro_item(n_clicks, stored_retro, counter, sprint_id, *field_values):
 )
 def vote_retro_action(n_clicks_list, counter):
     """Upvote a retro item."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 5
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
         return (no_update,) * 5
 
-    retro_id = triggered["index"]
+    retro_id = triggered_id["index"]
     token = get_user_token()
     email = get_user_email()
 
@@ -459,11 +469,14 @@ def vote_retro_action(n_clicks_list, counter):
 )
 def convert_to_task_action(n_clicks_list, counter):
     """Convert an action item retro item to a task."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 5
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
         return (no_update,) * 5
 
-    retro_id = triggered["index"]
+    retro_id = triggered_id["index"]
     token = get_user_token()
     email = get_user_email()
 
@@ -481,10 +494,13 @@ def convert_to_task_action(n_clicks_list, counter):
 )
 def open_delete_modal(n_clicks_list):
     """Open delete confirmation with the retro item ID."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
         return no_update, no_update
-    retro_id = triggered["index"]
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
+        return no_update, no_update
+    retro_id = triggered_id["index"]
     return True, retro_id
 
 
@@ -502,6 +518,8 @@ def open_delete_modal(n_clicks_list):
 )
 def confirm_delete_retro(n_clicks, retro_id, counter):
     """Soft-delete the retro item."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not retro_id:
         return no_update, no_update, no_update, no_update, no_update, no_update
 

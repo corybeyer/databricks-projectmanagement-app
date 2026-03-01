@@ -354,6 +354,8 @@ def render_task_detail(task_id):
 )
 def add_comment(n_clicks, task_id, body, counter):
     """Create a new comment on the selected task."""
+    if not n_clicks:
+        return (no_update,) * 5
     if not task_id:
         return no_update, "Please select a task first", "Error", "danger", True
     if not body or not body.strip():
@@ -382,15 +384,14 @@ def add_comment(n_clicks, task_id, body, counter):
 )
 def open_edit_modal(n_clicks_list):
     """Open edit modal with comment data."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return no_update, no_update, no_update
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
         return no_update, no_update, no_update
 
-    # Check if any button was actually clicked
-    if not any(n for n in n_clicks_list if n):
-        return no_update, no_update, no_update
-
-    comment_id = triggered["index"]
+    comment_id = triggered_id["index"]
     token = get_user_token()
     comment_df = comment_service.get_comment(comment_id, user_token=token)
 
@@ -428,6 +429,8 @@ def open_edit_modal(n_clicks_list):
 )
 def save_edit_comment(n_clicks, stored_data, body, counter):
     """Save an edited comment."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not stored_data:
         return no_update, no_update, no_update, no_update, no_update, no_update
 
@@ -468,14 +471,14 @@ def cancel_edit(n):
 )
 def open_delete_modal(n_clicks_list):
     """Open delete confirmation with the comment ID."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return no_update, no_update
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
         return no_update, no_update
 
-    if not any(n for n in n_clicks_list if n):
-        return no_update, no_update
-
-    comment_id = triggered["index"]
+    comment_id = triggered_id["index"]
     return True, comment_id
 
 
@@ -493,6 +496,8 @@ def open_delete_modal(n_clicks_list):
 )
 def confirm_delete_comment(n_clicks, comment_id, counter):
     """Soft-delete a comment."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not comment_id:
         return no_update, no_update, no_update, no_update, no_update, no_update
 

@@ -318,20 +318,25 @@ def refresh_timesheet(n, mutation_count, active_project, date_start, date_end, s
 )
 def toggle_entry_modal(add_clicks, edit_clicks, active_project):
     """Open time entry modal for create (blank) or edit (populated)."""
-    triggered = ctx.triggered_id
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 9
+
+    triggered_id = ctx.triggered_id
 
     # Build task options for the current project
     task_options = _get_task_options(project_id=active_project)
 
     # Create mode
-    if triggered == "ts-add-entry-btn":
+    if triggered_id == "ts-add-entry-btn" and add_clicks:
         today_str = str(date.today())
         return (True, "Log Time", None,
                 None, task_options, None, None, today_str, "")
 
     # Edit mode
-    if isinstance(triggered, dict) and triggered.get("type") == "ts-entry-edit-btn":
-        entry_id = triggered["index"]
+    if isinstance(triggered_id, dict) and triggered_id.get("type") == "ts-entry-edit-btn":
+        entry_id = triggered_id["index"]
         token = get_user_token()
         entry_df = time_entry_service.get_time_entry(entry_id, user_token=token)
         if entry_df.empty:
@@ -366,6 +371,8 @@ def toggle_entry_modal(add_clicks, edit_clicks, active_project):
 )
 def save_entry(n_clicks, stored_entry, counter, *field_values):
     """Save (create or update) a time entry."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(TIME_ENTRY_FIELDS) * 2)
     form_data = get_modal_values("ts-entry", TIME_ENTRY_FIELDS, *field_values)
 
     token = get_user_token()
@@ -409,10 +416,13 @@ def save_entry(n_clicks, stored_entry, counter, *field_values):
 )
 def open_delete_modal(n_clicks_list):
     """Open delete confirmation with the entry ID."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
         return no_update, no_update
-    entry_id = triggered["index"]
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
+        return no_update, no_update
+    entry_id = triggered_id["index"]
     return True, entry_id
 
 
@@ -430,6 +440,8 @@ def open_delete_modal(n_clicks_list):
 )
 def confirm_delete_entry(n_clicks, entry_id, counter):
     """Soft-delete the time entry."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not entry_id:
         return no_update, no_update, no_update, no_update, no_update, no_update
 

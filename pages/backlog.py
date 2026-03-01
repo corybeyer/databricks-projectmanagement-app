@@ -303,13 +303,18 @@ def refresh_backlog(n, mutation_count, active_project, status_filter,
 )
 def toggle_task_modal(add_clicks, edit_clicks):
     """Open task modal for create (blank) or edit (populated)."""
-    triggered = ctx.triggered_id
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 9
 
-    if triggered == "backlog-add-task-btn":
+    triggered_id = ctx.triggered_id
+
+    if triggered_id == "backlog-add-task-btn" and add_clicks:
         return True, "Create Backlog Task", None, "", None, None, None, None, ""
 
-    if isinstance(triggered, dict) and triggered.get("type") == "backlog-task-edit-btn":
-        task_id = triggered["index"]
+    if isinstance(triggered_id, dict) and triggered_id.get("type") == "backlog-task-edit-btn":
+        task_id = triggered_id["index"]
         token = get_user_token()
         task_df = task_service.get_task(task_id, user_token=token)
         if task_df.empty:
@@ -342,6 +347,8 @@ def toggle_task_modal(add_clicks, edit_clicks):
 )
 def save_task(n_clicks, stored_task, counter, active_project, *field_values):
     """Save (create or update) a backlog task."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(TASK_FIELDS) * 2)
     form_data = get_modal_values("backlog-task", TASK_FIELDS, *field_values)
     form_data["status"] = "backlog"
     form_data["sprint_id"] = None
@@ -419,10 +426,13 @@ def move_to_sprint(sprint_values):
 )
 def open_delete_modal(n_clicks_list):
     """Open delete confirmation."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
         return no_update, no_update
-    return True, triggered["index"]
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
+        return no_update, no_update
+    return True, triggered_id["index"]
 
 
 @callback(
@@ -439,6 +449,8 @@ def open_delete_modal(n_clicks_list):
 )
 def confirm_delete(n_clicks, task_id, counter):
     """Soft-delete the task."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not task_id:
         return (no_update,) * 6
 
