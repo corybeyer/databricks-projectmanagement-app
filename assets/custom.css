@@ -27,23 +27,9 @@
 }
 
 /* ── Global ─────────────────────────────────────── */
-html {
-    font-size: 16px;            /* Lock base size — prevents iframe inheritance */
-}
-
-/* Databricks Apps renders inside an iframe that can shrink text.
-   Bump the base size when running embedded so everything scales up. */
-@media (min-width: 768px) {
-    html {
-        font-size: 17px;
-    }
-}
-
 body {
     background-color: var(--bg-primary) !important;
     color: var(--text-primary);
-    -webkit-text-size-adjust: 100%;   /* Prevent mobile-style text shrinking */
-    text-size-adjust: 100%;
 }
 
 /* ── Page Header Fix + Styling ──────────────────── */
