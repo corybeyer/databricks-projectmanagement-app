@@ -80,22 +80,22 @@ def _build_content(department_id=None):
         dbc.Row([
             dbc.Col(kpi_card("Active Projects", int(data["total_projects"]),
                              f"across {len(portfolios)} portfolios",
-                             icon="folder-fill", icon_color="blue"), width=2),
+                             icon="folder-fill", icon_color="blue"), md=True),
             dbc.Col(kpi_card("On Track", f"{data['green_count']}/{len(portfolios)}",
                              "portfolios healthy", COLORS["green"],
-                             icon="check-circle-fill", icon_color="green"), width=2),
+                             icon="check-circle-fill", icon_color="green"), md=True),
             dbc.Col(kpi_card("Avg Completion", f"{data['avg_completion']:.0f}%",
                              "across all projects",
-                             icon="pie-chart-fill", icon_color="purple"), width=2),
+                             icon="pie-chart-fill", icon_color="purple"), md=True),
             dbc.Col(kpi_card("Total Budget", f"${data['total_budget']:,.0f}",
                              f"${data['total_spent']:,.0f} spent",
-                             icon="currency-dollar", icon_color="cyan"), width=3),
+                             icon="currency-dollar", icon_color="cyan"), md=True),
             dbc.Col(kpi_card("Budget Burned",
                              f"{(data['total_spent']/max(data['total_budget'],1)*100):.0f}%",
                              "of total allocation",
                              COLORS["yellow"] if data["total_spent"]/max(data["total_budget"],1) > 0.7 else COLORS["green"],
                              icon="fire", icon_color="yellow"),
-                    width=3),
+                    md=True),
         ], className="kpi-strip mb-4"),
 
         # Department cards
@@ -112,11 +112,11 @@ def _build_content(department_id=None):
                                 data["green_count"], data["yellow_count"], data["red_count"]
                             ),
                             config={"displayModeBar": False},
-                            style={"height": "300px"},
+                            style={"height": "380px"},
                         )
                     ),
-                ], className="chart-card"),
-            ], width=4),
+                ], className="chart-card h-100"),
+            ], md=5),
             dbc.Col([
                 html.Div([
                     portfolio_card(row.to_dict())
@@ -124,7 +124,7 @@ def _build_content(department_id=None):
                 ] if not portfolios.empty else [
                     html.Div("No portfolios found.", className="text-muted p-4")
                 ], className="portfolios-list"),
-            ], width=8),
+            ], md=7),
         ]),
     ])
 

@@ -1,7 +1,7 @@
 # CLAUDE.md — PM Hub Project Intelligence
 
 > Claude reads this file automatically at the start of every session.
-> Last updated: 2026-02-27 | All 7 Phases Complete (Production Ready)
+> Last updated: 2026-03-01 | All 8 Phases Complete (Production Ready)
 
 ## Environment
 
@@ -40,7 +40,7 @@ See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production ro
 ## Current State
 
 - **Phase**: ALL COMPLETE — Production Ready
-- **Roadmap**: See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) — 36 tasks across 7 phases, all done
+- **Roadmap**: See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) — 38 tasks across 8 phases, all done
 - **Phase 0**: Schema & data model (PR #19)
 - **Phase 1**: Foundation for interactivity (PR #20)
 - **Phase 2**: Full CRUD across all entities (PRs #22-#26)
@@ -48,6 +48,7 @@ See [docs/architecture/PLAN.md](docs/architecture/PLAN.md) for the production ro
 - **Phase 4**: PMI/PMP feature completeness (PR #29)
 - **Phase 5**: Production readiness — Excel export, RBAC, error handling, 325 tests, notifications (PR #30)
 - **Phase 6**: UI modernization — glassmorphism design, bundled icons/CSS, page headers, KPI icons
+- **Phase 7**: Layout & typography UX — 1800px max-width, larger fonts, even KPI cards, bigger health chart
 - **Pages**: 16/16 built; all CRUD pages fully interactive
 - **Tests**: 325 passing (services, repos, validators, syntax)
 - **Blockers**: None

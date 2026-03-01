@@ -44,7 +44,7 @@ body {
 
 .page-subtitle {
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 1rem;
 }
 
 .page-header {
@@ -86,7 +86,7 @@ body {
     background: transparent !important;
     border-bottom: 1px solid var(--border-subtle) !important;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-secondary);
@@ -117,17 +117,17 @@ body {
 }
 
 .kpi-card .card-body {
-    padding: 16px 20px;
+    padding: 20px 24px;
 }
 
 .kpi-icon-wrapper {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-sm);
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     margin-bottom: 10px;
 }
 
@@ -141,7 +141,7 @@ body {
 .kpi-icon-wrapper.icon-orange { background: rgba(249, 115, 22, 0.15); color: #f97316; }
 
 .kpi-label {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-secondary);
@@ -149,14 +149,14 @@ body {
 }
 
 .kpi-value {
-    font-size: 1.5rem;
+    font-size: 1.85rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.2;
 }
 
 .kpi-sub {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: var(--text-dim);
     margin-top: 2px;
 }
@@ -318,8 +318,8 @@ body {
 
 .page-content {
     flex: 1;
-    padding: 24px;
-    max-width: 1600px;
+    padding: 24px 32px;
+    max-width: 1800px;
     width: 100%;
     margin: 0 auto;
 }
@@ -342,7 +342,7 @@ body {
 }
 
 .table-dark thead th {
-    font-size: 0.7rem;
+    font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--text-dim);
@@ -414,7 +414,7 @@ body {
 .badge {
     border-radius: 20px;
     font-weight: 500;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     padding: 4px 10px;
 }
 
