@@ -5,7 +5,9 @@ All domain repositories inherit query helpers from here.
 Handles sample data fallback, optimistic locking, soft deletes.
 """
 
+import inspect
 import logging
+import time
 from typing import Optional
 import pandas as pd
 from db.unity_catalog import execute_query, execute_write
@@ -119,15 +121,34 @@ def _validate_identifier(value: str, allowlist: set, label: str) -> None:
         raise ValueError(f"Invalid {label}: {value!r}")
 
 
+def _caller_name() -> str:
+    """Return the name of the calling function (two frames up)."""
+    frame = inspect.currentframe()
+    try:
+        caller = frame.f_back.f_back
+        return caller.f_code.co_name if caller else "unknown"
+    finally:
+        del frame
+
+
 def query(sql_str: str, params: dict = None, user_token: str = None,
           sample_fallback=None) -> pd.DataFrame:
     """Execute a read query with sample data fallback for local dev."""
     if _use_sample_data() and sample_fallback is not None:
         return sample_fallback()
+    caller = _caller_name()
+    param_keys = list(params.keys()) if params else []
+    start = time.monotonic()
     result = execute_query(sql_str, params=params, user_token=user_token)
+    duration_ms = (time.monotonic() - start) * 1000
     if result is None and sample_fallback is not None:
         return sample_fallback()
-    return result if result is not None else pd.DataFrame()
+    df = result if result is not None else pd.DataFrame()
+    logger.debug(
+        "query [caller=%s] params=%s rows=%d duration=%.1fms",
+        caller, param_keys, len(df), duration_ms,
+    )
+    return df
 
 
 def write(sql_str: str, params: dict = None, user_token: str = None,
@@ -139,7 +160,16 @@ def write(sql_str: str, params: dict = None, user_token: str = None,
         from models import sample_data
         sample_data.create_record(table_name, record)
         return True
-    return execute_write(sql_str, params=params, user_token=user_token)
+    caller = _caller_name()
+    param_keys = list(params.keys()) if params else []
+    start = time.monotonic()
+    result = execute_write(sql_str, params=params, user_token=user_token)
+    duration_ms = (time.monotonic() - start) * 1000
+    logger.debug(
+        "write [caller=%s] table=%s params=%s duration=%.1fms",
+        caller, table_name or "?", param_keys, duration_ms,
+    )
+    return result
 
 
 def safe_update(table: str, id_column: str, id_value: str,
@@ -157,14 +187,22 @@ def safe_update(table: str, id_column: str, id_value: str,
             if not col.isidentifier():
                 raise ValueError(f"Invalid column name: {col!r}")
 
+    start = time.monotonic()
+
     if _use_sample_data():
         from models import sample_data
         if user_email:
             updates = {**updates, "updated_by": user_email}
-        return sample_data.update_record(
+        result = sample_data.update_record(
             table, id_column, id_value, updates,
             expected_updated_at=expected_updated_at,
         )
+        logger.debug(
+            "safe_update [table=%s, %s=%s] cols=%s duration=%.1fms",
+            table, id_column, id_value, list(updates.keys()),
+            (time.monotonic() - start) * 1000,
+        )
+        return result
 
     if user_email:
         updates = {**updates, "updated_by": user_email}
@@ -182,7 +220,13 @@ def safe_update(table: str, id_column: str, id_value: str,
             f"WHERE {id_column} = :_id AND is_deleted = false"
         )
         params = {**updates, "_id": id_value}
-    return write(sql_str, params=params, user_token=user_token)
+    result = write(sql_str, params=params, user_token=user_token)
+    logger.debug(
+        "safe_update [table=%s, %s=%s] cols=%s duration=%.1fms",
+        table, id_column, id_value, list(updates.keys()),
+        (time.monotonic() - start) * 1000,
+    )
+    return result
 
 
 def soft_delete(table: str, id_column: str, id_value: str,
@@ -191,9 +235,16 @@ def soft_delete(table: str, id_column: str, id_value: str,
     _validate_identifier(table, ALLOWED_TABLES, "table")
     _validate_identifier(id_column, ALLOWED_ID_COLUMNS, "id_column")
 
+    start = time.monotonic()
+
     if _use_sample_data():
         from models import sample_data
-        return sample_data.delete_record(table, id_column, id_value, user_email=user_email)
+        result = sample_data.delete_record(table, id_column, id_value, user_email=user_email)
+        logger.debug(
+            "soft_delete [table=%s, %s=%s] duration=%.1fms",
+            table, id_column, id_value, (time.monotonic() - start) * 1000,
+        )
+        return result
 
     deleted_by_clause = ", deleted_by = :_email" if user_email else ""
     sql_str = (
@@ -204,4 +255,9 @@ def soft_delete(table: str, id_column: str, id_value: str,
     params = {"_id": id_value}
     if user_email:
         params["_email"] = user_email
-    return write(sql_str, params=params, user_token=user_token)
+    result = write(sql_str, params=params, user_token=user_token)
+    logger.debug(
+        "soft_delete [table=%s, %s=%s] duration=%.1fms",
+        table, id_column, id_value, (time.monotonic() - start) * 1000,
+    )
+    return result

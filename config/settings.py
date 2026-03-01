@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     app_port: int = 8050
     use_sample_data: bool = True
     debug: bool = False
+    log_level: str = "INFO"
 
     # Unity Catalog
     uc_catalog: str = "workspace"

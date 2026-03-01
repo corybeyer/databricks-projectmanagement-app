@@ -16,16 +16,33 @@ import dash
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 from config import get_settings
-from config.logging import setup_logging
+from config.logging import setup_logging, set_trace_id, clear_trace_id
 from components.app_state import app_stores
 from components.toast import toast_container
 from components.department_selector import department_selector
 from components.project_selector import project_selector
 from components.notification_bell import notification_bell
+from components.error_boundary import log_callback
 
 # ─── Init ──────────────────────────────────────────────────
-setup_logging()
 settings = get_settings()
+setup_logging(level=settings.log_level)
+
+# ─── Monkey-patch dash.callback to auto-instrument all callbacks ──
+_original_callback = dash.callback
+
+
+def _instrumented_callback(*args, **kwargs):
+    """Wrap every dash.callback so it automatically gets logging."""
+    original_decorator = _original_callback(*args, **kwargs)
+
+    def wrapper(fn):
+        instrumented_fn = log_callback()(fn)
+        return original_decorator(instrumented_fn)
+    return wrapper
+
+
+dash.callback = _instrumented_callback
 
 app = Dash(
     __name__,
@@ -36,6 +53,20 @@ app = Dash(
     title="PM Hub — Portfolio & Project Management",
 )
 server = app.server  # Required for Databricks Apps deployment
+
+
+# ─── Trace ID hooks ──────────────────────────────────────────
+@server.before_request
+def _set_trace_id():
+    """Generate a trace ID for each Flask request."""
+    set_trace_id()
+
+
+@server.teardown_request
+def _clear_trace_id(exc=None):
+    """Clear trace ID after request completes."""
+    clear_trace_id()
+
 
 # Register callbacks
 import callbacks  # noqa: F401, E402

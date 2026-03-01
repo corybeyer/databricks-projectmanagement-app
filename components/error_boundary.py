@@ -1,9 +1,10 @@
 """Error Boundary — exception handling for page rendering and callbacks."""
 
 import logging
+import time
 import traceback
 from functools import wraps
-from dash import html
+from dash import html, ctx
 import dash_bootstrap_components as dbc
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,43 @@ def safe_render(render_fn, fallback_message="Unable to load this section."):
         return _error_card(fallback_message, str(e))
 
 
+def log_callback():
+    """Logging-only decorator for callbacks. Logs name, trigger, duration, errors.
+
+    Unlike safe_callback(), this re-raises exceptions so Dash handles them
+    normally. Used by the auto-instrument monkey-patch in app.py.
+    """
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            trigger = _get_trigger()
+            start = time.monotonic()
+            try:
+                result = fn(*args, **kwargs)
+                duration_ms = (time.monotonic() - start) * 1000
+                if duration_ms > 50:
+                    logger.info(
+                        "Callback %s [trigger=%s] completed in %.0fms",
+                        fn.__name__, trigger, duration_ms,
+                    )
+                else:
+                    logger.debug(
+                        "Callback %s [trigger=%s] completed in %.1fms",
+                        fn.__name__, trigger, duration_ms,
+                    )
+                return result
+            except Exception as e:
+                duration_ms = (time.monotonic() - start) * 1000
+                logger.error(
+                    "Callback %s [trigger=%s] failed after %.0fms: %s\n%s",
+                    fn.__name__, trigger, duration_ms,
+                    str(e), traceback.format_exc(),
+                )
+                raise
+        return wrapper
+    return decorator
+
+
 def safe_callback(fallback_message="An error occurred."):
     """Decorator for callbacks that catches exceptions and returns error UI.
 
@@ -48,16 +86,41 @@ def safe_callback(fallback_message="An error occurred."):
     def decorator(fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
+            trigger = _get_trigger()
+            start = time.monotonic()
             try:
-                return fn(*args, **kwargs)
+                result = fn(*args, **kwargs)
+                duration_ms = (time.monotonic() - start) * 1000
+                if duration_ms > 50:
+                    logger.info(
+                        "Callback %s [trigger=%s] completed in %.0fms",
+                        fn.__name__, trigger, duration_ms,
+                    )
+                else:
+                    logger.debug(
+                        "Callback %s [trigger=%s] completed in %.1fms",
+                        fn.__name__, trigger, duration_ms,
+                    )
+                return result
             except Exception as e:
+                duration_ms = (time.monotonic() - start) * 1000
                 logger.error(
-                    "Callback error in %s: %s\n%s",
-                    fn.__name__, str(e), traceback.format_exc(),
+                    "Callback %s [trigger=%s] failed after %.0fms: %s\n%s",
+                    fn.__name__, trigger, duration_ms,
+                    str(e), traceback.format_exc(),
                 )
                 return _error_card(fallback_message, str(e))
         return wrapper
     return decorator
+
+
+def _get_trigger():
+    """Get the triggering input ID for the current callback, or 'unknown'."""
+    try:
+        triggered = ctx.triggered_id
+        return str(triggered) if triggered else "initial"
+    except Exception:
+        return "unknown"
 
 
 def _error_card(message, detail=None):
