@@ -104,7 +104,7 @@ databricks-pm-app/
 │   └── labels.py           # Centralized user-facing strings
 │
 └── assets/                 # Dash auto-loads CSS/JS from here
-    ├── custom.css          # Glassmorphism design system (~280 lines)
+    ├── custom.css          # Glassmorphism design system (~280 lines, 1800px fluid layout)
     ├── bootstrap-icons/    # Locally bundled Bootstrap Icons v1.11.3
     │   ├── bootstrap-icons.min.css
     │   └── fonts/          # WOFF2 + WOFF font files
