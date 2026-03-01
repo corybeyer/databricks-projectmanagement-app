@@ -339,16 +339,21 @@ def refresh_projects(n, mutation_count, search, status_filter,
 )
 def toggle_project_modal(add_clicks, edit_clicks):
     """Open project modal for create (blank) or edit (populated)."""
-    triggered = ctx.triggered_id
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 12
+
+    triggered_id = ctx.triggered_id
 
     # Create mode
-    if triggered == "projects-add-project-btn":
+    if triggered_id == "projects-add-project-btn" and add_clicks:
         return (True, "Create Project", None,
                 "", None, None, None, "", None, None, None, "")
 
     # Edit mode -- pattern-match button
-    if isinstance(triggered, dict) and triggered.get("type") == "projects-project-edit-btn":
-        project_id = triggered["index"]
+    if isinstance(triggered_id, dict) and triggered_id.get("type") == "projects-project-edit-btn":
+        project_id = triggered_id["index"]
         token = get_user_token()
         project_df = project_service.get_project(project_id, user_token=token)
         if project_df.empty:
@@ -388,6 +393,8 @@ def toggle_project_modal(add_clicks, edit_clicks):
 )
 def save_project(n_clicks, stored_project, counter, *field_values):
     """Save (create or update) a project."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(PROJECT_FIELDS) * 2)
     form_data = get_modal_values("projects-project", PROJECT_FIELDS, *field_values)
 
     token = get_user_token()
@@ -431,10 +438,13 @@ def save_project(n_clicks, stored_project, counter, *field_values):
 )
 def open_delete_modal(n_clicks_list):
     """Open delete confirmation with the project ID."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
         return no_update, no_update
-    project_id = triggered["index"]
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
+        return no_update, no_update
+    project_id = triggered_id["index"]
     return True, project_id
 
 
@@ -452,6 +462,8 @@ def open_delete_modal(n_clicks_list):
 )
 def confirm_delete_project(n_clicks, project_id, counter):
     """Soft-delete the project."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not project_id:
         return no_update, no_update, no_update, no_update, no_update, no_update
 

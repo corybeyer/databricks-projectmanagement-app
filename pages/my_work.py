@@ -230,11 +230,15 @@ def refresh_my_work(n, mutation_count):
 )
 def open_edit_modal(edit_clicks):
     """Open edit modal populated from service."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 9
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
         return (no_update,) * 9
 
-    task_id = triggered["index"]
+    task_id = triggered_id["index"]
     token = get_user_token()
     task_df = task_service.get_task(task_id, user_token=token)
     if task_df.empty:
@@ -265,6 +269,8 @@ def open_edit_modal(edit_clicks):
 )
 def save_task(n_clicks, stored_task, counter, *field_values):
     """Update a task (edit only)."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(TASK_FIELDS) * 2)
     if not stored_task:
         return (no_update,) * (6 + len(TASK_FIELDS) * 2)
 

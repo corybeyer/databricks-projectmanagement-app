@@ -408,16 +408,21 @@ def toggle_heatmap(n_clicks, current):
 )
 def toggle_risk_modal(add_clicks, edit_clicks):
     """Open risk modal for create (blank) or edit (populated)."""
-    triggered = ctx.triggered_id
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 15
+
+    triggered_id = ctx.triggered_id
 
     # Create mode
-    if triggered == "risks-add-risk-btn":
+    if triggered_id == "risks-add-risk-btn" and add_clicks:
         return (True, "Create Risk", None,
                 "", None, None, None, None, "", "", "", "", "", None, None)
 
     # Edit mode — pattern-match button
-    if isinstance(triggered, dict) and triggered.get("type") == "risks-risk-edit-btn":
-        risk_id = triggered["index"]
+    if isinstance(triggered_id, dict) and triggered_id.get("type") == "risks-risk-edit-btn":
+        risk_id = triggered_id["index"]
         token = get_user_token()
         risk_df = risk_service.get_risk(risk_id, user_token=token)
         if risk_df.empty:
@@ -459,6 +464,8 @@ def toggle_risk_modal(add_clicks, edit_clicks):
 )
 def save_risk(n_clicks, stored_risk, counter, *field_values):
     """Save (create or update) a risk."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(RISK_FIELDS) * 2)
     form_data = get_modal_values("risks-risk", RISK_FIELDS, *field_values)
 
     token = get_user_token()
@@ -539,10 +546,13 @@ def change_risk_status(status_values):
 )
 def open_delete_modal(n_clicks_list):
     """Open delete confirmation with the risk ID."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
         return no_update, no_update
-    risk_id = triggered["index"]
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
+        return no_update, no_update
+    risk_id = triggered_id["index"]
     return True, risk_id
 
 
@@ -560,6 +570,8 @@ def open_delete_modal(n_clicks_list):
 )
 def confirm_delete_risk(n_clicks, risk_id, counter):
     """Soft-delete the risk."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not risk_id:
         return no_update, no_update, no_update, no_update, no_update, no_update
 
@@ -594,11 +606,14 @@ def cancel_risk_modal(n):
 )
 def review_risk_action(n_clicks_list, counter):
     """Mark a risk as reviewed today."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 5
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
         return (no_update,) * 5
 
-    risk_id = triggered["index"]
+    risk_id = triggered_id["index"]
     token = get_user_token()
     email = get_user_email()
 

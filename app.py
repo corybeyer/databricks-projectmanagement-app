@@ -114,7 +114,7 @@ navbar = dbc.Navbar(
                         # ── Governance direct link ──
                         dbc.NavItem(
                             dbc.NavLink(
-                                [html.I(className="bi bi-box-seam-fill me-1"), "Governance"],
+                                "Governance",
                                 href="/deliverables",
                                 className="navbar-direct-link",
                             ),

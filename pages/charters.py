@@ -266,15 +266,20 @@ def refresh_charters(n, mutation_count, active_project):
 )
 def toggle_charter_modal(add_clicks, edit_clicks):
     """Open charter modal for create (blank) or edit (populated)."""
-    triggered = ctx.triggered_id
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 15
 
-    if triggered == "charters-add-charter-btn":
+    triggered_id = ctx.triggered_id
+
+    if triggered_id == "charters-add-charter-btn" and add_clicks:
         return (True, "Create Charter", None,
                 "", None, "", "", "", "", "", "", "", "", "", "")
 
     # Edit mode — pattern-match button
-    if isinstance(triggered, dict) and triggered.get("type") == "charters-charter-edit-btn":
-        charter_id = triggered["index"]
+    if isinstance(triggered_id, dict) and triggered_id.get("type") == "charters-charter-edit-btn":
+        charter_id = triggered_id["index"]
         token = get_user_token()
         charter_df = charter_service.get_charter(charter_id, user_token=token)
         if charter_df.empty:
@@ -318,6 +323,8 @@ def toggle_charter_modal(add_clicks, edit_clicks):
 )
 def save_charter(n_clicks, stored_charter, counter, active_project, *field_values):
     """Save (create or update) a charter."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(CHARTER_FIELDS) * 2)
     form_data = get_modal_values("charters-charter", CHARTER_FIELDS, *field_values)
     form_data["project_id"] = active_project or "prj-001"
 
@@ -366,11 +373,14 @@ def save_charter(n_clicks, stored_charter, counter, active_project, *field_value
 )
 def submit_charter_action(n_clicks_list, counter):
     """Submit a charter for approval."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 5
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
         return (no_update,) * 5
 
-    charter_id = triggered["index"]
+    charter_id = triggered_id["index"]
     token = get_user_token()
     email = get_user_email()
     result = charter_service.submit_charter(charter_id, user_email=email, user_token=token)
@@ -392,11 +402,14 @@ def submit_charter_action(n_clicks_list, counter):
 )
 def approve_charter_action(n_clicks_list, counter):
     """Approve a submitted charter."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 5
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
         return (no_update,) * 5
 
-    charter_id = triggered["index"]
+    charter_id = triggered_id["index"]
     token = get_user_token()
     email = get_user_email()
     result = charter_service.approve_charter(charter_id, user_email=email, user_token=token)
@@ -418,11 +431,14 @@ def approve_charter_action(n_clicks_list, counter):
 )
 def reject_charter_action(n_clicks_list, counter):
     """Reject a submitted charter."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 5
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
         return (no_update,) * 5
 
-    charter_id = triggered["index"]
+    charter_id = triggered_id["index"]
     token = get_user_token()
     email = get_user_email()
     result = charter_service.reject_charter(charter_id, user_email=email, user_token=token)
@@ -440,10 +456,13 @@ def reject_charter_action(n_clicks_list, counter):
 )
 def open_delete_modal(n_clicks_list):
     """Open delete confirmation with the charter ID."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
         return no_update, no_update
-    charter_id = triggered["index"]
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
+        return no_update, no_update
+    charter_id = triggered_id["index"]
     return True, charter_id
 
 
@@ -461,6 +480,8 @@ def open_delete_modal(n_clicks_list):
 )
 def confirm_delete_charter(n_clicks, charter_id, counter):
     """Soft-delete the charter."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not charter_id:
         return no_update, no_update, no_update, no_update, no_update, no_update
 
