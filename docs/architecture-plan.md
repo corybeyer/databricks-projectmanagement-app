@@ -1,6 +1,6 @@
 # PM Hub — Architecture & Scaffolding Plan
 
-> **Status (2026-02-27):** All 7 phases **complete** (including Phase 6: UI Modernization).
+> **Status (2026-03-01):** All 8 phases **complete** (including Phase 7: Layout & Typography UX).
 > The layered architecture (Pages → Services → Repositories → DB), repository pattern,
 > sample data fallback, config layer, charts layer, and all 16 pages are built. All CRUD
 > operations are fully interactive with validation, optimistic locking, and defense-in-depth
@@ -8,8 +8,10 @@
 > Databricks-specific exception handling, 325 unit tests, and a real-time notification
 > system. Phase 6 (UI Modernization) added: glassmorphism design system, locally bundled
 > Bootstrap Icons and SLATE theme (offline-capable), page header icons, KPI card icons,
-> and modern glass-effect styling throughout. See [PLAN.md](architecture/PLAN.md)
-> for the full roadmap history.
+> and modern glass-effect styling throughout. Phase 7 (Layout & Typography) added: wider
+> 1800px max-width, larger font sizes (KPI values 1.85rem, labels 0.85rem), even-width
+> KPI cards on dashboard, larger health chart (380px), responsive `md` breakpoints.
+> See [PLAN.md](architecture/PLAN.md) for the full roadmap history.
 
 ## Context
 

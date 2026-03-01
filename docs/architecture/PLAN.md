@@ -613,6 +613,41 @@ Removed all hardcoded `workspace.project_management` references from runtime cod
 
 ---
 
+## Phase 7: Full-Width Layout, Larger Typography & UX Improvements ✅ COMPLETE
+
+*Wider layout, larger fonts, even KPI distribution, bigger health chart.*
+*Completed: 2026-03-01*
+
+### 7.1 — CSS Typography & Layout Updates ✅
+
+*Completed: 2026-03-01*
+
+- `.page-content` max-width: 1600px → 1800px for better 1920px monitor coverage
+- `.page-content` padding: 24px → 24px 32px (wider horizontal breathing room)
+- `.kpi-value` font-size: 1.5rem → 1.85rem (larger KPI numbers)
+- `.kpi-label` font-size: 0.75rem → 0.85rem (more readable labels)
+- `.kpi-sub` font-size: 0.75rem → 0.8rem
+- `.card-header` font-size: 0.85rem → 0.9rem
+- `.table-dark thead th` font-size: 0.7rem → 0.78rem (minimum readable)
+- `.page-subtitle` font-size: 0.9rem → 1rem
+- `.badge` font-size: 0.7rem → 0.75rem
+- `.kpi-card .card-body` padding: 16px 20px → 20px 24px
+- `.kpi-icon-wrapper` size: 36px → 40px, font-size: 1.1rem → 1.25rem
+- **Files:** `assets/custom.css`
+
+### 7.2 — Dashboard Layout Fix ✅
+
+*Completed: 2026-03-01*
+
+- KPI row: uneven `[2,2,2,3,3]` widths → all `md=True` (equal flex distribution)
+- Health chart/portfolio split: `width=4`/`width=8` → `md=5`/`md=7` (larger chart)
+- Health chart height: 300px → 380px
+- Added `h-100` to chart card for same-row height matching
+- Used `md` breakpoints for graceful tablet stacking
+- **Files:** `pages/dashboard.py`
+
+---
+
 ## Verification
 
 After each phase:
