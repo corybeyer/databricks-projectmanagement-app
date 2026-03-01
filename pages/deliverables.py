@@ -407,16 +407,21 @@ def refresh_deliverables(n, mutation_count, active_project,
 )
 def toggle_deliverable_modal(add_clicks, edit_clicks):
     """Open deliverable modal for create (blank) or edit (populated)."""
-    triggered = ctx.triggered_id
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 9
+
+    triggered_id = ctx.triggered_id
 
     # Create mode
-    if triggered == "deliv-add-btn":
+    if triggered_id == "deliv-add-btn" and add_clicks:
         return (True, "Create Deliverable", None,
                 "", "", "not_started", "", "", "")
 
     # Edit mode
-    if isinstance(triggered, dict) and triggered.get("type") == "deliv-edit-btn":
-        did = triggered["index"]
+    if isinstance(triggered_id, dict) and triggered_id.get("type") == "deliv-edit-btn":
+        did = triggered_id["index"]
         token = get_user_token()
         df = deliverable_service.get_deliverable(did, user_token=token)
         if df.empty:
@@ -459,6 +464,8 @@ def toggle_deliverable_modal(add_clicks, edit_clicks):
 def save_deliverable(n_clicks, stored_item, counter, active_project,
                      phase_filter, *field_values):
     """Save (create or update) a deliverable."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(DELIVERABLE_FIELDS) * 2)
     form_data = get_modal_values("deliv-item", DELIVERABLE_FIELDS, *field_values)
 
     token = get_user_token()
@@ -546,10 +553,13 @@ def change_deliverable_status(status_values):
 )
 def open_delete_modal(n_clicks_list):
     """Open delete confirmation with the deliverable ID."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
         return no_update, no_update
-    did = triggered["index"]
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
+        return no_update, no_update
+    did = triggered_id["index"]
     return True, did
 
 
@@ -567,6 +577,8 @@ def open_delete_modal(n_clicks_list):
 )
 def confirm_delete_deliverable(n_clicks, did, counter):
     """Soft-delete the deliverable."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not did:
         return no_update, no_update, no_update, no_update, no_update, no_update
 

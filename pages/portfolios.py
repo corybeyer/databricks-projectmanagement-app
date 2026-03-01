@@ -262,15 +262,20 @@ def refresh_portfolios(n, mutation_count, dept_store, search):
 )
 def toggle_portfolio_modal(add_clicks, edit_clicks):
     """Open portfolio modal for create (blank) or edit (populated)."""
-    triggered = ctx.triggered_id
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 7
+
+    triggered_id = ctx.triggered_id
 
     # Create mode
-    if triggered == "portfolios-add-portfolio-btn":
+    if triggered_id == "portfolios-add-portfolio-btn" and add_clicks:
         return (True, "Create Portfolio", None, "", "", "", "")
 
     # Edit mode -- pattern-match button
-    if isinstance(triggered, dict) and triggered.get("type") == "portfolios-portfolio-edit-btn":
-        portfolio_id = triggered["index"]
+    if isinstance(triggered_id, dict) and triggered_id.get("type") == "portfolios-portfolio-edit-btn":
+        portfolio_id = triggered_id["index"]
         token = get_user_token()
         portfolio_df = get_portfolio(portfolio_id, user_token=token)
         if portfolio_df.empty:
@@ -305,6 +310,8 @@ def toggle_portfolio_modal(add_clicks, edit_clicks):
 )
 def save_portfolio(n_clicks, stored_portfolio, counter, *field_values):
     """Save (create or update) a portfolio."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(PORTFOLIO_FIELDS) * 2)
     form_data = get_modal_values("portfolios-portfolio", PORTFOLIO_FIELDS, *field_values)
 
     token = get_user_token()
@@ -348,10 +355,13 @@ def save_portfolio(n_clicks, stored_portfolio, counter, *field_values):
 )
 def open_delete_modal(n_clicks_list):
     """Open delete confirmation with the portfolio ID."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
         return no_update, no_update
-    portfolio_id = triggered["index"]
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
+        return no_update, no_update
+    portfolio_id = triggered_id["index"]
     return True, portfolio_id
 
 
@@ -369,6 +379,8 @@ def open_delete_modal(n_clicks_list):
 )
 def confirm_delete_portfolio(n_clicks, portfolio_id, counter):
     """Soft-delete the portfolio."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not portfolio_id:
         return no_update, no_update, no_update, no_update, no_update, no_update
 

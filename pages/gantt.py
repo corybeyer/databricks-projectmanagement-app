@@ -401,16 +401,21 @@ def refresh_gantt(n, mutation_count, active_project):
 )
 def toggle_phase_modal(add_clicks, edit_clicks):
     """Open phase modal for create (blank) or edit (populated)."""
-    triggered = ctx.triggered_id
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 9
+
+    triggered_id = ctx.triggered_id
 
     # Create mode
-    if triggered == "gantt-add-phase-btn":
+    if triggered_id == "gantt-add-phase-btn" and add_clicks:
         return (True, "Create Phase", None,
                 "", None, None, None, None, None)
 
     # Edit mode
-    if isinstance(triggered, dict) and triggered.get("type") == "gantt-phase-edit-btn":
-        phase_id = triggered["index"]
+    if isinstance(triggered_id, dict) and triggered_id.get("type") == "gantt-phase-edit-btn":
+        phase_id = triggered_id["index"]
         token = get_user_token()
         phase_df = phase_service.get_phase(phase_id, user_token=token)
         if phase_df.empty:
@@ -450,6 +455,8 @@ def toggle_phase_modal(add_clicks, edit_clicks):
 )
 def save_phase(n_clicks, stored_phase, counter, active_project, *field_values):
     """Save (create or update) a phase."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(PHASE_FIELDS) * 2)
     form_data = get_modal_values("gantt-phase", PHASE_FIELDS, *field_values)
     form_data["project_id"] = active_project or "prj-001"
 
@@ -510,10 +517,13 @@ def cancel_phase_modal(n):
 )
 def open_phase_delete_modal(n_clicks_list):
     """Open delete confirmation with the phase ID."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
         return no_update, no_update
-    phase_id = triggered["index"]
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
+        return no_update, no_update
+    phase_id = triggered_id["index"]
     return True, phase_id
 
 
@@ -534,6 +544,8 @@ def open_phase_delete_modal(n_clicks_list):
 )
 def confirm_delete_phase(n_clicks, phase_id, counter):
     """Soft-delete the phase."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not phase_id:
         return no_update, no_update, no_update, no_update, no_update, no_update
 
@@ -559,6 +571,8 @@ def confirm_delete_phase(n_clicks, phase_id, counter):
 )
 def open_gate_create_modal(n_clicks):
     """Open the gate create modal."""
+    if not n_clicks:
+        return (no_update,) * 4
     return True, "Create Gate", "", ""
 
 
@@ -581,6 +595,8 @@ def open_gate_create_modal(n_clicks):
 )
 def save_gate(n_clicks, counter, active_project, *field_values):
     """Create a new gate."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(GATE_FIELDS) * 2)
     form_data = get_modal_values("gantt-gate", GATE_FIELDS, *field_values)
 
     # Determine the phase and gate order from existing data
@@ -653,12 +669,16 @@ def cancel_gate_modal(n):
 )
 def open_gate_decision_modal(approve_clicks, reject_clicks, defer_clicks):
     """Open the gate decision modal for approve/reject/defer."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 4
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
         return (no_update,) * 4
 
-    gate_id = triggered["index"]
-    action_type = triggered.get("type", "")
+    gate_id = triggered_id["index"]
+    action_type = triggered_id.get("type", "")
 
     if "approve" in action_type:
         action = "approve"
@@ -694,6 +714,8 @@ def open_gate_decision_modal(approve_clicks, reject_clicks, defer_clicks):
 )
 def confirm_gate_decision(n_clicks, stored_action, decision_notes, counter):
     """Execute the gate decision (approve/reject/defer)."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not stored_action:
         return (no_update,) * 6
 

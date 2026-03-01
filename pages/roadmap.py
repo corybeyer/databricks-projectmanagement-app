@@ -398,16 +398,21 @@ def refresh_roadmap(n, mutation_count, type_filter, risk_filter,
 )
 def toggle_dep_modal(add_clicks, edit_clicks):
     """Open dependency modal for create (blank) or edit (populated)."""
-    triggered = ctx.triggered_id
+    # Guard: ignore when fired by new components appearing (no actual click)
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 9
+
+    triggered_id = ctx.triggered_id
 
     # Create mode
-    if triggered == "roadmap-add-dep-btn":
+    if triggered_id == "roadmap-add-dep-btn" and add_clicks:
         return (True, "Create Dependency", None,
                 None, None, None, None, None, "")
 
     # Edit mode — pattern-match button
-    if isinstance(triggered, dict) and triggered.get("type") == "roadmap-dep-edit-btn":
-        dep_id = triggered["index"]
+    if isinstance(triggered_id, dict) and triggered_id.get("type") == "roadmap-dep-edit-btn":
+        dep_id = triggered_id["index"]
         token = get_user_token()
         dep_df = dependency_service.get_dependency(dep_id, user_token=token)
         if dep_df.empty:
@@ -443,6 +448,8 @@ def toggle_dep_modal(add_clicks, edit_clicks):
 )
 def save_dependency(n_clicks, stored_dep, counter, *field_values):
     """Save (create or update) a dependency."""
+    if not n_clicks:
+        return (no_update,) * (6 + len(DEP_FIELDS) * 2)
     form_data = get_modal_values("roadmap-dep", DEP_FIELDS, *field_values)
 
     token = get_user_token()
@@ -524,10 +531,13 @@ def change_dep_status(status_values):
 )
 def open_delete_modal(n_clicks_list):
     """Open delete confirmation with the dependency ID."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
         return no_update, no_update
-    dep_id = triggered["index"]
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
+        return no_update, no_update
+    dep_id = triggered_id["index"]
     return True, dep_id
 
 
@@ -545,6 +555,8 @@ def open_delete_modal(n_clicks_list):
 )
 def confirm_delete_dep(n_clicks, dep_id, counter):
     """Soft-delete the dependency."""
+    if not n_clicks:
+        return (no_update,) * 6
     if not dep_id:
         return no_update, no_update, no_update, no_update, no_update, no_update
 
@@ -579,11 +591,14 @@ def cancel_dep_modal(n):
 )
 def resolve_dep_action(n_clicks_list, counter):
     """Mark a dependency as resolved."""
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
+    triggered = ctx.triggered
+    if not triggered or all(t.get("value") is None or t.get("value") == 0 for t in triggered):
+        return (no_update,) * 5
+    triggered_id = ctx.triggered_id
+    if not isinstance(triggered_id, dict):
         return (no_update,) * 5
 
-    dep_id = triggered["index"]
+    dep_id = triggered_id["index"]
     token = get_user_token()
     email = get_user_email()
 
