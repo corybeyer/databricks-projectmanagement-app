@@ -4,8 +4,12 @@
 # No external dependencies. Portable across Git Bash / Linux / macOS.
 INPUT=$(cat)
 
-# Check if this is a git commit command (search the raw JSON)
-if ! echo "$INPUT" | grep -q 'git commit\|git.*commit'; then
+# Extract the actual command from the JSON tool input, then check for git commit.
+# Grepping the full JSON blob is too broad — descriptions and context also contain
+# the word "commit", causing false positives on git stash, git status, etc.
+COMMAND=$(echo "$INPUT" | /c/Users/coryb/anaconda3/python.exe -c "import sys,json; print(json.load(sys.stdin).get('input',''))" 2>/dev/null)
+
+if ! echo "$COMMAND" | grep -q 'git commit'; then
   exit 0
 fi
 
